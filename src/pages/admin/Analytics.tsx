@@ -249,12 +249,15 @@ export default function AdminAnalytics() {
                     className="lg:col-span-6"
                     flush
                 >
-                    <div className="h-[230px] w-full px-5 pb-3">
+                    {/* The flow needs real vertical room: with 10 nodes a short
+                      * container collapses every band into one solid block. The
+                      * left/right gutters hold the end labels clear of the edge. */}
+                    <div className="h-[660px] w-full px-5 pb-4">
                         <SankeyChart
                             data={learnerJourney}
-                            margin={{ top: 18, right: 96, bottom: 18, left: 88 }}
-                            nodeWidth={7}
-                            nodePadding={9}
+                            margin={{ top: 24, right: 136, bottom: 24, left: 124 }}
+                            nodeWidth={12}
+                            nodePadding={20}
                         >
                             <SankeyLink />
                             <SankeyNode lineCap={4} />
