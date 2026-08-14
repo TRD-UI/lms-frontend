@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthFormField } from "@/components/auth/AuthFormField";
+import { useSession } from "@/store/session";
 
 
 export default function Login() {
     const navigate = useNavigate();
+    const { signIn } = useSession();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -16,6 +18,8 @@ export default function Login() {
         // Simulate auth call
         setTimeout(() => {
             setLoading(false);
+            // Auth is simulated: signing in selects the student demo identity.
+            signIn("student", { email });
             navigate("/dashboard");
         }, 1200);
     };

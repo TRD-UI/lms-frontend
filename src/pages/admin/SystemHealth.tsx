@@ -17,14 +17,19 @@ import {
     WifiOff01Icon,
     Loading01Icon,
     RotateClockwiseIcon,
+    ViewIcon,
     FileSearchIcon,
     ShieldKeyIcon,
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
+import { RowActions } from "@/components/shared/RowActions";
+import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { toast } from "sonner";
 
 export default function SystemHealth() {
     const [activeTab, setActiveTab] = useState<"sync" | "audit">("sync");
+    const syncPage = usePagination(syncLogs, 8);
+    const auditPage = usePagination(auditLogs, 8);
 
     const syncStatusConfig = {
         synced: { color: "bg-emerald-50 text-emerald-600", icon: Wifi01Icon },
@@ -146,7 +151,7 @@ export default function SystemHealth() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {syncLogs.map((log) => {
+                                    {syncPage.pageRows.map((log) => {
                                         const StatusIcon = syncStatusConfig[log.status].icon;
                                         return (
                                             <TableRow key={log.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
@@ -165,21 +170,40 @@ export default function SystemHealth() {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    {log.status === "failed" && (
-                                                        <Button
-                                                            onClick={() => handleRetrySync(log)}
-                                                            className="h-8 px-3 rounded-full bg-primary/5 hover:bg-primary/10 text-primary font-medium text-xs gap-1 shadow-none"
-                                                        >
-                                                            <RotateClockwiseIcon size={12} />
-                                                            Retry
-                                                        </Button>
-                                                    )}
+                                                    <RowActions
+                                                        label={`Actions for ${log.deviceId}`}
+                                                        actions={[
+                                                            {
+                                                                label: "Retry sync",
+                                                                icon: RotateClockwiseIcon,
+                                                                disabled: log.status === "synced",
+                                                                onSelect: () => handleRetrySync(log),
+                                                            },
+                                                            {
+                                                                label: "View sync payload",
+                                                                icon: ViewIcon,
+                                                                onSelect: () =>
+                                                                    toast.success(`Sync ${log.deviceId}`, {
+                                                                        description: `${log.recordCount} attendance records · ${log.timestamp}`,
+                                                                    }),
+                                                            },
+                                                        ]}
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         );
                                     })}
                                 </TableBody>
                             </Table>
+                            <TablePagination
+                                page={syncPage.page}
+                                pageCount={syncPage.pageCount}
+                                onPageChange={syncPage.setPage}
+                                from={syncPage.from}
+                                to={syncPage.to}
+                                total={syncPage.total}
+                                label="sync records"
+                            />
                         </CardContent>
                     </Card>
                 )
@@ -197,7 +221,7 @@ export default function SystemHealth() {
                     </div>
                 ) : (
                     <div className="space-y-3 px-2">
-                        {auditLogs.map((log) => (
+                        {auditPage.pageRows.map((log) => (
                             <Card key={log.id} className="border-slate-100 rounded-2xl shadow-none hover:shadow-sm transition-all">
                                 <CardContent className="p-5">
                                     <div className="flex items-start gap-4">
@@ -224,6 +248,16 @@ export default function SystemHealth() {
                                 </CardContent>
                             </Card>
                         ))}
+                        <TablePagination
+                            page={auditPage.page}
+                            pageCount={auditPage.pageCount}
+                            onPageChange={auditPage.setPage}
+                            from={auditPage.from}
+                            to={auditPage.to}
+                            total={auditPage.total}
+                            label="entries"
+                            className="border-t-0 px-0"
+                        />
                     </div>
                 )
             )}

@@ -11,14 +11,38 @@ import { cn } from "@/lib/utils";
 import { entryPasses, EntryPass } from "@/data/entry-passes";
 import { EntryPassCard } from "@/components/dashboard/entry-passes/EntryPassCard";
 import { PassViewer } from "@/components/dashboard/entry-passes/PassViewer";
+import { useLms } from "@/store/lms-store";
+import { useActingUser } from "@/store/session";
 
 export default function EntryPasses() {
     const [selectedPass, setSelectedPass] = useState<EntryPass | null>(null);
     const [viewerOpen, setViewerOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
 
+    const student = useActingUser("student");
+    const { entryPassUnlocked, assessmentsForCourse, bestAttempt } = useLms();
+
     const activePasses = entryPasses.filter(p => p.status === 'active');
     const pastPasses = entryPasses.filter(p => p.status === 'past');
+
+    /**
+     * A pass is released only once every gating assessment on its course is
+     * passed. When one is outstanding we surface it as the call to action.
+     */
+    const gateFor = (pass: EntryPass) => {
+        const unlocked = entryPassUnlocked(pass.courseId, student.id);
+        const blockingAssessment = unlocked
+            ? undefined
+            : assessmentsForCourse(pass.courseId).find(
+                (a) =>
+                    a.gatesEntryPass &&
+                    a.status === "published" &&
+                    bestAttempt(a.id, student.id)?.passed !== true
+            );
+        return { unlocked, blockingAssessment };
+    };
+
+    const lockedCount = activePasses.filter((p) => !gateFor(p).unlocked).length;
 
     const handleView = (pass: EntryPass) => {
         setSelectedPass(pass);
@@ -32,7 +56,11 @@ export default function EntryPasses() {
                 <div className="flex items-center gap-5">
                     <div className="space-y-0.5 sm:space-y-1">
                         <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-900">Entry Passes</h1>
-                        <p className="text-slate-500 font-medium text-xs sm:text-sm">Access your physical workshop and event entry tickets.</p>
+                        <p className="text-slate-500 font-medium text-xs sm:text-sm">
+                            {lockedCount > 0
+                                ? `${lockedCount} ${lockedCount === 1 ? "pass is" : "passes are"} held until you clear the prerequisite test.`
+                                : "Access your physical workshop and event entry tickets."}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -85,13 +113,18 @@ export default function EntryPasses() {
                         <EmptyState />
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 px-1 sm:px-2">
-                            {activePasses.map((pass) => (
-                                <EntryPassCard
-                                    key={pass.id}
-                                    pass={pass}
-                                    onView={handleView}
-                                />
-                            ))}
+                            {activePasses.map((pass) => {
+                                const { unlocked, blockingAssessment } = gateFor(pass);
+                                return (
+                                    <EntryPassCard
+                                        key={pass.id}
+                                        pass={pass}
+                                        onView={handleView}
+                                        unlocked={unlocked}
+                                        blockingAssessment={blockingAssessment}
+                                    />
+                                );
+                            })}
                         </div>
                     )
                 ) : (

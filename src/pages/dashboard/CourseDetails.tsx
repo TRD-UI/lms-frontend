@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft01Icon } from "hugeicons-react";
-import { courses } from "@/data/courses";
+import { purchasedCourseIds } from "@/data/courses";
+import { useLms } from "@/store/lms-store";
 import { CourseHero } from "@/components/dashboard/course-details/CourseHero";
 import { CourseQuickInfo } from "@/components/dashboard/course-details/CourseQuickInfo";
 import { CourseModuleList } from "@/components/dashboard/course-details/CourseModuleList";
@@ -8,10 +9,8 @@ import { EnrollmentCard } from "@/components/dashboard/course-details/Enrollment
 
 export default function CourseDetails() {
     const { id } = useParams<{ id: string }>();
+    const { courses } = useLms();
     const course = courses.find((c) => c.id === id);
-
-    // Mock purchased courses (Keep in sync with MyLearning.tsx)
-    const purchasedCourseIds = ["1", "3"];
     const isPurchased = purchasedCourseIds.includes(id || "");
 
     if (!course) {

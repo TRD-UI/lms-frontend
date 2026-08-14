@@ -13,14 +13,18 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useActingUser, useSession } from "@/store/session";
 
 export function UserDropdown() {
     const navigate = useNavigate();
+    const student = useActingUser("student");
+    const { signOut } = useSession();
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [logoutOpen, setLogoutOpen] = useState(false);
 
     const handleLogout = () => {
         setLogoutOpen(false);
+        signOut();
         navigate("/login");
     };
 
@@ -30,12 +34,14 @@ export function UserDropdown() {
                 <PopoverTrigger asChild>
                     <button className="flex items-center gap-3 pl-2 sm:border-l sm:border-slate-100 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-full sm:rounded-none">
                         <div className="hidden sm:flex flex-col items-end mr-1">
-                            <span className="text-sm font-medium text-slate-800">Cyber Smith</span>
-                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">Student</span>
+                            <span className="text-sm font-medium text-slate-800">{student.name}</span>
+                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">
+                                {student.roleLabel}
+                            </span>
                         </div>
                         <Avatar className="h-10 w-10 sm:h-11 sm:w-11 border rounded-full border-slate-100 bg-accent shadow-sm">
-                            <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=CyberSmith" />
-                            <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">CS</AvatarFallback>
+                            <AvatarImage src={student.avatarUrl} />
+                            <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">{student.initials}</AvatarFallback>
                         </Avatar>
                     </button>
                 </PopoverTrigger>
@@ -45,9 +51,9 @@ export function UserDropdown() {
                     sideOffset={8}
                 >
                     <div className="px-4 py-3 border-b border-slate-100 mb-2 flex flex-col gap-1">
-                        <p className="text-sm font-medium text-slate-900 leading-none">Cyber Smith</p>
-                        <p className="text-xs text-slate-500 font-medium">Student</p>
-                        <p className="text-[10px] text-slate-400 font-normal leading-tight mt-1">cyber.smith@example.com</p>
+                        <p className="text-sm font-medium text-slate-900 leading-none">{student.name}</p>
+                        <p className="text-xs text-slate-500 font-medium">{student.roleLabel}</p>
+                        <p className="text-[10px] text-slate-400 font-normal leading-tight mt-1">{student.email}</p>
                     </div>
 
                     <div className="flex flex-col gap-1">

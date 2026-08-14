@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthFormField } from "@/components/auth/AuthFormField";
+import { useSession } from "@/store/session";
 import {
     Select,
     SelectContent,
@@ -18,6 +19,7 @@ const ROLES = [
 
 export default function Signup() {
     const navigate = useNavigate();
+    const { signIn } = useSession();
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
         name: "",
@@ -58,7 +60,10 @@ export default function Signup() {
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-            navigate("/dashboard");
+            // The role picked at signup decides which portal the user lands in.
+            const role = form.role === "Instructor" ? "instructor" : "student";
+            signIn(role, { name: form.name, email: form.email });
+            navigate(role === "instructor" ? "/instructor" : "/dashboard");
         }, 1300);
     };
 

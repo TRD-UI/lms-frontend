@@ -3,6 +3,10 @@ import { Course, CourseMetadata, CourseModule, ModuleItem } from "./types";
 const SAMPLE_VIDEO = "https://www.w3schools.com/html/mov_bbb.mp4";
 const SAMPLE_PDF = "https://morth.nic.in/sites/default/files/dd12-13_0.pdf";
 
+/** Instructor roster — ids match `adminUsers` in admin.ts. */
+export const FUNKE = { id: "u-2", name: "Dr. Funke Akindele" };
+export const SEUN = { id: "u-6", name: "Oluwaseun Fadare" };
+
 export const courses: Course[] = [
     {
         id: "1",
@@ -14,13 +18,35 @@ export const courses: Course[] = [
         category: "Software Development",
         fees: { type: 'flat', amount: 150000 },
         progress: 68,
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         modules: [
             {
                 id: "1-1",
                 title: "Web Foundation (HTML/CSS/JS)",
                 items: [
                     { id: "1-1-1", title: "Project Overview Video", type: 'video', url: SAMPLE_VIDEO },
-                    { id: "1-1-2", title: "Tech Roadmap PDF", type: 'pdf', url: SAMPLE_PDF }
+                    { id: "1-1-2", title: "Tech Roadmap PDF", type: 'pdf', url: SAMPLE_PDF },
+                    { id: "1-1-3", title: "Web Foundation Checkpoint", type: 'quiz', assessmentId: "as-2" }
+                ]
+            },
+            {
+                id: "1-2",
+                title: "Styling & Layout Systems",
+                items: [
+                    { id: "1-2-1", title: "The CSS Box Model", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "1-2-2", title: "Flexbox & Grid Reference", type: 'pdf', url: SAMPLE_PDF },
+                    { id: "1-2-3", title: "Responsive Patterns", type: 'document' }
+                ]
+            },
+            {
+                id: "1-3",
+                title: "Programming with JavaScript & Python",
+                items: [
+                    { id: "1-3-1", title: "Variables, Types & Scope", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "1-3-2", title: "Functions & Control Flow", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "1-3-3", title: "Tech Odyssey Capstone", type: 'quiz', assessmentId: "as-3" }
                 ]
             }
         ]
@@ -35,6 +61,9 @@ export const courses: Course[] = [
         category: "Software Development",
         fees: { type: 'flat', amount: 200000 },
         progress: 0,
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         modules: [
             {
                 id: "2-1",
@@ -55,8 +84,35 @@ export const courses: Course[] = [
         category: "Software Development",
         fees: { type: 'flat', amount: 150000 },
         progress: 12,
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         modules: [
-            { id: "3-1", title: "Python Basics", items: [{ id: "3-1-1", title: "Syntax Video", type: 'video', url: SAMPLE_VIDEO }] }
+            {
+                id: "3-1",
+                title: "Python Basics",
+                items: [
+                    { id: "3-1-1", title: "Syntax Video", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "3-1-2", title: "Setting Up Your Environment", type: 'pdf', url: SAMPLE_PDF }
+                ]
+            },
+            {
+                id: "3-2",
+                title: "Control Flow & Collections",
+                items: [
+                    { id: "3-2-1", title: "Loops & Conditionals", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "3-2-2", title: "Lists, Tuples & Dictionaries", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "3-2-3", title: "Control Flow Checkpoint", type: 'quiz', assessmentId: "as-7" }
+                ]
+            },
+            {
+                id: "3-3",
+                title: "Certification",
+                items: [
+                    { id: "3-3-1", title: "Exam Preparation Guide", type: 'pdf', url: SAMPLE_PDF },
+                    { id: "3-3-2", title: "Python Certification Exam", type: 'quiz', assessmentId: "as-8" }
+                ]
+            }
         ]
     },
     {
@@ -67,6 +123,9 @@ export const courses: Course[] = [
         location: "Training Lab 1, ITeMS Building, UI",
         seats: { enrolled: 22, total: 30 },
         category: "Digital Literacy",
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         fees: {
             type: 'tiered',
             tiers: [
@@ -75,7 +134,14 @@ export const courses: Course[] = [
             ]
         },
         modules: [
-            { id: "4-1", title: "Digital Foundations", items: [{ id: "4-1-1", title: "OS Basics Video", type: 'video', url: SAMPLE_VIDEO }] }
+            {
+                id: "4-1",
+                title: "Digital Foundations",
+                items: [
+                    { id: "4-1-1", title: "OS Basics Video", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "4-1-2", title: "Productivity Tools Final", type: 'quiz', assessmentId: "as-10" }
+                ]
+            }
         ]
     },
     {
@@ -87,6 +153,9 @@ export const courses: Course[] = [
         seats: { enrolled: 5, total: 10 },
         category: "Data Science",
         fees: { type: 'flat', amount: 50000 },
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         modules: [
             { id: "5-1", title: "ArcGIS Intro", items: [{ id: "5-1-1", title: "Mapping Video", type: 'video', url: SAMPLE_VIDEO }] }
         ]
@@ -99,6 +168,9 @@ export const courses: Course[] = [
         location: "ITeMS Building, UI",
         seats: { enrolled: 10, total: 15 },
         category: "Data Science",
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         fees: {
             type: 'tiered',
             tiers: [
@@ -119,6 +191,9 @@ export const courses: Course[] = [
         seats: { enrolled: 8, total: 15 },
         category: "Digital Literacy",
         fees: { type: 'flat', amount: 100000 },
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         modules: [
             { id: "7-1", title: "Word & Excel", items: [{ id: "7-1-1", title: "Excel Formulas", type: 'video', url: SAMPLE_VIDEO }] }
         ]
@@ -131,6 +206,9 @@ export const courses: Course[] = [
         location: "ITeMS Building, UI",
         seats: { enrolled: 12, total: 20 },
         category: "Digital Literacy",
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         fees: {
             type: 'tiered',
             tiers: [
@@ -151,6 +229,9 @@ export const courses: Course[] = [
         seats: { enrolled: 15, total: 25 },
         category: "AI & ML",
         fees: { type: 'flat', amount: 100000 },
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         modules: [
             { id: "9-1", title: "AI Basics", items: [{ id: "9-1-1", title: "Prompt Engineering", type: 'video', url: SAMPLE_VIDEO }] }
         ]
@@ -164,6 +245,9 @@ export const courses: Course[] = [
         seats: { enrolled: 6, total: 12 },
         category: "Networking",
         fees: { type: 'flat', amount: 100000 },
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         modules: [
             { id: "10-1", title: "MikroTik Setup", items: [{ id: "10-1-1", title: "Routing Intro", type: 'video', url: SAMPLE_VIDEO }] }
         ]
@@ -176,6 +260,9 @@ export const courses: Course[] = [
         location: "ITeMS Building, UI",
         seats: { enrolled: 10, total: 20 },
         category: "Networking",
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         fees: {
             type: 'tiered',
             tiers: [
@@ -196,6 +283,9 @@ export const courses: Course[] = [
         seats: { enrolled: 12, total: 25 },
         category: "Data Science",
         fees: { type: 'flat', amount: 300000 },
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         modules: [
             { id: "13-1", title: "Data Analysis", items: [{ id: "13-1-1", title: "Pandas Intro", type: 'video', url: SAMPLE_VIDEO }] }
         ]
@@ -209,8 +299,18 @@ export const courses: Course[] = [
         seats: { enrolled: 8, total: 20 },
         category: "Cybersecurity",
         fees: { type: 'flat', amount: 300000 },
+        instructorId: FUNKE.id,
+        instructorName: FUNKE.name,
+        status: 'published',
         modules: [
-            { id: "14-1", title: "Security Labs", items: [{ id: "14-1-1", title: "Auth Systems", type: 'video', url: SAMPLE_VIDEO }] }
+            {
+                id: "14-1",
+                title: "Security Labs",
+                items: [
+                    { id: "14-1-1", title: "Auth Systems", type: 'video', url: SAMPLE_VIDEO },
+                    { id: "14-1-2", title: "Threat Modelling Checkpoint", type: 'quiz', assessmentId: "as-15" }
+                ]
+            }
         ]
     },
     {
@@ -222,6 +322,9 @@ export const courses: Course[] = [
         seats: { enrolled: 20, total: 30 },
         category: "Digital Literacy",
         fees: { type: 'flat', amount: 300000 },
+        instructorId: SEUN.id,
+        instructorName: SEUN.name,
+        status: 'published',
         modules: [
             { id: "15-1", title: "SEO Strategy", items: [{ id: "15-1-1", title: "Search Engines", type: 'video', url: SAMPLE_VIDEO }] }
         ]
@@ -243,6 +346,20 @@ export const courseMetadata: CourseMetadata = {
         "0806-273-3470"
     ]
 };
+
+/** Courses the demo student has paid for. */
+/** Courses the demo student has paid for. Cybersecurity is enrolled but its
+ * prerequisite is unpassed, so its entry pass starts locked. */
+export const purchasedCourseIds = ["1", "3", "14"];
+
+export const courseCategories = [
+    "Software Development",
+    "Data Science",
+    "Digital Literacy",
+    "Cybersecurity",
+    "AI & ML",
+    "Networking",
+];
 
 // Re-export types for compatibility
 export type { Course, CourseMetadata, CourseModule, ModuleItem };

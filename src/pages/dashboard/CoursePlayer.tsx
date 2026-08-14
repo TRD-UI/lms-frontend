@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { courses } from "@/data/courses";
+import { useLms } from "@/store/lms-store";
 import { PlayerSidebar } from "@/components/dashboard/course/PlayerSidebar";
 import { PlayerHeader } from "@/components/dashboard/course/PlayerHeader";
 import { MediaViewer } from "@/components/dashboard/course/MediaViewer";
@@ -8,22 +8,25 @@ import { useMemo, useState } from "react";
 export default function CoursePlayer() {
     const { courseId, moduleId, itemId } = useParams<{ courseId: string; moduleId: string; itemId: string }>();
     const navigate = useNavigate();
+    const { courses } = useLms();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-    const course = useMemo(() => courses.find(c => c.id === courseId), [courseId]);
+    const course = useMemo(() => courses.find(c => c.id === courseId), [courses, courseId]);
+
+    // Every hook runs before the early return below, so hook order stays stable
+    // across renders regardless of whether the course resolves.
+    const allItems = useMemo(() => {
+        if (!course) return [];
+        return course.modules.flatMap(m =>
+            m.items.map(i => ({ moduleId: m.id, itemId: i.id }))
+        );
+    }, [course]);
 
     if (!course) return <div className="p-8">Course not found</div>;
 
     const currentModule = course.modules.find(m => m.id === moduleId);
     const currentItem = currentModule?.items.find(i => i.id === itemId) || currentModule?.items[0];
-
-    // Navigation logic
-    const allItems = useMemo(() => {
-        return course.modules.flatMap(m =>
-            m.items.map(i => ({ moduleId: m.id, itemId: i.id }))
-        );
-    }, [course]);
 
     const currentIndex = allItems.findIndex(path =>
         path.moduleId === moduleId && path.itemId === itemId

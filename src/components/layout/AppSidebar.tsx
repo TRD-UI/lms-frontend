@@ -1,4 +1,4 @@
-import { BookOpen01Icon, Certificate01Icon, Home01Icon, QrCode01Icon, Logout01Icon } from "hugeicons-react";
+import { BookOpen01Icon, Certificate01Icon, Home01Icon, QrCode01Icon, Logout01Icon, Task01Icon } from "hugeicons-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -18,6 +18,11 @@ const items = [
         title: "Courses",
         url: "/dashboard/learning",
         icon: BookOpen01Icon,
+    },
+    {
+        title: "Tests",
+        url: "/dashboard/assessments",
+        icon: Task01Icon,
     },
     {
         title: "Passes",
@@ -108,7 +113,7 @@ export function AppSidebar() {
             </Sidebar>
 
             {/* Mobile Bottom Nav */}
-            <nav className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-max bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 border border-white/60 rounded-full p-2 flex items-center gap-1 z-50">
+            <nav className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-1rem)] bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 border border-white/60 rounded-full p-1.5 flex items-center gap-0.5 z-50">
                 {items.map((item) => {
                     const isActive = location.pathname === item.url;
                     return (
@@ -116,8 +121,8 @@ export function AppSidebar() {
                             key={item.title}
                             onClick={() => navigate(item.url)}
                             className={cn(
-                                "relative flex items-center justify-center h-12 rounded-full transition-all duration-300 ease-in-out focus:outline-none overflow-hidden",
-                                isActive ? "bg-primary w-[7.5rem]" : "bg-transparent w-12"
+                                "relative flex items-center justify-center h-12 rounded-full transition-all duration-300 ease-in-out focus:outline-none overflow-hidden shrink-0",
+                                isActive ? "bg-primary w-[6.5rem]" : "bg-transparent w-11"
                             )}
                         >
                             <div className="flex items-center gap-2">

@@ -1,151 +1,516 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { adminStats, enrollmentTrends, venueUsage } from "@/data/admin";
-import { ArrowUp01Icon, ArrowDown01Icon } from "hugeicons-react";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
-    AreaChart,
+    ArrowRight01Icon,
+    ChartLineData01Icon,
+    Coins01Icon,
+    Invoice01Icon,
+    UserMultiple02Icon,
+} from "hugeicons-react";
+import {
     Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip as RechartsTooltip,
     XAxis,
     YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    Legend,
 } from "recharts";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { StatGrid, StatTile } from "@/components/shared/StatTile";
+import { ChartCard } from "@/components/shared/ChartCard";
+import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
+import { RowActions } from "@/components/shared/RowActions";
+import { TablePagination, usePagination } from "@/components/shared/TablePagination";
+import { RetentionHeatGrid } from "@/components/admin/RetentionHeatGrid";
+import { DonutChart } from "@/components/admin/DonutChart";
+import { FunnelChart } from "@/components/charts/funnel-chart";
+import { ChartLegend } from "@/components/shared/ChartLegend";
+import {
+    SankeyChart,
+    SankeyLink,
+    SankeyNode,
+    SankeyTooltip,
+} from "@/components/charts/sankey";
+import { RadarChart } from "@/components/charts/radar-chart";
+import { RadarArea } from "@/components/charts/radar-area";
+import { RadarAxis } from "@/components/charts/radar-axis";
+import { RadarGrid } from "@/components/charts/radar-grid";
+import { RadarLabels } from "@/components/charts/radar-labels";
+import {
+    assessmentThroughput,
+    cohortRetention,
+    courseHealth,
+    courseHealthMetrics,
+    enrollmentFunnel,
+    formatCompactNaira,
+    formatNaira,
+    learnerJourney,
+    paymentMethods,
+    revenueByMonth,
+    topCourses,
+    transactions,
+} from "@/data/analytics";
+import { ORDINAL, SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "@/lib/chart-palette";
+import { toast } from "sonner";
 
+/**
+ * Global analytics — a bento of the whole system: money in, learner flow,
+ * course health, retention and assessment throughput.
+ *
+ * Colour follows the shared roles: categorical slots for series identity, the
+ * ordinal ramp for funnel stages, the sequential ramp for retention magnitude.
+ */
 export default function AdminAnalytics() {
+    const [funnelHover, setFunnelHover] = useState<number | null>(null);
+    const txPage = usePagination(transactions, 5);
+
+    const funnelData = enrollmentFunnel.map((stage, i) => ({
+        ...stage,
+        color: ORDINAL[i % ORDINAL.length],
+    }));
+
+    const funnelLegend = enrollmentFunnel.map((stage, i) => ({
+        label: stage.label,
+        color: ORDINAL[i % ORDINAL.length],
+    }));
+
+    const totalRevenue = revenueByMonth.reduce((s, r) => s + r.tuition + r.applications, 0);
+    const paymentTotal = paymentMethods.reduce((s, p) => s + p.amount, 0);
+
     return (
-        <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex items-center justify-between px-2">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-medium tracking-tight text-slate-800">Global Analytics</h1>
-                    <p className="text-slate-400 font-medium text-sm">Monitor system-wide performance and enrollment health.</p>
-                </div>
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <PageHeader
+                title="Global Analytics"
+                description="Revenue, learner flow and course health across the whole platform."
+                actions={
+                    <Link to="/admin/assessments">
+                        <Button
+                            variant="outline"
+                            className="h-11 px-5 rounded-full border-slate-200 text-slate-600 font-medium"
+                        >
+                            Manage assessments
+                            <ArrowRight01Icon size={16} className="ml-1.5" />
+                        </Button>
+                    </Link>
+                }
+            />
+
+            {/* ─── Headline tiles ─── */}
+            <div className="px-1 sm:px-2">
+                <StatGrid>
+                <StatTile
+                    label="Total Revenue"
+                    value="₦11.4M"
+                    delta={24}
+                    hint="February, all courses"
+                    icon={Coins01Icon}
+                />
+                <StatTile
+                    label="Active Learners"
+                    value="1,247"
+                    delta={12}
+                    hint="Enrolled and not withdrawn"
+                    icon={UserMultiple02Icon}
+                />
+                <StatTile
+                    label="Avg. Pass Rate"
+                    value="78%"
+                    delta={3}
+                    hint="Across published assessments"
+                    icon={ChartLineData01Icon}
+                />
+                <StatTile
+                    label="Course Retention"
+                    value="72%"
+                    delta={-4}
+                    hint="Week 5, rolling cohorts"
+                    icon={Invoice01Icon}
+                />
+                </StatGrid>
             </div>
 
-            {/* Stats Grid */}
-            <div className="bg-slate-100 p-4 rounded-[2rem]">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {adminStats.map((stat) => (
-                        <Card key={stat.title} className="border-none bg-white rounded-2xl overflow-hidden shadow-none transition-all hover:shadow-sm">
-                            <CardContent className="p-6 flex flex-col gap-4 text-primary">
-                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <stat.icon size={20} />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-none">
-                                        {stat.title}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-2xl font-medium tracking-tight text-slate-800">{stat.value}</h3>
-                                        {stat.change && (
-                                            <Badge
-                                                variant="secondary"
-                                                className={cn(
-                                                    "text-[10px] font-medium px-1.5 h-5 border-none gap-0.5",
-                                                    stat.trend === "up" && "bg-emerald-50 text-emerald-600",
-                                                    stat.trend === "down" && "bg-red-50 text-red-500"
-                                                )}
-                                            >
-                                                {stat.trend === "up" ? <ArrowUp01Icon size={10} /> : <ArrowDown01Icon size={10} />}
-                                                {stat.change}
-                                            </Badge>
-                                        )}
+            {/* ─── Bento ─── */}
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-3 px-1 sm:px-2">
+                {/* Revenue — two measures, same unit, stacked */}
+                <ChartCard
+                    title="Revenue collected"
+                    description="Tuition and application fees, last six months"
+                    className="lg:col-span-4"
+                    action={
+                        <span className="text-sm font-medium text-slate-900 tabular-nums">
+                            {formatCompactNaira(totalRevenue)}
+                        </span>
+                    }
+                    footer={
+                        <ChartLegend
+                            items={[
+                                { label: "Tuition", color: SERIES[0] },
+                                { label: "Application fees", color: SERIES[1] },
+                            ]}
+                        />
+                    }
+                >
+                    <div className="h-[260px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={revenueByMonth} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="revTuition" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={SERIES[0]} stopOpacity={0.28} />
+                                        <stop offset="100%" stopColor={SERIES[0]} stopOpacity={0.02} />
+                                    </linearGradient>
+                                    <linearGradient id="revApps" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={SERIES[1]} stopOpacity={0.28} />
+                                        <stop offset="100%" stopColor={SERIES[1]} stopOpacity={0.02} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "var(--chart-label)", fontSize: 11 }}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "var(--chart-label)", fontSize: 11 }}
+                                    tickFormatter={(v) => `${v / 1_000_000}M`}
+                                />
+                                <RechartsTooltip
+                                    cursor={{ stroke: "var(--chart-crosshair)", strokeWidth: 1 }}
+                                    contentStyle={TOOLTIP_STYLE}
+                                    labelStyle={TOOLTIP_LABEL_STYLE}
+                                    itemStyle={TOOLTIP_ITEM_STYLE}
+                                    formatter={(value: number, name: string) => [formatNaira(value), name]}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="tuition"
+                                    name="Tuition"
+                                    stackId="1"
+                                    stroke={SERIES[0]}
+                                    strokeWidth={2}
+                                    fill="url(#revTuition)"
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="applications"
+                                    name="Application fees"
+                                    stackId="1"
+                                    stroke={SERIES[1]}
+                                    strokeWidth={2}
+                                    fill="url(#revApps)"
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </ChartCard>
+
+                {/* Enrollment funnel — ordinal stages */}
+                <ChartCard
+                    title="Enrollment funnel"
+                    description="Prospectus view through to certification"
+                    className="lg:col-span-2"
+                    footer={
+                        <ChartLegend
+                            items={funnelLegend}
+                            hoveredIndex={funnelHover}
+                            onHoverChange={setFunnelHover}
+                        />
+                    }
+                >
+                    <div className="h-[260px] w-full flex items-center justify-center">
+                        <FunnelChart
+                            data={funnelData}
+                            color={ORDINAL[2]}
+                            layers={3}
+                            hoveredIndex={funnelHover}
+                            onHoverChange={setFunnelHover}
+                            showLabels={false}
+                            className="w-full h-full"
+                        />
+                    </div>
+                </ChartCard>
+
+                {/* Learner journey — full width flow */}
+                <ChartCard
+                    title="Learner journey"
+                    description="How applicants move from first contact to outcome"
+                    className="lg:col-span-6"
+                    flush
+                >
+                    <div className="h-[230px] w-full px-5 pb-3">
+                        <SankeyChart
+                            data={learnerJourney}
+                            margin={{ top: 18, right: 96, bottom: 18, left: 88 }}
+                            nodeWidth={7}
+                            nodePadding={9}
+                        >
+                            <SankeyLink />
+                            <SankeyNode lineCap={4} />
+                            <SankeyTooltip />
+                        </SankeyChart>
+                    </div>
+                </ChartCard>
+
+                {/* Course health radar */}
+                <ChartCard
+                    title="Course health"
+                    description="Normalised 0–100 across six measures"
+                    className="lg:col-span-2"
+                    footer={
+                        <ChartLegend
+                            items={courseHealth.map((c, i) => ({
+                                label: c.label,
+                                value: Math.round(
+                                    Object.values(c.values).reduce((s, v) => s + v, 0) /
+                                    Object.values(c.values).length
+                                ),
+                                color: c.color ?? SERIES[i],
+                            }))}
+                        />
+                    }
+                >
+                    <div className="h-[280px] w-full flex items-center justify-center">
+                        <RadarChart data={courseHealth} metrics={courseHealthMetrics} size={250}>
+                            <RadarGrid />
+                            <RadarAxis />
+                            <RadarLabels />
+                            {courseHealth.map((item, index) => (
+                                <RadarArea index={index} key={item.label} />
+                            ))}
+                        </RadarChart>
+                    </div>
+                </ChartCard>
+
+                {/* Cohort retention */}
+                <ChartCard
+                    title="Cohort retention"
+                    description="Share of each intake still active, by week"
+                    className="lg:col-span-4"
+                >
+                    <div className="py-2">
+                        <RetentionHeatGrid cohorts={cohortRetention} />
+                    </div>
+                </ChartCard>
+
+                {/* Assessment throughput */}
+                <ChartCard
+                    title="Assessment throughput"
+                    description="Attempts and passes per week"
+                    className="lg:col-span-4"
+                    footer={
+                        <ChartLegend
+                            items={[
+                                { label: "Attempts", color: SERIES[0] },
+                                { label: "Passes", color: SERIES[2] },
+                            ]}
+                        />
+                    }
+                >
+                    <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={assessmentThroughput} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="thAttempts" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={SERIES[0]} stopOpacity={0.22} />
+                                        <stop offset="100%" stopColor={SERIES[0]} stopOpacity={0.02} />
+                                    </linearGradient>
+                                    <linearGradient id="thPasses" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={SERIES[2]} stopOpacity={0.22} />
+                                        <stop offset="100%" stopColor={SERIES[2]} stopOpacity={0.02} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                                <XAxis
+                                    dataKey="week"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "var(--chart-label)", fontSize: 11 }}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "var(--chart-label)", fontSize: 11 }}
+                                />
+                                <RechartsTooltip
+                                    cursor={{ stroke: "var(--chart-crosshair)", strokeWidth: 1 }}
+                                    contentStyle={TOOLTIP_STYLE}
+                                    labelStyle={TOOLTIP_LABEL_STYLE}
+                                    itemStyle={TOOLTIP_ITEM_STYLE}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="attempts"
+                                    name="Attempts"
+                                    stroke={SERIES[0]}
+                                    strokeWidth={2}
+                                    fill="url(#thAttempts)"
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="passes"
+                                    name="Passes"
+                                    stroke={SERIES[2]}
+                                    strokeWidth={2}
+                                    fill="url(#thPasses)"
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </ChartCard>
+
+                {/* Payment mix — share of total, as a donut */}
+                <ChartCard
+                    title="Payment mix"
+                    description="How learners paid this month"
+                    className="lg:col-span-2"
+                >
+                    <div className="pb-4">
+                        <DonutChart
+                            data={paymentMethods.map((m) => ({ label: m.method, value: m.amount }))}
+                            centerValue={formatCompactNaira(paymentTotal)}
+                            centerLabel="Collected"
+                            formatValue={formatCompactNaira}
+                        />
+                    </div>
+                </ChartCard>
+
+                {/* Top courses */}
+                <ChartCard
+                    title="Top courses by revenue"
+                    description="This term"
+                    className="lg:col-span-2"
+                >
+                    <div className="py-2 space-y-1">
+                        {[...topCourses]
+                            .sort((a, b) => b.revenue - a.revenue)
+                            .map((c, i) => (
+                                <div
+                                    key={c.title}
+                                    className="flex items-center gap-3 py-2.5 border-b border-slate-50 last:border-0"
+                                >
+                                    <span className="h-6 w-6 rounded-lg bg-slate-100 text-slate-500 text-[10px] font-medium flex items-center justify-center shrink-0">
+                                        {i + 1}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-medium text-slate-800 truncate">{c.title}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">
+                                            {c.enrolled} enrolled · {c.passRate}% pass
+                                        </p>
                                     </div>
+                                    <span className="text-xs font-medium text-slate-900 tabular-nums shrink-0">
+                                        {formatCompactNaira(c.revenue)}
+                                    </span>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </div>
+                            ))}
+                    </div>
+                </ChartCard>
 
-            {/* Charts Row */}
-            <div className="grid gap-8 lg:grid-cols-7 px-2">
-                {/* Enrollment Trends */}
-                <div className="lg:col-span-4 space-y-4">
-                    <h2 className="text-xl font-medium text-slate-800">Enrollment Trends</h2>
-                    <Card className="border-slate-100 rounded-2xl shadow-none">
-                        <CardContent className="p-6">
-                            <ResponsiveContainer width="100%" height={280}>
-                                <AreaChart data={enrollmentTrends} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(225, 76%, 48%)" stopOpacity={0.15} />
-                                            <stop offset="95%" stopColor="hsl(225, 76%, 48%)" stopOpacity={0} />
-                                        </linearGradient>
-                                        <linearGradient id="completeGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(160, 60%, 45%)" stopOpacity={0.15} />
-                                            <stop offset="95%" stopColor="hsl(160, 60%, 45%)" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                    <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            borderRadius: "12px",
-                                            border: "1px solid #e2e8f0",
-                                            boxShadow: "0 4px 6px -1px rgba(0,0,0,.05)",
-                                            fontSize: "12px",
-                                        }}
-                                    />
-                                    <Area type="monotone" dataKey="enrollments" stroke="hsl(225, 76%, 48%)" fill="url(#enrollGrad)" strokeWidth={2} name="Enrollments" />
-                                    <Area type="monotone" dataKey="completions" stroke="hsl(160, 60%, 45%)" fill="url(#completeGrad)" strokeWidth={2} name="Completions" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Venue Heatmap */}
-                <div className="lg:col-span-3 space-y-4">
-                    <h2 className="text-xl font-medium text-slate-800">Venue Capacity</h2>
-                    <Card className="border-slate-100 rounded-2xl shadow-none">
-                        <CardContent className="p-6">
-                            <div className="space-y-3">
-                                {venueUsage.map((v) => {
-                                    const pct = Math.round((v.usage / v.capacity) * 100);
-                                    return (
-                                        <div key={v.venue} className="space-y-1.5">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium text-slate-700 truncate max-w-[180px]">{v.venue}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-400">{v.usage}/{v.capacity}</span>
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className={cn(
-                                                            "text-[9px] font-medium px-1.5 h-4 border-none rounded-full",
-                                                            v.status === "optimal" && "bg-emerald-50 text-emerald-600",
-                                                            v.status === "overbooked" && "bg-red-50 text-red-500",
-                                                            v.status === "underutilized" && "bg-amber-50 text-amber-600"
-                                                        )}
-                                                    >
-                                                        {v.status}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                                                <div
-                                                    className={cn(
-                                                        "h-full rounded-full transition-all duration-500",
-                                                        v.status === "optimal" && "bg-primary",
-                                                        v.status === "overbooked" && "bg-red-400",
-                                                        v.status === "underutilized" && "bg-amber-400"
-                                                    )}
-                                                    style={{ width: `${Math.min(pct, 100)}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                {/* Transactions */}
+                <ChartCard
+                    title="Recent transactions"
+                    description="Latest payments across all courses"
+                    className="lg:col-span-4"
+                    flush
+                >
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="border-slate-100 hover:bg-transparent">
+                                    <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest pl-5">Reference</TableHead>
+                                    <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Learner</TableHead>
+                                    <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Amount</TableHead>
+                                    <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Status</TableHead>
+                                    <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest text-right pr-5">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {txPage.pageRows.map((tx) => (
+                                    <TableRow key={tx.id} className="border-slate-50 hover:bg-slate-50/50">
+                                        <TableCell className="pl-5">
+                                            <span className="text-xs font-medium text-slate-800 tabular-nums">
+                                                {tx.reference}
+                                            </span>
+                                            <p className="text-[10px] text-slate-400">{tx.date}</p>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-xs font-medium text-slate-700">{tx.studentName}</span>
+                                            <p className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                                                {tx.courseTitle}
+                                            </p>
+                                        </TableCell>
+                                        <TableCell className="text-xs font-medium text-slate-900 tabular-nums whitespace-nowrap">
+                                            {formatNaira(tx.amount)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <StatusBadge tone={toneForStatus(tx.status)}>{tx.status}</StatusBadge>
+                                        </TableCell>
+                                        <TableCell className="text-right pr-5">
+                                            <RowActions
+                                                label={`Actions for ${tx.reference}`}
+                                                actions={[
+                                                    {
+                                                        label: "View receipt",
+                                                        icon: Invoice01Icon,
+                                                        onSelect: () =>
+                                                            toast.success(`Receipt ${tx.reference}`, {
+                                                                description: `${tx.studentName} · ${formatNaira(tx.amount)} · ${tx.method}`,
+                                                            }),
+                                                    },
+                                                    {
+                                                        label: "Retry settlement",
+                                                        icon: ArrowRight01Icon,
+                                                        disabled: tx.status !== "failed",
+                                                        onSelect: () =>
+                                                            toast.success("Settlement retried", {
+                                                                description: `${tx.reference} re-queued with the payment provider.`,
+                                                            }),
+                                                    },
+                                                    {
+                                                        label: "Refund payment",
+                                                        icon: Coins01Icon,
+                                                        destructive: true,
+                                                        separatorBefore: true,
+                                                        disabled: tx.status !== "settled",
+                                                        onSelect: () =>
+                                                            toast.success("Refund initiated", {
+                                                                description: `${formatNaira(tx.amount)} will return to ${tx.studentName}.`,
+                                                            }),
+                                                        confirm: {
+                                                            title: "Refund this payment?",
+                                                            description: `${formatNaira(tx.amount)} will be returned to ${tx.studentName} for ${tx.courseTitle}.`,
+                                                            actionLabel: "Refund",
+                                                        },
+                                                    },
+                                                ]}
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <TablePagination
+                        page={txPage.page}
+                        pageCount={txPage.pageCount}
+                        onPageChange={txPage.setPage}
+                        from={txPage.from}
+                        to={txPage.to}
+                        total={txPage.total}
+                        label="transactions"
+                    />
+                </ChartCard>
             </div>
         </div>
     );

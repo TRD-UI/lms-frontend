@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AuthFormField } from "@/components/auth/AuthFormField";
 import { ArrowRight01Icon } from "hugeicons-react";
 import { toast } from "sonner";
+import { useSession } from "@/store/session";
 import {
     Select,
     SelectContent,
@@ -16,6 +17,7 @@ type StaffRole = "admin" | "instructor";
 
 export default function StaffLogin() {
     const navigate = useNavigate();
+    const { signIn } = useSession();
     const [selectedRole, setSelectedRole] = useState<StaffRole>("admin");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -29,6 +31,7 @@ export default function StaffLogin() {
         // Simulate auth call
         setTimeout(() => {
             setLoading(false);
+            signIn(selectedRole, { email });
             toast.success(`Signed in as ${selectedRole === "admin" ? "Administrator" : "Instructor"}`, {
                 description: "Redirecting to your dashboard...",
             });

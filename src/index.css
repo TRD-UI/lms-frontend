@@ -53,6 +53,64 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* ─── Data-visualisation tokens ───────────────────────────────
+     * Unlike the shadcn tokens above (bare HSL components consumed as
+     * `hsl(var(--x))`), these are COMPLETE colour values — the chart
+     * components read them as `var(--x)` directly.
+     *
+     * Categorical slots are assigned in fixed order and never cycled.
+     * Slot 1 is the brand indigo so charts read as part of the product.
+     * Validated light-mode (surface #fff): lightness band, chroma floor,
+     * CVD separation (worst adjacent ΔE 9.1 protan), normal-vision floor
+     * (worst adjacent ΔE 19.6). Slots 3–5 sit below 3:1 on white, so every
+     * chart using them ships a value-bearing legend or direct labels.
+     */
+    --chart-1: #1d4cd7;
+    --chart-2: #eb6834;
+    --chart-3: #1baf7a;
+    --chart-4: #eda100;
+    --chart-5: #e87ba4;
+
+    /* Ordinal blue ramp — for ordered stages (funnel), light→dark.
+     * Validated: monotone lightness, adjacent ΔL ≥ 0.06, light end 2.06:1. */
+    --chart-ordinal-1: #86b6ef;
+    --chart-ordinal-2: #5598e7;
+    --chart-ordinal-3: #2a78d6;
+    --chart-ordinal-4: #1c5cab;
+    --chart-ordinal-5: #104281;
+
+    /* Chart chrome — recessive slate, matching the app surface */
+    --chart-background: #ffffff;
+    --chart-foreground: #0f172a;
+    --chart-foreground-muted: #94a3b8;
+    --chart-grid: #f1f5f9;
+    --chart-label: #94a3b8;
+    --chart-crosshair: #cbd5e1;
+    --chart-brush-border: #e2e8f0;
+    --chart-line-primary: #1d4cd7;
+    --chart-line-secondary: #eb6834;
+    --chart-indicator-color: #1d4cd7;
+    --chart-indicator-secondary-color: #eb6834;
+    --chart-segment-background: #f8fafc;
+    --chart-segment-line: #e2e8f0;
+    --chart-marker-background: #ffffff;
+    --chart-marker-border: #1d4cd7;
+    --chart-marker-foreground: #0f172a;
+    --chart-marker-badge-background: #1d4cd7;
+    --chart-marker-badge-foreground: #ffffff;
+    --chart-tooltip-background: #ffffff;
+    --chart-tooltip-foreground: #0f172a;
+    --chart-tooltip-muted: #94a3b8;
+    --chart-tooltip-border: #e2e8f0;
+    --color-muted: #f1f5f9;
+
+    /* Legend */
+    --legend: #ffffff;
+    --legend-foreground: #334155;
+    --legend-muted: #f8fafc;
+    --legend-muted-foreground: #94a3b8;
+    --legend-track: #e2e8f0;
   }
 
   .dark {

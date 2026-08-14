@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search01Icon, BookOpen01Icon, FavouriteIcon } from "hugeicons-react";
-import { courses } from "@/data/courses";
+import { purchasedCourseIds, courseCategories } from "@/data/courses";
+import { useLms } from "@/store/lms-store";
 import { CourseCard } from "@/components/dashboard/course/CourseCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,7 @@ export default function MyLearning() {
     const [selectedCategory, setSelectedCategory] = useState("All Courses");
     const [activeTab, setActiveTab] = useState<'catalog' | 'my-courses'>('catalog');
 
-    // Mock purchased courses (e.g., first course)
-    // In a real app, this would come from a user state or API
-    const purchasedCourseIds = ["1", "3"];
+    const { courses } = useLms();
     const allCoursesWithLockState = courses.map(course => ({ ...course, isUnlocked: purchasedCourseIds.includes(course.id) }));
     const myCourses = allCoursesWithLockState.filter(c => c.isUnlocked);
     const hasPurchasedCourses = myCourses.length > 0;
@@ -25,7 +24,7 @@ export default function MyLearning() {
         return matchesSearch && matchesCategory;
     });
 
-    const categories = ["All Courses", "Software Development", "Data Science", "Digital Literacy", "Cybersecurity", "AI & ML", "Networking"];
+    const categories = ["All Courses", ...courseCategories];
 
     return (
         <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">

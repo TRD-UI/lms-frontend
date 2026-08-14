@@ -40,6 +40,7 @@ import {
     StarIcon,
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
+import { RowActions } from "@/components/shared/RowActions";
 import { toast } from "sonner";
 import type { InstructorCohort, AttendanceRecord } from "@/data/admin-types";
 
@@ -171,56 +172,35 @@ export default function CohortAttendance() {
                                                         {student.checkInTime || "—"}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <div className="flex items-center justify-end gap-1">
-                                                            {/* Manual status override buttons */}
-                                                            {student.status !== "present" && (
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-8 w-8 rounded-full text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50"
-                                                                            onClick={() => handleMarkAttendance(student, "present")}
-                                                                            aria-label={`Mark ${student.studentName} present`}
-                                                                        >
-                                                                            <CheckmarkCircle01Icon size={14} />
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent side="top" className="text-xs">Mark present</TooltipContent>
-                                                                </Tooltip>
-                                                            )}
-                                                            {student.status !== "absent" && (
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-8 w-8 rounded-full text-red-300 hover:text-red-500 hover:bg-red-50"
-                                                                            onClick={() => handleMarkAttendance(student, "absent")}
-                                                                            aria-label={`Mark ${student.studentName} absent`}
-                                                                        >
-                                                                            <Cancel01Icon size={14} />
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent side="top" className="text-xs">Mark absent</TooltipContent>
-                                                                </Tooltip>
-                                                            )}
-                                                            {/* Grade button */}
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-8 w-8 rounded-full text-slate-300 hover:text-primary hover:bg-primary/5"
-                                                                        onClick={() => setGradeDialogStudent(student)}
-                                                                        aria-label={`Grade ${student.studentName}`}
-                                                                    >
-                                                                        <StarIcon size={14} />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent side="top" className="text-xs">Subjective grade</TooltipContent>
-                                                            </Tooltip>
-                                                        </div>
+                                                        <RowActions
+                                                            label={`Actions for ${student.studentName}`}
+                                                            actions={[
+                                                                {
+                                                                    label: "Mark present",
+                                                                    icon: CheckmarkCircle01Icon,
+                                                                    disabled: student.status === "present",
+                                                                    onSelect: () => handleMarkAttendance(student, "present"),
+                                                                },
+                                                                {
+                                                                    label: "Mark absent",
+                                                                    icon: Cancel01Icon,
+                                                                    disabled: student.status === "absent",
+                                                                    onSelect: () => handleMarkAttendance(student, "absent"),
+                                                                },
+                                                                {
+                                                                    label: "Mark excused",
+                                                                    icon: Clock01Icon,
+                                                                    disabled: student.status === "excused",
+                                                                    onSelect: () => handleMarkAttendance(student, "excused"),
+                                                                },
+                                                                {
+                                                                    label: "Subjective grade",
+                                                                    icon: StarIcon,
+                                                                    separatorBefore: true,
+                                                                    onSelect: () => setGradeDialogStudent(student),
+                                                                },
+                                                            ]}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             );

@@ -3,11 +3,13 @@ import { InstructorSidebar } from "./InstructorSidebar";
 import { Outlet } from "react-router-dom";
 import { Wifi01Icon } from "hugeicons-react";
 import { NotificationDropdown } from "./NotificationDropdown";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useActingUser } from "@/store/session";
 
 export function InstructorLayout() {
+    const instructor = useActingUser("instructor");
+
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans">
@@ -25,18 +27,21 @@ export function InstructorLayout() {
                                 <NotificationDropdown />
                                 <div className="flex items-center gap-3 pl-2 border-l border-slate-100">
                                     <div className="flex flex-col items-end mr-1">
-                                        <span className="text-sm font-medium text-slate-800">Dr. Funke Akindele</span>
-                                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">Instructor</span>
+                                        <span className="text-sm font-medium text-slate-800">{instructor.name}</span>
+                                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">
+                                            {instructor.roleLabel}
+                                        </span>
                                     </div>
                                     <Avatar className="h-11 w-11 border rounded-full border-slate-100 bg-accent shadow-sm">
-                                        <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=funke" />
-                                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">FA</AvatarFallback>
+                                        <AvatarImage src={instructor.avatarUrl} />
+                                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">{instructor.initials}</AvatarFallback>
                                     </Avatar>
                                 </div>
                             </div>
                         </header>
-                        <main className="flex-1 overflow-auto p-6 sm:p-10">
-                            <div className="mx-auto max-w-5xl">
+                        <main className="flex-1 overflow-auto p-10">
+                            {/* Same content cap as the admin portal so pages line up across roles. */}
+                            <div className="mx-auto max-w-7xl">
                                 <Outlet />
                             </div>
                         </main>

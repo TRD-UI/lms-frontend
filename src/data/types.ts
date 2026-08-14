@@ -12,6 +12,8 @@ export interface ModuleItem {
     title: string;
     type: 'video' | 'pdf' | 'document' | 'quiz';
     url?: string;
+    /** Required when `type` is 'quiz' — points at an Assessment. */
+    assessmentId?: string;
 }
 
 export interface CourseModule {
@@ -35,6 +37,10 @@ export interface Course {
     modules: CourseModule[];
     isUnlocked?: boolean;
     progress?: number;
+    /** Owning instructor — scopes the instructor portal to "my courses". */
+    instructorId?: string;
+    instructorName?: string;
+    status?: 'published' | 'draft';
 }
 
 export interface CourseMetadata {

@@ -55,6 +55,20 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				/* Data-viz tokens are complete colour values, not HSL triplets,
+				 * so they are referenced as var(--x) rather than hsl(var(--x)). */
+				chart: {
+					1: 'var(--chart-1)',
+					2: 'var(--chart-2)',
+					3: 'var(--chart-3)',
+					4: 'var(--chart-4)',
+					5: 'var(--chart-5)',
+					grid: 'var(--chart-grid)',
+					label: 'var(--chart-label)',
+					'tooltip-background': 'var(--chart-tooltip-background)',
+					'tooltip-foreground': 'var(--chart-tooltip-foreground)',
+					'tooltip-muted': 'var(--chart-tooltip-muted)'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

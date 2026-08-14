@@ -2,6 +2,8 @@ import {
     QrCode01Icon,
     UserGroupIcon,
     Logout01Icon,
+    Analytics01Icon,
+    BookOpen01Icon,
 } from "hugeicons-react";
 import {
     Sidebar,
@@ -27,7 +29,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 const items = [
-    { title: "Scanner", url: "/instructor", icon: QrCode01Icon },
+    { title: "Home", url: "/instructor", icon: Analytics01Icon },
+    { title: "Courses", url: "/instructor/courses", icon: BookOpen01Icon },
+    { title: "Scanner", url: "/instructor/scanner", icon: QrCode01Icon },
     { title: "Attendance", url: "/instructor/attendance", icon: UserGroupIcon },
 ];
 

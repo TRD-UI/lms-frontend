@@ -35,12 +35,15 @@ import {
     Search01Icon,
     UserMultiple02Icon,
     Edit01Icon,
+    Mail01Icon,
     MoreHorizontalIcon,
     CheckmarkCircle01Icon,
     Cancel01Icon,
     Clock01Icon,
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
+import { RowActions } from "@/components/shared/RowActions";
+import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { toast } from "sonner";
 import type { AdminUser } from "@/data/admin-types";
 
@@ -58,6 +61,8 @@ export default function UserManagement() {
         const matchesRole = roleFilter === "all" || u.role === roleFilter;
         return matchesSearch && matchesRole;
     });
+
+    const userPage = usePagination(filteredUsers, 8);
 
     const roleColors = {
         admin: "bg-purple-50 text-purple-600",
@@ -176,7 +181,7 @@ export default function UserManagement() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredUsers.map((user) => {
+                                    {userPage.pageRows.map((user) => {
                                         const StatusIcon = statusConfig[user.status].icon;
                                         return (
                                             <TableRow key={user.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
@@ -208,31 +213,28 @@ export default function UserManagement() {
                                                 <TableCell className="text-sm text-slate-600">{user.enrolledCourses}</TableCell>
                                                 <TableCell className="text-sm text-slate-400">{user.joinDate}</TableCell>
                                                 <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-9 w-9 rounded-full text-slate-400 hover:text-primary hover:bg-primary/5"
-                                                            onClick={() => { setEditUser(user); setSelectedRole(user.role); }}
-                                                            aria-label={`Edit role for ${user.name}`}
-                                                        >
-                                                            <Edit01Icon size={16} />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className={cn(
-                                                                "h-9 w-9 rounded-full",
-                                                                user.status === "active"
-                                                                    ? "text-slate-400 hover:text-destructive hover:bg-destructive/5"
-                                                                    : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                                                            )}
-                                                            onClick={() => setStatusToggleTarget(user)}
-                                                            aria-label={user.status === "active" ? `Suspend ${user.name}` : `Activate ${user.name}`}
-                                                        >
-                                                            {user.status === "active" ? <Cancel01Icon size={16} /> : <CheckmarkCircle01Icon size={16} />}
-                                                        </Button>
-                                                    </div>
+                                                    <RowActions
+                                                        label={`Actions for ${user.name}`}
+                                                        actions={[
+                                                            {
+                                                                label: "Change role",
+                                                                icon: Edit01Icon,
+                                                                onSelect: () => { setEditUser(user); setSelectedRole(user.role); },
+                                                            },
+                                                            {
+                                                                label: "Email learner",
+                                                                icon: Mail01Icon,
+                                                                onSelect: () => toast.success(`Draft opened for ${user.name}`, { description: user.email }),
+                                                            },
+                                                            {
+                                                                label: user.status === "active" ? "Suspend account" : "Activate account",
+                                                                icon: user.status === "active" ? Cancel01Icon : CheckmarkCircle01Icon,
+                                                                destructive: user.status === "active",
+                                                                separatorBefore: true,
+                                                                onSelect: () => setStatusToggleTarget(user),
+                                                            },
+                                                        ]}
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -240,6 +242,15 @@ export default function UserManagement() {
                                 </TableBody>
                             </Table>
                         </div>
+                        <TablePagination
+                            page={userPage.page}
+                            pageCount={userPage.pageCount}
+                            onPageChange={userPage.setPage}
+                            from={userPage.from}
+                            to={userPage.to}
+                            total={userPage.total}
+                            label="users"
+                        />
                     </CardContent>
                 </Card>
             )}
