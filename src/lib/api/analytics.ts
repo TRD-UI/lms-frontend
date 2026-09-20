@@ -159,10 +159,37 @@ export interface Journey {
 
 export async function fetchJourney(): Promise<Journey> {
     const raw = await call<Journey>("analytics_journey");
+    const nodes = raw?.nodes ?? [];
+    const links = (raw?.links ?? []).filter((l) => l.value > 0);
+
+    /*
+     * Dropping zero-weight links can orphan a node — "In progress" when
+     * everyone has finished, say. d3-sankey cannot place a node nothing flows
+     * through and throws `Invalid array length`, taking the page with it.
+     *
+     * So the surviving nodes are collected and the links re-indexed against
+     * the compacted list.
+     */
+    const keep = new Set<number>();
+    for (const l of links) {
+        keep.add(l.source);
+        keep.add(l.target);
+    }
+
+    const remap = new Map<number, number>();
+    const compacted = nodes.filter((_, i) => keep.has(i));
+    let next = 0;
+    nodes.forEach((_, i) => {
+        if (keep.has(i)) remap.set(i, next++);
+    });
+
     return {
-        nodes: raw?.nodes ?? [],
-        // A zero-weight link renders as an invisible ribbon, so drop them.
-        links: (raw?.links ?? []).filter((l) => l.value > 0),
+        nodes: compacted,
+        links: links.map((l) => ({
+            source: remap.get(l.source)!,
+            target: remap.get(l.target)!,
+            value: l.value,
+        })),
     };
 }
 

@@ -147,12 +147,47 @@ const SankeyChartCore = memo(function SankeyChartCore({
       ]);
   }, [innerWidth, innerHeight, nodeWidth, nodePadding]);
 
+  /*
+   * d3-sankey throws rather than degrading: an empty graph, a link pointing at
+   * a node that is not there, or a node nothing flows through all surface as
+   * `RangeError: Invalid array length`, which takes the whole page down.
+   *
+   * A chart is not worth a white screen, so the layout is attempted defensively
+   * and a null graph renders as an empty state instead.
+   */
   const graph = useMemo(() => {
-    const clonedData = {
-      nodes: data.nodes.map((node) => ({ ...node })),
-      links: data.links.map((link) => ({ ...link })),
-    };
-    return sankeyGenerator(clonedData);
+    const nodeCount = data.nodes.length;
+    const links = data.links.filter(
+      (l) =>
+        typeof l.source === "number" &&
+        typeof l.target === "number" &&
+        l.source >= 0 &&
+        l.target >= 0 &&
+        l.source < nodeCount &&
+        l.target < nodeCount &&
+        l.source !== l.target &&
+        Number.isFinite(l.value) &&
+        l.value > 0
+    );
+
+    // Every node must sit on at least one link for a depth to exist.
+    const connected = new Set<number>();
+    for (const l of links) {
+      connected.add(l.source as number);
+      connected.add(l.target as number);
+    }
+    if (nodeCount === 0 || links.length === 0 || connected.size !== nodeCount) {
+      return null;
+    }
+
+    try {
+      return sankeyGenerator({
+        nodes: data.nodes.map((node) => ({ ...node })),
+        links: links.map((link) => ({ ...link })),
+      });
+    } catch {
+      return null;
+    }
   }, [data, sankeyGenerator]);
 
   const createPath = useCallback(
@@ -181,6 +216,20 @@ const SankeyChartCore = memo(function SankeyChartCore({
     setTooltipData(null);
     setMousePos(null);
   }, [setHoveredNodeIndex]);
+
+  // Hooks above run unconditionally; the bail-out happens after them so hook
+  // order stays stable when the graph cannot be laid out.
+  if (!graph) {
+    return (
+      <div
+        className="flex h-full w-full items-center justify-center"
+        role="img"
+        aria-label="No journey data to display"
+      >
+        <p className="text-xs font-medium text-slate-400">Not enough data yet.</p>
+      </div>
+    );
+  }
 
   const contextValue = {
     graph,
