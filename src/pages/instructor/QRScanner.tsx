@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
     QrCode01Icon,
-    Camera01Icon,
     CheckmarkCircle01Icon,
     Cancel01Icon,
     ArrowReloadHorizontalIcon,
 } from "hugeicons-react";
+import { CameraScanner } from "@/components/instructor/CameraScanner";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { ScanResult } from "@/data/admin-types";
@@ -82,53 +82,31 @@ export default function QRScanner() {
             {/* Header */}
             <div className="flex items-center justify-between px-2">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-medium tracking-tight text-slate-800">QR Scanner</h1>
-                    <p className="text-slate-400 font-medium text-sm">Validate student entry passes for physical sessions.</p>
+                    <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-800">QR Scanner</h1>
+                    <p className="text-slate-400 font-medium text-xs sm:text-sm">
+                        Validate student entry passes for physical sessions.
+                    </p>
                 </div>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-5 px-2">
+            <div className="grid gap-6 lg:gap-8 lg:grid-cols-5 px-2">
                 {/* Scanner Area */}
-                <div className="lg:col-span-3 space-y-6">
+                <div className="lg:col-span-3 space-y-4 sm:space-y-6">
                     {/* Camera Viewport */}
                     <Card className="border-slate-100 rounded-2xl shadow-none overflow-hidden">
                         <CardContent className="p-0">
-                            <div className="relative aspect-[4/3] bg-slate-900 flex items-center justify-center">
-                                {isScanning ? (
-                                    <div className="flex flex-col items-center gap-4 animate-pulse">
-                                        <div className="h-48 w-48 border-2 border-white/30 rounded-2xl relative">
-                                            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-lg" />
-                                            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white rounded-tr-lg" />
-                                            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-lg" />
-                                            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-lg" />
-                                            {/* Scanning line animation */}
-                                            <div className="absolute left-2 right-2 h-0.5 bg-primary rounded-full animate-bounce top-1/2" />
-                                        </div>
-                                        <p className="text-white/60 text-sm font-medium">Scanning...</p>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center gap-4 text-white/40">
-                                        <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center">
-                                            <Camera01Icon size={36} />
-                                        </div>
-                                        <p className="text-sm font-medium">Camera scanning not enabled yet</p>
-                                        <p className="text-xs text-white/30">
-                                            Type the learner's pass code below to check them in.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
+                            <CameraScanner onScan={(code) => void processCode(code)} busy={isScanning} />
                         </CardContent>
                     </Card>
 
                     {/* Pass code entry — the working check-in path. */}
-                    <form onSubmit={handleManualSubmit} className="flex items-center gap-3">
+                    <form onSubmit={handleManualSubmit} className="flex items-center gap-2 sm:gap-3">
                         <div className="relative flex-1">
                             <input
                                 type="text"
                                 value={manualCode}
                                 onChange={(e) => setManualCode(e.target.value)}
-                                placeholder="Enter pass code manually..."
+                                placeholder="Or enter pass code..."
                                 aria-label="Manual pass code entry"
                                 className="h-11 w-full px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-400"
                             />
@@ -136,7 +114,7 @@ export default function QRScanner() {
                         <Button
                             type="submit"
                             disabled={!manualCode.trim()}
-                            className="h-11 px-6 rounded-full bg-accent/70 hover:bg-accent/40 text-primary font-medium shadow-none"
+                            className="h-11 px-5 sm:px-6 rounded-full bg-accent/70 hover:bg-accent/40 text-primary font-medium shadow-none shrink-0"
                         >
                             Verify
                         </Button>
@@ -144,7 +122,7 @@ export default function QRScanner() {
                 </div>
 
                 {/* Results Side Panel */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                     {/* Last Result */}
                     {lastResult && (
                         <Card className={cn(
@@ -176,9 +154,11 @@ export default function QRScanner() {
                                         <span className="font-medium text-slate-800">{lastResult.courseName}</span>
                                     </div>
                                 </div>
-                                <p className="text-xs text-slate-500 leading-relaxed bg-white/50 rounded-xl p-3">
-                                    {lastResult.message}
-                                </p>
+                                {!lastResult.valid && (
+                                    <p className="text-xs text-slate-500 leading-relaxed bg-white/50 rounded-xl p-3">
+                                        {lastResult.message}
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
                     )}
@@ -208,34 +188,26 @@ export default function QRScanner() {
                                 <p className="text-xs text-slate-300 mt-1">Scan results will appear here</p>
                             </div>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="divide-y divide-slate-100">
                                 {scanHistory.map((result, idx) => (
                                     <div
                                         key={`${result.passCode}-${idx}`}
-                                        className={cn(
-                                            "flex items-center gap-3 p-3 rounded-xl transition-colors",
-                                            result.valid ? "bg-emerald-50/50" : "bg-red-50/50"
-                                        )}
+                                        className="flex items-center gap-3 py-3"
                                     >
-                                        <div className={cn(
-                                            "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                                            result.valid ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-500"
-                                        )}>
-                                            {result.valid ? <CheckmarkCircle01Icon size={14} /> : <Cancel01Icon size={14} />}
-                                        </div>
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-sm font-medium text-slate-800 truncate block">{result.studentName}</span>
+                                            <span className="text-sm font-medium text-slate-800 truncate block">
+                                                {result.studentName}
+                                            </span>
                                             <span className="text-[10px] text-slate-400">{result.passCode}</span>
                                         </div>
-                                        <Badge
-                                            variant="secondary"
+                                        <span
                                             className={cn(
-                                                "text-[9px] font-medium border-none rounded-full shrink-0",
-                                                result.valid ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-500"
+                                                "text-[11px] font-medium shrink-0",
+                                                result.valid ? "text-emerald-600" : "text-red-500"
                                             )}
                                         >
                                             {result.valid ? "Valid" : "Invalid"}
-                                        </Badge>
+                                        </span>
                                     </div>
                                 ))}
                             </div>

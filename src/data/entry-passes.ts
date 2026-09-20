@@ -6,7 +6,6 @@ export interface EntryPass {
     venue: string;
     roomNumber: string;
     passCode: string;
-    qrUrl: string;
     status: 'active' | 'past';
     /**
      * Course this pass admits the learner to. The pass is only released once
@@ -28,7 +27,6 @@ export const entryPasses: EntryPass[] = [
         venue: "ITeMS Building, University of Ibadan",
         roomNumber: "Lab 01 (Ground Floor)",
         passCode: "PSW-UI-2026-001",
-        qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PSW-UI-2026-001",
         status: 'active',
         courseId: "1"
     },
@@ -40,7 +38,6 @@ export const entryPasses: EntryPass[] = [
         venue: "Virtual Room 4 (Google Meet)",
         roomNumber: "N/A (Virtual)",
         passCode: "LOS-VIRT-2026-045",
-        qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LOS-VIRT-2026-045",
         status: 'active',
         courseId: "3"
     },
@@ -52,7 +49,6 @@ export const entryPasses: EntryPass[] = [
         venue: "Tech Lab 3, ITeMS Building",
         roomNumber: "Level 2, Room 204",
         passCode: "CSL-UI-2026-112",
-        qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CSL-UI-2026-112",
         status: 'active',
         courseId: "14"
     },
@@ -64,7 +60,6 @@ export const entryPasses: EntryPass[] = [
         venue: "Conference Hall, UI",
         roomNumber: "Main Auditorium",
         passCode: "DLI-UI-2026-001",
-        qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DLI-UI-2026-001",
         status: 'past',
         courseId: "4"
     },
@@ -76,7 +71,6 @@ export const entryPasses: EntryPass[] = [
         venue: "Tech Lab 3, ITeMS Building",
         roomNumber: "Level 2, Room 204",
         passCode: "SAB-UI-2025-088",
-        qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SAB-UI-2025-088",
         status: 'past',
         courseId: "5"
     }

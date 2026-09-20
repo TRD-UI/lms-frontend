@@ -12,9 +12,11 @@ import {
     Ticket01Icon,
     Cancel01Icon,
     Download01Icon,
-    Share01Icon
+    Share01Icon,
+    SquareLock02Icon
 } from "hugeicons-react";
 import { EntryPass } from "@/data/entry-passes";
+import { usePassQr } from "./PassQrCode";
 
 interface PassViewerProps {
     pass: EntryPass | null;
@@ -23,23 +25,24 @@ interface PassViewerProps {
 }
 
 export function PassViewer({ pass, open, onOpenChange }: PassViewerProps) {
+    // The hook below needs a pass, and hooks cannot be called conditionally —
+    // so the body lives in its own component.
     if (!pass) return null;
+    return <PassTicket pass={pass} open={open} onOpenChange={onOpenChange} />;
+}
 
-    const handleDownload = async () => {
-        try {
-            const response = await fetch(pass.qrUrl);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${pass.eventTitle}_Pass.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Download failed:", error);
-        }
+function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: EntryPass }) {
+    const { dataUrl, isLoading } = usePassQr(pass.id, open);
+
+    /* The QR is drawn locally, so "save" is just the data URL — no fetch. */
+    const handleDownload = () => {
+        if (!dataUrl) return;
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `${pass.eventTitle}_Pass.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -93,11 +96,26 @@ export function PassViewer({ pass, open, onOpenChange }: PassViewerProps) {
                         {/* Bottom Section - QR & Code */}
                         <div className="p-6 sm:p-10 flex flex-col items-center justify-center text-center">
                             <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-100 mb-4 sm:mb-6 group transition-all hover:bg-white hover:shadow-lg">
-                                <img
-                                    src={pass.qrUrl}
-                                    alt="Entry Pass QR"
-                                    className="w-36 h-36 sm:w-48 sm:h-48"
-                                />
+                                {dataUrl ? (
+                                    <img
+                                        src={dataUrl}
+                                        alt="Entry Pass QR"
+                                        className="w-36 h-36 sm:w-48 sm:h-48"
+                                    />
+                                ) : (
+                                    <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center gap-2 text-center">
+                                        {isLoading ? (
+                                            <div className="h-full w-full rounded-xl bg-slate-100 animate-pulse" />
+                                        ) : (
+                                            <>
+                                                <SquareLock02Icon size={28} className="text-slate-300" />
+                                                <p className="text-[11px] text-slate-400 font-medium px-4 leading-relaxed">
+                                                    This code opens on the day of the class, once any required test is passed.
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-1 mb-6 sm:mb-8">
@@ -110,6 +128,7 @@ export function PassViewer({ pass, open, onOpenChange }: PassViewerProps) {
                             <div className="flex items-center gap-3 sm:gap-4 w-full">
                                 <Button
                                     onClick={handleDownload}
+                                    disabled={!dataUrl}
                                     className="flex-1 h-10 sm:h-12 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shadow-lg shadow-primary/10"
                                 >
                                     <Download01Icon size={18} className="mr-2" />

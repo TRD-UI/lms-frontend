@@ -124,9 +124,6 @@ export async function fetchEntryPasses(): Promise<EntryPass[]> {
             venue: p.session!.venue_name,
             roomNumber: p.session!.room_number || "TBC",
             passCode: p.pass_code,
-            // The scannable payload is signed and fetched on demand via
-            // entry_pass_qr(); this image is the human-readable stand-in.
-            qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(p.pass_code)}`,
             status: p.session!.session_date < today ? "past" : "active",
             courseId: p.session!.course_id,
             sessionId: p.session_id,

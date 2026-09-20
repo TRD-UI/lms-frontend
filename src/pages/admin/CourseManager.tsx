@@ -39,6 +39,8 @@ import * as adminApi from "@/lib/api/admin";
 import { ReferenceTables } from "@/components/courses/ReferenceTables";
 import { ReferenceFormDialog } from "@/components/courses/ReferenceFormDialog";
 import { InstitutionSettings } from "@/components/courses/InstitutionSettings";
+import { ApplicationsTable } from "@/components/courses/ApplicationsTable";
+import { fetchApplications } from "@/lib/api/applications";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -51,7 +53,9 @@ export default function CourseManager() {
     const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse, instructors, categories, venues } = useLms();
 
     const [query, setQuery] = useState("");
-    const [tab, setTab] = useState<"courses" | "waitlist" | "categories" | "venues" | "institution">("courses");
+    const [tab, setTab] = useState<
+        "courses" | "applications" | "waitlist" | "categories" | "venues" | "institution"
+    >("courses");
     const [referenceOpen, setReferenceOpen] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
@@ -61,6 +65,13 @@ export default function CourseManager() {
         queryFn: adminApi.fetchWaitlist,
         staleTime: 30_000,
     });
+    // Only the count is needed here; the tab body fetches from the same key.
+    const { data: applications = [] } = useQuery({
+        queryKey: ["course-applications"],
+        queryFn: fetchApplications,
+        staleTime: 30_000,
+    });
+    const pendingApplications = applications.filter((a) => a.status === "pending").length;
 
     const filtered = courses.filter(
         (c) =>
@@ -156,7 +167,7 @@ export default function CourseManager() {
                         </div>}
                         {/* The waitlist is populated by learners, so it has
                             nothing for an admin to create. */}
-                        {tab !== "waitlist" && tab !== "institution" && (
+                        {tab !== "waitlist" && tab !== "institution" && tab !== "applications" && (
                             <Button
                                 onClick={() => {
                                     if (tab === "courses") {
@@ -182,6 +193,7 @@ export default function CourseManager() {
                     {(
                         [
                             ["courses", "Courses", courses.length],
+                            ["applications", "Applications", pendingApplications],
                             ["waitlist", "Waitlist", waitlist.length],
                             ["categories", "Categories", categories.length],
                             ["venues", "Venues", venues.length],
@@ -215,6 +227,8 @@ export default function CourseManager() {
 
             {tab === "institution" ? (
                 <InstitutionSettings />
+            ) : tab === "applications" ? (
+                <ApplicationsTable />
             ) : tab === "categories" || tab === "venues" ? (
                 <ReferenceTables kind={tab} />
             ) : tab === "courses" ? (

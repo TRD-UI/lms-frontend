@@ -135,6 +135,7 @@ export function TextArea({
     rows = 3,
     required,
     hint,
+    error,
 }: {
     id: string;
     label: string;
@@ -144,16 +145,20 @@ export function TextArea({
     rows?: number;
     required?: boolean;
     hint?: string;
+    error?: string;
 }) {
     return (
-        <Field label={label} htmlFor={id} required={required} hint={hint}>
+        <Field label={label} htmlFor={id} required={required} hint={hint} error={error}>
             <textarea
                 id={id}
                 rows={rows}
                 value={value}
                 placeholder={placeholder}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/30 transition-all resize-none"
+                className={cn(
+                    "w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/30 transition-all resize-none",
+                    error && "border-destructive/50"
+                )}
             />
         </Field>
     );

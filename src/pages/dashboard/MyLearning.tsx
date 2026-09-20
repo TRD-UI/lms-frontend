@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search01Icon, BookOpen01Icon, FavouriteIcon } from "hugeicons-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchMyApplications } from "@/lib/api/applications";
+import { useSession } from "@/store/session";
 import { useLms } from "@/store/lms-store";
 import { CourseCard } from "@/components/dashboard/course/CourseCard";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +16,13 @@ export default function MyLearning() {
     const [activeTab, setActiveTab] = useState<'catalog' | 'my-courses'>('catalog');
 
     const { courses, enrolledCourseIds, categories: courseCategories } = useLms();
+    const { status: sessionStatus } = useSession();
+    const { data: myApplications = {} } = useQuery({
+        queryKey: ["my-applications"],
+        queryFn: fetchMyApplications,
+        enabled: sessionStatus === "authenticated",
+        staleTime: 30_000,
+    });
     const allCoursesWithLockState = courses.map(course => ({ ...course, isUnlocked: enrolledCourseIds.includes(course.id) }));
     const myCourses = allCoursesWithLockState.filter(c => c.isUnlocked);
     const hasPurchasedCourses = myCourses.length > 0;
@@ -106,7 +116,11 @@ export default function MyLearning() {
                 filteredCourses.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4">
                         {filteredCourses.map((course) => (
-                            <CourseCard key={course.id} course={course} />
+                            <CourseCard
+                                key={course.id}
+                                course={course}
+                                applicationStatus={myApplications[course.id]?.status}
+                            />
                         ))}
                     </div>
                 ) : (

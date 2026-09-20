@@ -210,5 +210,88 @@ console.log('\n── Long-form paper reached the database ──');
   }
 }
 
+console.log('\n── Course applications ──');
+{
+  const { c: stu, data: stuAuth } = await login('cyber.smith@example.com');
+  const { c: ins, data: insAuth } = await login('funke.a@trd.edu');
+  const { c: adm } = await login('eze.n@trd.edu');
+  const STU = stuAuth.user.id, INS = insAuth.user.id;
+
+  const { data: enrolled } = await stu.from('enrollments').select('course_id');
+  const mine = new Set((enrolled ?? []).map(e => e.course_id));
+  const { data: courses } = await stu.from('courses')
+    .select('id, title, instructor_id').eq('status', 'published');
+  const target = courses?.find(c => !mine.has(c.id) && c.instructor_id === INS)
+              ?? courses?.find(c => !mine.has(c.id));
+
+  if (!target) bad('no unenrolled course to apply for');
+  else {
+    // Start from a known state — a previous run may have left a row behind.
+    await adm.from('course_applications').delete().eq('course_id', target.id).eq('student_id', STU);
+
+    let r = await stu.rpc('apply_for_course', {
+      p_course_id: target.id, p_phone: '0801 234 5678', p_employer: 'ACME Ltd',
+      p_experience: 'Some self-study', p_motivation: 'Verification run.',
+    });
+    r.error ? bad('student applies', r.error.message) : ok('student applies', target.title);
+    const appId = r.data?.id;
+
+    r = await stu.rpc('apply_for_course', { p_course_id: target.id });
+    r.error ? ok('duplicate application while pending refused')
+            : bad('a second pending application was allowed');
+
+    const { data: insSees } = await ins.from('course_applications').select('id').eq('id', appId);
+    (target.instructor_id === INS ? insSees?.length === 1 : insSees?.length === 0)
+      ? ok('instructor sees applications for their courses only')
+      : bad('instructor application scope wrong', `${insSees?.length}`);
+
+    // The decision must be unreachable from the client.
+    await stu.from('course_applications').update({ status: 'approved' }).eq('id', appId);
+    const { data: afterWrite } = await stu.from('course_applications')
+      .select('status').eq('id', appId).single();
+    afterWrite?.status === 'pending'
+      ? ok('student cannot approve themselves by direct update')
+      : bad('student self-approved via direct update');
+
+    r = await stu.from('course_applications').insert({ course_id: target.id, student_id: STU, status: 'approved' });
+    r.error ? ok('student cannot insert an application row directly', r.error.code)
+            : bad('direct application insert allowed');
+
+    r = await stu.rpc('review_application', { p_application_id: appId, p_approve: true });
+    r.error ? ok('student cannot call review_application')
+            : bad('student reviewed their own application');
+
+    r = await adm.rpc('review_application', { p_application_id: appId, p_approve: true, p_note: 'Welcome.' });
+    r.error ? bad('admin approves', r.error.message) : ok('admin approves');
+
+    const { data: enr } = await stu.from('enrollments')
+      .select('status').eq('course_id', target.id).eq('student_id', STU).maybeSingle();
+    enr?.status === 'active'
+      ? ok('approval created an active enrolment')
+      : bad('no enrolment after approval', JSON.stringify(enr));
+
+    r = await adm.rpc('review_application', { p_application_id: appId, p_approve: false });
+    r.error ? ok('a decided application cannot be re-decided')
+            : bad('the same application was decided twice');
+
+    const { data: notes } = await stu.from('notifications')
+      .select('title').order('created_at', { ascending: false }).limit(5);
+    notes?.some(n => n.title === 'Application approved')
+      ? ok('learner notified of the decision')
+      : bad('no decision notification reached the learner');
+
+    r = await stu.rpc('apply_for_course', { p_course_id: target.id });
+    r.error ? ok('an enrolled learner cannot apply again')
+            : bad('enrolled learner applied again');
+
+    // Leave the project as we found it.
+    await adm.from('course_applications').delete().eq('id', appId);
+    await adm.from('enrollments').delete().eq('course_id', target.id).eq('student_id', STU);
+    const { data: leftover } = await stu.from('notifications')
+      .select('id, title').in('title', ['Application approved', 'Application not successful']);
+    for (const n of leftover ?? []) await stu.from('notifications').delete().eq('id', n.id);
+  }
+}
+
 console.log(`\n${'─'.repeat(50)}\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

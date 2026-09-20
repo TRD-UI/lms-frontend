@@ -3,12 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Course } from "@/data/types";
 import { PlayIcon, BookOpen01Icon } from "hugeicons-react";
+import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
     course: Course;
+    /** Shown on the catalogue so an applicant need not reopen each course to recall. */
+    applicationStatus?: "pending" | "approved" | "rejected" | "withdrawn";
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, applicationStatus }: CourseCardProps) {
     const getPrice = () => {
         if (course.fees.type === 'flat') {
             return `₦${course.fees.amount?.toLocaleString()}`;
@@ -80,9 +83,18 @@ export function CourseCard({ course }: CourseCardProps) {
                     className="block mt-auto"
                 >
                     <Button
-                        className="w-full h-8 md:h-11 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-xs md:text-sm tracking-wide transition-all duration-300 shadow-sm"
+                        className={cn(
+                            "w-full h-8 md:h-11 rounded-full font-medium text-xs md:text-sm tracking-wide transition-all duration-300 shadow-sm",
+                            isLocked && applicationStatus === "pending"
+                                ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                : "bg-primary hover:bg-primary/90 text-white"
+                        )}
                     >
-                        {isLocked ? "Details" : "Continue"}
+                        {!isLocked
+                            ? "Continue"
+                            : applicationStatus === "pending"
+                                ? "Applied"
+                                : "Details"}
                         {!isLocked && <PlayIcon size={14} className="ml-1 md:ml-2" />}
                     </Button>
                 </Link>

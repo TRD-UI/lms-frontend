@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Archive01Icon,
     PlayIcon,
     InformationCircleIcon,
-    CallIcon
+    CallIcon,
+    Clock01Icon,
+    Cancel01Icon
 } from "hugeicons-react";
 import {
     Accordion,
@@ -13,9 +16,14 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/data/types";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchApplicationFee } from "@/lib/api/courses";
 import { fetchInstitution } from "@/lib/api/reference";
+import { fetchMyApplications, withdrawApplication } from "@/lib/api/applications";
+import { ApplyDialog } from "./ApplyDialog";
+import { useSession } from "@/store/session";
+import { describeError } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface EnrollmentCardProps {
     course: Course;
@@ -25,6 +33,30 @@ interface EnrollmentCardProps {
 
 export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardProps) {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { status: sessionStatus } = useSession();
+    const [applyOpen, setApplyOpen] = useState(false);
+
+    const { data: myApplications = {} } = useQuery({
+        queryKey: ["my-applications"],
+        queryFn: fetchMyApplications,
+        enabled: sessionStatus === "authenticated",
+        staleTime: 30_000,
+    });
+    const application = myApplications[course.id];
+
+    const withdraw = useMutation({
+        mutationFn: () => withdrawApplication(course.id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["my-applications"] });
+            toast.success("Application withdrawn");
+        },
+        onError: (e) =>
+            toast.error("Could not withdraw", {
+                description: describeError(e as { message?: string }),
+            }),
+    });
+
     const { data: applicationFee = 0 } = useQuery({
         queryKey: ["application-fee", course.id],
         queryFn: () => fetchApplicationFee(course.id),
@@ -83,9 +115,63 @@ export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardP
                         </div>
                     </div>
 
-                    <Button className="w-full h-11 sm:h-14 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm sm:text-base transition-all shadow-lg shadow-primary/5">
-                        Apply for Admission
-                    </Button>
+                    {application?.status === "pending" ? (
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 rounded-2xl bg-amber-50 border border-amber-100 p-3.5">
+                                <Clock01Icon size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                                <div className="space-y-0.5">
+                                    <p className="text-sm font-medium text-amber-800">Application under review</p>
+                                    <p className="text-xs text-amber-700/80 leading-relaxed">
+                                        Submitted {new Date(application.submittedAt).toLocaleDateString("en-GB", {
+                                            day: "numeric",
+                                            month: "long",
+                                        })}. We'll be in touch.
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline"
+                                disabled={withdraw.isPending}
+                                onClick={() => withdraw.mutate()}
+                                className="w-full h-11 rounded-full border-slate-200 text-slate-500 font-medium text-sm hover:text-destructive hover:border-destructive/30"
+                            >
+                                Withdraw application
+                            </Button>
+                        </div>
+                    ) : application?.status === "rejected" ? (
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
+                                <Cancel01Icon size={18} className="text-slate-400 shrink-0 mt-0.5" />
+                                <div className="space-y-0.5">
+                                    <p className="text-sm font-medium text-slate-700">Not successful this time</p>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        {application.reviewNote || "You're welcome to apply again."}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                onClick={() => setApplyOpen(true)}
+                                className="w-full h-11 sm:h-14 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm sm:text-base transition-all shadow-lg shadow-primary/5"
+                            >
+                                Apply again
+                            </Button>
+                        </div>
+                    ) : (
+                        <Button
+                            onClick={() => setApplyOpen(true)}
+                            className="w-full h-11 sm:h-14 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm sm:text-base transition-all shadow-lg shadow-primary/5"
+                        >
+                            Apply for Admission
+                        </Button>
+                    )}
+
+                    <ApplyDialog
+                        courseId={course.id}
+                        courseTitle={course.title}
+                        open={applyOpen}
+                        onOpenChange={setApplyOpen}
+                        initial={application}
+                    />
 
                     <Accordion type="multiple" className="w-full space-y-2 border-t border-slate-100 pt-3">
                         <AccordionItem value="enrollment" className="border-none">

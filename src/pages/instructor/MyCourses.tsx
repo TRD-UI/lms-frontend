@@ -32,10 +32,14 @@ import {
     draftToFees,
     type CourseDraft,
 } from "@/components/courses/CourseFormDialog";
+import { ApplicationsTable } from "@/components/courses/ApplicationsTable";
+import { fetchApplications } from "@/lib/api/applications";
+import { useQuery } from "@tanstack/react-query";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
 import type { Course } from "@/data/types";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { describeError } from "@/lib/supabase";
 
 /** Instructor: the courses they own, with create / edit / delete. */
@@ -51,8 +55,17 @@ export default function MyCourses() {
     } = useLms();
 
     const [query, setQuery] = useState("");
+    const [tab, setTab] = useState<"courses" | "applications">("courses");
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
+
+    // RLS narrows this to the courses they teach, so the count is already theirs.
+    const { data: applications = [] } = useQuery({
+        queryKey: ["course-applications"],
+        queryFn: fetchApplications,
+        staleTime: 30_000,
+    });
+    const pendingApplications = applications.filter((a) => a.status === "pending").length;
 
     const myCourses = coursesByInstructor(instructor.id);
     const visible = myCourses.filter(
@@ -110,7 +123,8 @@ export default function MyCourses() {
                 title="My Courses"
                 description={`${myCourses.length} ${myCourses.length === 1 ? "course" : "courses"} assigned to you.`}
                 actions={
-                    <div className="flex items-center gap-3">
+                    tab === "applications" ? null : (
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <div className="relative group w-full lg:w-64">
                             <Search01Icon
                                 size={18}
@@ -136,10 +150,46 @@ export default function MyCourses() {
                             New course
                         </Button>
                     </div>
+                    )
                 }
             />
 
-            {myCourses.length === 0 ? (
+            {/* Applications sit beside the courses rather than on their own
+                sidebar entry — reviewing an applicant is course work. */}
+            <div className="px-1 sm:px-2">
+                <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-100">
+                    {([
+                        ["courses", "Courses", myCourses.length],
+                        ["applications", "Applications", pendingApplications],
+                    ] as const).map(([key, label, count]) => (
+                        <button
+                            key={key}
+                            onClick={() => setTab(key)}
+                            className={cn(
+                                "pb-4 text-sm font-medium transition-all relative",
+                                tab === key ? "text-primary" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            {label}
+                            <span
+                                className={cn(
+                                    "ml-2 rounded-full text-[10px] px-1.5 py-0.5",
+                                    tab === key ? "bg-accent/50 text-primary" : "bg-slate-50 text-slate-400"
+                                )}
+                            >
+                                {count}
+                            </span>
+                            {tab === key && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {tab === "applications" ? (
+                <ApplicationsTable />
+            ) : myCourses.length === 0 ? (
                 <EmptyState
                     icon={BookOpen01Icon}
                     title="No courses yet"

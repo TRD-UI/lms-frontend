@@ -446,6 +446,80 @@ export type Database = {
           },
         ]
       }
+      course_applications: {
+        Row: {
+          course_id: string
+          employer: string
+          experience: string
+          id: string
+          motivation: string
+          phone: string
+          review_note: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          student_id: string
+          submitted_at: string
+        }
+        Insert: {
+          course_id: string
+          employer?: string
+          experience?: string
+          id?: string
+          motivation?: string
+          phone?: string
+          review_note?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          student_id: string
+          submitted_at?: string
+        }
+        Update: {
+          course_id?: string
+          employer?: string
+          experience?: string
+          id?: string
+          motivation?: string
+          phone?: string
+          review_note?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          student_id?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_applications_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course_seat_counts"
+            referencedColumns: ["course_id"]
+          },
+          {
+            foreignKeyName: "course_applications_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_applications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_categories: {
         Row: {
           created_at: string
@@ -1331,6 +1405,16 @@ export type Database = {
           revenue: number
         }[]
       }
+      apply_for_course: {
+        Args: {
+          p_course_id: string
+          p_employer?: string
+          p_experience?: string
+          p_motivation?: string
+          p_phone?: string
+        }
+        Returns: Json
+      }
       assessment_authoring_payload: {
         Args: { p_assessment_id: string }
         Returns: Json
@@ -1396,9 +1480,14 @@ export type Database = {
         Returns: undefined
       }
       owns_course: { Args: { target_course_id: string }; Returns: boolean }
+      pass_is_releasable: { Args: { p_session_id: string }; Returns: boolean }
       promote_from_waitlist: { Args: { p_entry_id: string }; Returns: Json }
       redeem_entry_pass: {
         Args: { p_payload: string; p_session_id?: string }
+        Returns: Json
+      }
+      review_application: {
+        Args: { p_application_id: string; p_approve: boolean; p_note?: string }
         Returns: Json
       }
       safe_uuid: { Args: { p_text: string }; Returns: string }
@@ -1417,8 +1506,10 @@ export type Database = {
       }
       teaches_course: { Args: { target_course_id: string }; Returns: boolean }
       verify_certificate: { Args: { p_credential_id: string }; Returns: Json }
+      withdraw_application: { Args: { p_course_id: string }; Returns: Json }
     }
     Enums: {
+      application_status: "pending" | "approved" | "rejected" | "withdrawn"
       assessment_kind: "prerequisite" | "checkpoint" | "final"
       assessment_status: "draft" | "published"
       attendance_method: "qr" | "manual"
@@ -1572,6 +1663,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      application_status: ["pending", "approved", "rejected", "withdrawn"],
       assessment_kind: ["prerequisite", "checkpoint", "final"],
       assessment_status: ["draft", "published"],
       attendance_method: ["qr", "manual"],

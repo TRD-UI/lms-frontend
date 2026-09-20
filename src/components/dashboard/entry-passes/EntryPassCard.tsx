@@ -5,12 +5,11 @@ import {
     Calendar03Icon,
     Location01Icon,
     Ticket01Icon,
-    SquareLock02Icon,
     ArrowRight01Icon
 } from "hugeicons-react";
 import { EntryPass } from "@/data/entry-passes";
+import { PassQrCode } from "./PassQrCode";
 import type { Assessment } from "@/data/assessment-types";
-import { cn } from "@/lib/utils";
 
 interface EntryPassCardProps {
     pass: EntryPass;
@@ -51,20 +50,12 @@ export function EntryPassCard({
             <CardContent className="p-0 flex flex-row">
                 {/* QR Section - always on the left */}
                 <div className={`p-3 sm:p-6 flex flex-col items-center justify-center shrink-0 border-r border-slate-100 ${isPast ? 'bg-slate-50/50' : 'bg-slate-50'}`}>
-                    <div className="relative bg-white p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-100 mb-2 sm:mb-3 shadow-sm">
-                        <img
-                            src={pass.qrUrl}
-                            alt={isLocked ? "" : "Pass QR Code"}
-                            aria-hidden={isLocked}
-                            className={cn("w-14 h-14 sm:w-24 sm:h-24", isLocked && "blur-[6px] opacity-40")}
+                    <div className="bg-white p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-100 mb-2 sm:mb-3 shadow-sm">
+                        <PassQrCode
+                            passId={pass.id}
+                            locked={isLocked || isPast}
+                            className="w-14 h-14 sm:w-24 sm:h-24"
                         />
-                        {isLocked && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="h-8 w-8 sm:h-11 sm:w-11 rounded-full bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-400">
-                                    <SquareLock02Icon size={18} />
-                                </div>
-                            </div>
-                        )}
                     </div>
                     <span className="text-[8px] sm:text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-none text-center">
                         {!isLocked
