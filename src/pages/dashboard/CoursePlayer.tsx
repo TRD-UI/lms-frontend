@@ -88,29 +88,31 @@ export default function CoursePlayer() {
                 <MediaViewer currentItem={currentItem} course={course} />
 
                 {/* Floating pager, over the content rather than in a header. */}
-                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
-                    <div className="flex items-center gap-1 rounded-full bg-white/95 backdrop-blur border border-slate-200 shadow-lg shadow-slate-900/5 p-1.5">
+                <div className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-20 w-max max-w-[calc(100vw-1.5rem)]">
+                    <div className="flex items-center gap-0.5 sm:gap-1 rounded-full bg-white/95 backdrop-blur border border-slate-200 shadow-lg shadow-slate-900/5 p-1.5">
                         <Button
                             variant="ghost"
                             onClick={() => go(-1)}
                             disabled={!hasPrevious}
-                            className="h-9 rounded-full px-4 text-slate-600 font-medium text-sm hover:text-primary hover:bg-primary/5 disabled:opacity-30"
+                            aria-label="Previous lesson"
+                            className="h-9 shrink-0 rounded-full px-3 sm:px-4 text-slate-600 font-medium text-sm hover:text-primary hover:bg-primary/5 disabled:opacity-30"
                         >
-                            <ArrowLeft01Icon size={16} className="mr-1.5" />
-                            Previous
+                            <ArrowLeft01Icon size={16} className="sm:mr-1.5" />
+                            <span className="hidden sm:inline">Previous</span>
                         </Button>
 
-                        <span className="text-[11px] font-medium text-slate-400 tabular-nums px-1 shrink-0">
+                        <span className="text-[11px] font-medium text-slate-400 tabular-nums px-1.5 shrink-0">
                             {currentIndex + 1} / {allItems.length}
                         </span>
 
                         <Button
                             onClick={() => go(1)}
                             disabled={!hasNext}
-                            className="h-9 rounded-full px-5 bg-primary hover:bg-primary/90 text-white font-medium text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100"
+                            aria-label="Next lesson"
+                            className="h-9 shrink-0 rounded-full px-3 sm:px-5 bg-primary hover:bg-primary/90 text-white font-medium text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100"
                         >
-                            Next
-                            <ArrowRight01Icon size={16} className="ml-1.5" />
+                            <span className="hidden sm:inline">Next</span>
+                            <ArrowRight01Icon size={16} className="sm:ml-1.5" />
                         </Button>
                     </div>
                 </div>

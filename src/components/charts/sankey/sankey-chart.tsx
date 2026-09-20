@@ -190,18 +190,18 @@ const SankeyChartCore = memo(function SankeyChartCore({
     }
   }, [data, sankeyGenerator]);
 
-  const createPath = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: d3-sankey types are complex
-    (link: any) => {
-      try {
-        const pathGenerator = sankeyLinkHorizontal();
-        return pathGenerator(link) || "";
-      } catch {
-        return "";
-      }
-    },
-    []
-  );
+  /* The link as the layout hands it back, with its endpoints resolved to node
+     objects — which is exactly what sankeyLinkHorizontal() expects. */
+  type LayoutLink = NonNullable<typeof graph>["links"][number];
+
+  const createPath = useCallback((link: LayoutLink) => {
+    try {
+      const pathGenerator = sankeyLinkHorizontal();
+      return pathGenerator(link) || "";
+    } catch {
+      return "";
+    }
+  }, []);
 
   const handleMouseMove = useCallback((event: React.MouseEvent) => {
     const point = localPoint(event);

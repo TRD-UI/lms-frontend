@@ -42,6 +42,10 @@ export function AppSidebar() {
     const location = useLocation();
     const [logoutOpen, setLogoutOpen] = useState(false);
 
+    // The lesson player is full-bleed and carries its own floating pager at the
+    // bottom of the viewport; a second pill there would sit on top of it.
+    const hideMobileNav = location.pathname.startsWith("/dashboard/player/");
+
     const handleLogout = () => {
         setLogoutOpen(false);
         navigate("/login");
@@ -114,7 +118,7 @@ export function AppSidebar() {
             </Sidebar>
 
             {/* Mobile Bottom Nav */}
-            <nav className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-1rem)] bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 border border-white/60 rounded-full p-1.5 flex items-center gap-0.5 z-50">
+            {!hideMobileNav && <nav className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-1rem)] bg-white/55 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/50 ring-1 ring-slate-900/5 shadow-[0_8px_32px_-4px_rgba(15,23,42,0.18)] rounded-full p-1.5 flex items-center gap-0.5 z-50">
                 {items.map((item) => {
                     const isActive = location.pathname === item.url;
                     return (
@@ -146,7 +150,7 @@ export function AppSidebar() {
                         </button>
                     )
                 })}
-            </nav>
+            </nav>}
         </>
     );
 }

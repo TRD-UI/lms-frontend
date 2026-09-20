@@ -1,12 +1,16 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { InstructorSidebar } from "./InstructorSidebar";
 import { Outlet } from "react-router-dom";
-import { Wifi01Icon } from "hugeicons-react";
+import { Wifi01Icon, WifiDisconnected01Icon } from "hugeicons-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { UserDropdown } from "./UserDropdown";
 import { Badge } from "@/components/ui/badge";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { cn } from "@/lib/utils";
 
 export function InstructorLayout() {
+    const online = useOnlineStatus();
+
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans">
@@ -16,9 +20,21 @@ export function InstructorLayout() {
                         <header className="flex h-16 md:h-20 shrink-0 items-center justify-between px-4 md:px-10 border-b border-slate-100">
                             <div className="flex items-center gap-3">
                                 <img src="/logo.png" alt="TRD" className="h-8 w-8 object-contain md:hidden" />
-                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] font-medium px-2.5 py-1 rounded-full gap-1.5">
-                                    <Wifi01Icon size={12} />
-                                    Online
+                                {/* Reports the browser's own connectivity. An
+                                    instructor marking a register needs to know
+                                    when their check-ins have stopped landing. */}
+                                <Badge
+                                    variant="secondary"
+                                    aria-live="polite"
+                                    className={cn(
+                                        "text-[10px] font-medium px-2.5 py-1 rounded-full gap-1.5",
+                                        online
+                                            ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                            : "bg-red-50 text-red-600 border-red-200"
+                                    )}
+                                >
+                                    {online ? <Wifi01Icon size={12} /> : <WifiDisconnected01Icon size={12} />}
+                                    {online ? "Online" : "Offline"}
                                 </Badge>
                             </div>
                             <div className="flex items-center justify-end gap-2 md:gap-4">

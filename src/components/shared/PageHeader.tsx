@@ -88,10 +88,12 @@ export function PageHeader({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
-                    {search && <div className="hidden lg:block">{search}</div>}
-                    {actions}
-                </div>
+                {(search || actions) && (
+                    <div className="flex items-center gap-3 shrink-0">
+                        {search && <div className="hidden lg:block">{search}</div>}
+                        {actions}
+                    </div>
+                )}
             </div>
 
             {search && <div className="lg:hidden">{search}</div>}

@@ -102,7 +102,7 @@ export default function QuizResults() {
     const hasAside = passReleased || remedialModules.length > 0;
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 px-1 sm:px-2">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 px-1 sm:px-2">
             {/* ── Summary ───────────────────────────────────────────────── */}
             <div className={cn(
                 "grid gap-6",

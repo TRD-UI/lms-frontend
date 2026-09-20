@@ -169,7 +169,7 @@ export default function CohortAttendance() {
                     {/* Session Info */}
                     <Card className="border-slate-100 rounded-2xl shadow-none">
                         <CardContent className="p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                                 <div>
                                     <h2 className="text-lg sm:text-xl font-medium text-slate-800">{selectedCohort.courseTitle}</h2>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 mt-2 text-xs sm:text-sm text-slate-500">
@@ -183,12 +183,12 @@ export default function CohortAttendance() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none text-xs font-medium px-3 py-1.5 rounded-full gap-1">
+                                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                    <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full gap-1">
                                         <CheckmarkCircle01Icon size={12} />
                                         {selectedCohort.presentCount} Present
                                     </Badge>
-                                    <Badge variant="secondary" className="bg-red-50 text-red-500 border-none text-xs font-medium px-3 py-1.5 rounded-full gap-1">
+                                    <Badge variant="secondary" className="bg-red-50 text-red-500 border-none text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full gap-1">
                                         <Cancel01Icon size={12} />
                                         {selectedCohort.absentCount} Absent
                                     </Badge>
@@ -261,8 +261,8 @@ export default function CohortAttendance() {
                                 {selectedCohort.students.map((student) => {
                                     const StatusIcon = statusConfig[student.status].icon;
                                     return (
-                                        <div key={student.id} className="flex items-center gap-3 p-4">
-                                            <Avatar className="h-9 w-9 border border-slate-100 rounded-full shrink-0">
+                                        <div key={student.id} className="flex items-center gap-2.5 px-3 py-2.5">
+                                            <Avatar className="h-8 w-8 border border-slate-100 rounded-full shrink-0">
                                                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.studentName.split(" ")[0].toLowerCase()}`} />
                                                 <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-medium">
                                                     {student.studentName.split(" ").map((n) => n[0]).join("")}
@@ -272,7 +272,7 @@ export default function CohortAttendance() {
                                                 <span className="block text-sm font-medium text-slate-800 truncate">
                                                     {student.studentName}
                                                 </span>
-                                                <div className="flex items-center gap-2 mt-1">
+                                                <div className="flex items-center gap-2 mt-0.5">
                                                     <Badge
                                                         variant="secondary"
                                                         className={cn(
@@ -304,12 +304,12 @@ export default function CohortAttendance() {
             ) : (
                 /* Cohort List */
                 instructorCohorts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 duration-500">
-                        <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mb-6">
-                            <UserGroupIcon size={40} />
+                    <div className="flex flex-col items-center justify-center py-14 sm:py-20 text-center animate-in fade-in zoom-in-95 duration-500">
+                        <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mb-4 sm:mb-6">
+                            <UserGroupIcon size={36} />
                         </div>
-                        <h2 className="text-2xl font-medium text-slate-900 mb-2">No Sessions</h2>
-                        <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm leading-relaxed">
+                        <h2 className="text-xl sm:text-2xl font-medium text-slate-900 mb-2">No Sessions</h2>
+                        <p className="text-slate-500 max-w-sm mx-auto font-medium text-xs sm:text-sm leading-relaxed">
                             Your upcoming and past training sessions will appear here.
                         </p>
                     </div>

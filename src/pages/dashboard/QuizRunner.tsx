@@ -196,9 +196,9 @@ export default function QuizRunner() {
     };
 
     return (
-        <div className="flex flex-col gap-5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+        <div className="flex flex-col gap-5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Masthead */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1 sm:px-2">
+            <div className="flex items-start sm:items-center justify-between gap-3 px-1 sm:px-2">
                 <div className="min-w-0 space-y-1">
                     <button
                         onClick={() => setExitOpen(true)}
@@ -207,7 +207,7 @@ export default function QuizRunner() {
                         <ArrowLeft01Icon size={14} />
                         Exit assessment
                     </button>
-                    <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-slate-900 truncate">
+                    <h1 className="text-lg sm:text-2xl font-medium tracking-tight text-slate-900 truncate">
                         {assessment.title}
                     </h1>
                     <p className="text-xs text-slate-400 font-medium truncate">
@@ -215,7 +215,7 @@ export default function QuizRunner() {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-3 shrink-0 pt-5 sm:pt-0">
                     <QuizTimer
                         totalSeconds={timeLimit * 60}
                         onExpire={() => void handleSubmit(true)}
@@ -245,10 +245,10 @@ export default function QuizRunner() {
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-5 px-1 sm:px-2">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-5 px-1 sm:px-2">
                 {/* Question */}
                 <div className="flex-1 min-w-0 order-2 lg:order-1">
-                    <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-3.5 sm:p-8">
                         <QuestionCard
                             question={question}
                             index={current}
@@ -257,12 +257,12 @@ export default function QuizRunner() {
                             onChange={(ids) => setAnswers((prev) => ({ ...prev, [question.id]: ids }))}
                         />
 
-                        <div className="flex items-center justify-between gap-3 mt-8 pt-6 border-t border-slate-100">
+                        <div className="flex items-center justify-between gap-2 sm:gap-3 mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100">
                             <Button
                                 variant="outline"
                                 onClick={() => setCurrent((c) => Math.max(0, c - 1))}
                                 disabled={current === 0}
-                                className="h-11 rounded-full border-slate-200 text-slate-600 font-medium px-5 disabled:opacity-30"
+                                className="h-10 sm:h-11 rounded-full border-slate-200 text-slate-600 font-medium px-4 sm:px-5 disabled:opacity-30"
                             >
                                 <ArrowLeft01Icon size={16} className="mr-1.5" />
                                 Previous
@@ -272,7 +272,7 @@ export default function QuizRunner() {
                                 variant="ghost"
                                 onClick={toggleFlag}
                                 className={cn(
-                                    "h-11 rounded-full font-medium px-4 gap-1.5 transition-colors",
+                                    "h-10 sm:h-11 rounded-full font-medium px-3 sm:px-4 gap-1.5 transition-colors",
                                     flagged.has(question.id)
                                         ? "text-amber-600 bg-amber-50 hover:bg-amber-100 hover:text-amber-700"
                                         : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
@@ -287,7 +287,7 @@ export default function QuizRunner() {
                             {isLast ? (
                                 <Button
                                     onClick={() => setConfirmOpen(true)}
-                                    className="h-11 rounded-full bg-primary hover:bg-primary/90 text-white font-medium px-6 shadow-lg shadow-primary/10"
+                                    className="h-10 sm:h-11 rounded-full bg-primary hover:bg-primary/90 text-white font-medium px-5 sm:px-6 shadow-lg shadow-primary/10"
                                 >
                                     Submit
                                     <CheckmarkCircle01Icon size={16} className="ml-1.5" />
@@ -295,7 +295,7 @@ export default function QuizRunner() {
                             ) : (
                                 <Button
                                     onClick={() => setCurrent((c) => Math.min(total - 1, c + 1))}
-                                    className="h-11 rounded-full bg-primary hover:bg-primary/90 text-white font-medium px-6"
+                                    className="h-10 sm:h-11 rounded-full bg-primary hover:bg-primary/90 text-white font-medium px-5 sm:px-6"
                                 >
                                     Next
                                     <ArrowRight01Icon size={16} className="ml-1.5" />
@@ -307,8 +307,8 @@ export default function QuizRunner() {
 
                 {/* Navigator */}
                 <aside className="lg:w-[404px] shrink-0 order-1 lg:order-2">
-                    <div className="bg-white rounded-3xl border border-slate-100 p-5 lg:sticky lg:top-3">
-                        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mb-4">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-3.5 sm:p-5 lg:sticky lg:top-3">
+                        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mb-3 sm:mb-4">
                             Questions
                         </p>
                         <div className="grid grid-cols-10 gap-2 max-h-[212px] overflow-y-auto scrollbar-thin -mr-1 pr-1">
@@ -341,25 +341,25 @@ export default function QuizRunner() {
                             })}
                         </div>
 
-                        <div className="mt-5 pt-5 border-t border-slate-100 space-y-2.5 text-[11px] font-medium">
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <span className="h-3 w-3 rounded bg-accent/40 border border-primary/20" />
+                        <div className="mt-4 pt-4 sm:mt-5 sm:pt-5 border-t border-slate-100 flex flex-wrap items-center gap-x-4 gap-y-2 lg:flex-col lg:items-start lg:gap-2.5 text-[11px] font-medium">
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500">
+                                <span className="h-3 w-3 shrink-0 rounded bg-accent/40 border border-primary/20" />
                                 Answered
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <span className="h-3 w-3 rounded bg-slate-50 border border-slate-200" />
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500">
+                                <span className="h-3 w-3 shrink-0 rounded bg-slate-50 border border-slate-200" />
                                 Not answered
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <span className="h-3 w-3 rounded bg-amber-100 border border-amber-300" />
-                                Flagged for review
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500">
+                                <span className="h-3 w-3 shrink-0 rounded bg-amber-100 border border-amber-300" />
+                                Flagged
                             </div>
                         </div>
 
                         <Button
                             onClick={() => setConfirmOpen(true)}
                             variant="outline"
-                            className="w-full mt-5 h-11 rounded-full border-slate-200 text-slate-600 font-medium hover:border-primary/30 hover:text-primary"
+                            className="w-full mt-4 sm:mt-5 h-10 sm:h-11 rounded-full border-slate-200 text-slate-600 font-medium hover:border-primary/30 hover:text-primary"
                         >
                             Submit assessment
                         </Button>

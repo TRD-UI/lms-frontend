@@ -84,7 +84,7 @@ export function QuestionCard({
                     {question.points} {question.points === 1 ? "point" : "points"}
                 </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-medium text-slate-900 leading-snug">
+            <h2 className="text-base sm:text-xl font-medium text-slate-900 leading-snug">
                 {question.prompt}
             </h2>
         </div>
@@ -92,19 +92,19 @@ export function QuestionCard({
 
     const rowClass = (selected: boolean, isCorrectOption: boolean) =>
         cn(
-            "flex items-start gap-3 p-4 rounded-2xl border transition-all",
+            "flex items-start gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all",
             rowTone(selected, isCorrectOption),
             review ? "cursor-default" : "cursor-pointer"
         );
 
     return (
-        <fieldset className="space-y-5 min-w-0">
+        <fieldset className="space-y-4 sm:space-y-5 min-w-0">
             <legend className="sr-only">{`Question ${index + 1} of ${total}`}</legend>
 
             {header}
 
             {isMultiple ? (
-                <div className="space-y-2.5">
+                <div className="space-y-2 sm:space-y-2.5">
                     {question.options.map((option) => {
                         const selected = selectedOptionIds.includes(option.id);
                         const isCorrectOption = question.correctOptionIds.includes(option.id);
@@ -128,7 +128,7 @@ export function QuestionCard({
                     value={selectedOptionIds[0] ?? ""}
                     onValueChange={(value) => !review && onChange([value])}
                     disabled={review}
-                    className="space-y-2.5 gap-0"
+                    className="space-y-2 sm:space-y-2.5 gap-0"
                 >
                     {question.options.map((option) => {
                         const selected = selectedOptionIds.includes(option.id);

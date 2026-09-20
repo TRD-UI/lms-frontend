@@ -50,7 +50,7 @@ export default function Assessments() {
 
     const enrolled = useMemo(
         () => courses.filter((c) => enrolledCourseIds.includes(c.id)),
-        [courses]
+        [courses, enrolledCourseIds]
     );
 
     const rows = useMemo(() => {
@@ -94,8 +94,35 @@ export default function Assessments() {
             )
             : 0;
 
+    type Row = (typeof rows)[number];
+
+    const rowActions = ({ assessment, course, best, left }: Row) => {
+        const exhausted = left === 0 && best?.passed !== true;
+        return [
+            {
+                label: exhausted ? "No attempts left" : best ? "Retake assessment" : "Start assessment",
+                icon: exhausted ? SquareLock02Icon : PlayIcon,
+                disabled: exhausted,
+                onSelect: () => navigate(`/dashboard/assessments/${assessment.id}/take`),
+            },
+            {
+                label: "View last result",
+                icon: ChartLineData01Icon,
+                disabled: !best,
+                onSelect: () =>
+                    navigate(`/dashboard/assessments/${assessment.id}/result/${best!.id}`),
+            },
+            {
+                label: "Go to course",
+                icon: ArrowRight01Icon,
+                separatorBefore: true,
+                onSelect: () => navigate(`/dashboard/learning/${course.id}`),
+            },
+        ];
+    };
+
     return (
-        <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+        <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="Assessments"
                 description="Prerequisite tests, module checkpoints and final exams for your courses."
@@ -185,7 +212,7 @@ export default function Assessments() {
             ) : (
                 <div className="px-1 sm:px-2">
                     <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        <div className="hidden md:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-slate-100 hover:bg-transparent">
@@ -199,8 +226,8 @@ export default function Assessments() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {pageRows.map(({ assessment, course, best, left }) => {
-                                        const exhausted = left === 0 && best?.passed !== true;
+                                    {pageRows.map((row) => {
+                                        const { assessment, course, best, left } = row;
                                         return (
                                             <TableRow
                                                 key={assessment.id}
@@ -251,35 +278,7 @@ export default function Assessments() {
                                                 <TableCell className="text-right">
                                                     <RowActions
                                                         label={`Actions for ${assessment.title}`}
-                                                        actions={[
-                                                            {
-                                                                label: exhausted
-                                                                    ? "No attempts left"
-                                                                    : best
-                                                                        ? "Retake assessment"
-                                                                        : "Start assessment",
-                                                                icon: exhausted ? SquareLock02Icon : PlayIcon,
-                                                                disabled: exhausted,
-                                                                onSelect: () =>
-                                                                    navigate(`/dashboard/assessments/${assessment.id}/take`),
-                                                            },
-                                                            {
-                                                                label: "View last result",
-                                                                icon: ChartLineData01Icon,
-                                                                disabled: !best,
-                                                                onSelect: () =>
-                                                                    navigate(
-                                                                        `/dashboard/assessments/${assessment.id}/result/${best!.id}`
-                                                                    ),
-                                                            },
-                                                            {
-                                                                label: "Go to course",
-                                                                icon: ArrowRight01Icon,
-                                                                separatorBefore: true,
-                                                                onSelect: () =>
-                                                                    navigate(`/dashboard/learning/${course.id}`),
-                                                            },
-                                                        ]}
+                                                        actions={rowActions(row)}
                                                     />
                                                 </TableCell>
                                             </TableRow>
@@ -287,6 +286,51 @@ export default function Assessments() {
                                     })}
                                 </TableBody>
                             </Table>
+                        </div>
+
+                        {/* Phone: the same rows, stacked. Seven columns of test
+                            metadata cannot survive a 390px viewport. */}
+                        <div className="md:hidden divide-y divide-slate-100">
+                            {pageRows.map((row) => {
+                                const { assessment, course, best, left } = row;
+                                return (
+                                    <div key={assessment.id} className="flex items-start gap-3 p-4">
+                                        <div className="min-w-0 flex-1 space-y-1.5">
+                                            <span className="block text-sm font-medium text-slate-800">
+                                                {assessment.title}
+                                            </span>
+                                            <p className="text-[11px] text-slate-400 font-medium truncate">
+                                                {course.title}
+                                            </p>
+                                            <p className="text-[11px] text-slate-400 font-medium tabular-nums">
+                                                {KIND_LABEL[assessment.kind]} · {assessment.questions.length} questions ·{" "}
+                                                {assessment.timeLimitMinutes} min ·{" "}
+                                                {assessment.maxAttempts === 0
+                                                    ? "unlimited attempts"
+                                                    : `${left} of ${assessment.maxAttempts} left`}
+                                            </p>
+                                            <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                                                {best ? (
+                                                    <StatusBadge tone={best.passed ? "good" : "critical"}>
+                                                        {best.score}%
+                                                    </StatusBadge>
+                                                ) : (
+                                                    <StatusBadge tone="neutral">Not started</StatusBadge>
+                                                )}
+                                                {assessment.gatesEntryPass && (
+                                                    <StatusBadge tone="info" icon={QrCode01Icon}>
+                                                        Gates pass
+                                                    </StatusBadge>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <RowActions
+                                            label={`Actions for ${assessment.title}`}
+                                            actions={rowActions(row)}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         <TablePagination

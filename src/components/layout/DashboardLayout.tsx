@@ -1,11 +1,18 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Search01Icon } from "hugeicons-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { UserDropdown } from "./UserDropdown";
+import { cn } from "@/lib/utils";
 
 export function DashboardLayout() {
+    const { pathname } = useLocation();
+    // The player hides the mobile nav, so it does not need the gutter that
+    // keeps content clear of it — and that gutter made the page scrollable
+    // past its own floating pager.
+    const onPlayer = pathname.startsWith("/dashboard/player/");
+
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans">
@@ -30,7 +37,7 @@ export function DashboardLayout() {
                             </div>
                         </header>
 
-                        <main className="flex-1 overflow-auto p-4 pb-24 md:p-10">
+                        <main className={cn("flex-1 overflow-auto p-4 md:p-10", !onPlayer && "pb-24 md:pb-10")}>
                             <div className="mx-auto max-w-7xl">
                                 <Outlet />
                             </div>
