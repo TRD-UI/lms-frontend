@@ -3,30 +3,22 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthFormField } from "@/components/auth/AuthFormField";
 import { useSession } from "@/store/session";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { describeError } from "@/lib/supabase";
+import { CheckmarkCircle02Icon } from "hugeicons-react";
+import { toast } from "sonner";
 
-
-const ROLES = [
-    "Instructor",
-    "Student",
-];
 
 export default function Signup() {
     const navigate = useNavigate();
-    const { signIn } = useSession();
+    const { signUp } = useSession();
     const [loading, setLoading] = useState(false);
+    const [sent, setSent] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
     const [form, setForm] = useState({
         name: "",
         email: "",
         phone: "",
         organization: "",
-        role: "",
         password: "",
         confirmPassword: "",
     });
@@ -58,14 +50,56 @@ export default function Signup() {
         const errs = validate();
         if (Object.keys(errs).length) { setErrors(errs); return; }
         setLoading(true);
-        setTimeout(() => {
+        setFormError(null);
+        try {
+            // Every self-service account is created as a learner. Instructor and
+            // admin accounts are provisioned by an administrator.
+            const { needsEmailConfirmation } = await signUp({
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                phone: form.phone,
+            });
+
+            if (needsEmailConfirmation) {
+                setSent(true);
+                return;
+            }
+
+            toast.success("Account created");
+            navigate("/dashboard", { replace: true });
+        } catch (err) {
+            setFormError(describeError(err as { message?: string }));
+        } finally {
             setLoading(false);
-            // The role picked at signup decides which portal the user lands in.
-            const role = form.role === "Instructor" ? "instructor" : "student";
-            signIn(role, { name: form.name, email: form.email });
-            navigate(role === "instructor" ? "/instructor" : "/dashboard");
-        }, 1300);
+        }
     };
+
+    if (sent) {
+        return (
+            <div className="w-full space-y-6 text-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-16 w-16 rounded-full bg-accent/50 flex items-center justify-center border border-accent/10">
+                        <CheckmarkCircle02Icon size={32} className="text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                        <h1 className="text-2xl font-medium text-slate-900">Confirm your email</h1>
+                        <p className="text-sm text-slate-500 font-normal">
+                            We've sent a confirmation link to{" "}
+                            <span className="font-medium text-slate-700">{form.email}</span>. Open it to
+                            activate your account.
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    asChild
+                    className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shadow-lg shadow-primary/10 transition-all"
+                >
+                    <Link to="/login">Back to Sign In</Link>
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full space-y-8">
@@ -92,31 +126,11 @@ export default function Signup() {
                         error={errors.phone} required disabled={loading}
                     />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                    <AuthFormField
-                        label="Organization" id="organization" placeholder="University of Ibadan"
-                        value={form.organization} onChange={e => setForm(f => ({ ...f, organization: e.target.value }))}
-                        disabled={loading}
-                    />
-                    {/* Role - shadcn Select */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-medium text-slate-600">Role</label>
-                        <Select
-                            value={form.role}
-                            onValueChange={val => setForm(f => ({ ...f, role: val }))}
-                            disabled={loading}
-                        >
-                            <SelectTrigger className="h-12 rounded-xl bg-white border-transparent text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30">
-                                <SelectValue placeholder="Select role..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ROLES.map(r => (
-                                    <SelectItem key={r} value={r}>{r}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
+                <AuthFormField
+                    label="Organization" id="organization" placeholder="University of Ibadan"
+                    value={form.organization} onChange={e => setForm(f => ({ ...f, organization: e.target.value }))}
+                    disabled={loading}
+                />
                 <AuthFormField
                     label="Password" id="password" type="password" placeholder="Min. 8 characters"
                     value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
@@ -127,6 +141,12 @@ export default function Signup() {
                     value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
                     error={errors.confirmPassword} required disabled={loading}
                 />
+
+                {formError && (
+                    <p role="alert" className="text-xs font-medium text-destructive bg-destructive/5 rounded-xl px-4 py-3">
+                        {formError}
+                    </p>
+                )}
 
                 <Button
                     type="submit"

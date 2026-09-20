@@ -1,27 +1,47 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthFormField } from "@/components/auth/AuthFormField";
 import { useSession } from "@/store/session";
+import { describeError } from "@/lib/supabase";
+import { toast } from "sonner";
 
 
 export default function Login() {
     const navigate = useNavigate();
-    const { signIn } = useSession();
+    const location = useLocation();
+    const { signIn, signOut } = useSession();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Set by RequireRole when an unauthenticated visitor is bounced off a
+    // protected route, so they land back where they were headed.
+    const from = (location.state as { from?: string } | null)?.from;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate auth call
-        setTimeout(() => {
+        setError(null);
+        try {
+            const user = await signIn(email, password);
+
+            // The two sign-in surfaces stay separate: staff belong on
+            // /staff-login, which routes them to the right portal.
+            if (user.role !== "student") {
+                await signOut();
+                setError("This is a staff account. Use the staff sign-in page.");
+                return;
+            }
+
+            toast.success(`Welcome back, ${user.name.split(" ")[0]}`);
+            navigate(from ?? "/dashboard", { replace: true });
+        } catch (err) {
+            setError(describeError(err as { message?: string }));
+        } finally {
             setLoading(false);
-            // Auth is simulated: signing in selects the student demo identity.
-            signIn("student", { email });
-            navigate("/dashboard");
-        }, 1200);
+        }
     };
 
     return (
@@ -52,6 +72,12 @@ export default function Login() {
                     required
                     disabled={loading}
                 />
+
+                {error && (
+                    <p role="alert" className="text-xs font-medium text-destructive bg-destructive/5 rounded-xl px-4 py-3">
+                        {error}
+                    </p>
+                )}
 
                 <div className="flex justify-end">
                     <Link

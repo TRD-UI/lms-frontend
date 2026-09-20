@@ -5,6 +5,7 @@ import { AuthFormField } from "@/components/auth/AuthFormField";
 import { ArrowRight01Icon } from "hugeicons-react";
 import { toast } from "sonner";
 import { useSession } from "@/store/session";
+import { describeError } from "@/lib/supabase";
 import {
     Select,
     SelectContent,
@@ -17,26 +18,46 @@ type StaffRole = "admin" | "instructor";
 
 export default function StaffLogin() {
     const navigate = useNavigate();
-    const { signIn } = useSession();
+    const { signIn, signOut } = useSession();
     const [selectedRole, setSelectedRole] = useState<StaffRole>("admin");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email.trim() || !password.trim()) return;
 
         setLoading(true);
-        // Simulate auth call
-        setTimeout(() => {
+        setError(null);
+        try {
+            const user = await signIn(email, password);
+
+            if (user.role === "student") {
+                await signOut();
+                setError("This is a learner account. Sign in from the student page instead.");
+                return;
+            }
+
+            // The role picker is a convenience, not an authority — the account's
+            // actual role decides the destination.
+            if (user.role !== selectedRole) {
+                toast.info(`Signed in as ${user.roleLabel}`, {
+                    description: `Your account is an ${user.roleLabel.toLowerCase()} account, so that is the portal you have been taken to.`,
+                });
+            } else {
+                toast.success(`Signed in as ${user.role === "admin" ? "Administrator" : "Instructor"}`, {
+                    description: "Redirecting to your dashboard...",
+                });
+            }
+
+            navigate(user.role === "admin" ? "/admin" : "/instructor", { replace: true });
+        } catch (err) {
+            setError(describeError(err as { message?: string }));
+        } finally {
             setLoading(false);
-            signIn(selectedRole, { email });
-            toast.success(`Signed in as ${selectedRole === "admin" ? "Administrator" : "Instructor"}`, {
-                description: "Redirecting to your dashboard...",
-            });
-            navigate(selectedRole === "admin" ? "/admin" : "/instructor");
-        }, 1200);
+        }
     };
 
     return (
@@ -87,6 +108,12 @@ export default function StaffLogin() {
                     required
                     disabled={loading}
                 />
+
+                {error && (
+                    <p role="alert" className="text-xs font-medium text-destructive bg-destructive/5 rounded-xl px-4 py-3">
+                        {error}
+                    </p>
+                )}
 
                 <div className="flex justify-end">
                     <Link

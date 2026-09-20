@@ -13,20 +13,28 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useActingUser, useSession } from "@/store/session";
+import { useSession } from "@/store/session";
+
+const SETTINGS_PATH = {
+    student: "/dashboard/settings",
+    instructor: "/instructor/settings",
+    admin: "/admin/settings",
+} as const;
 
 export function UserDropdown() {
     const navigate = useNavigate();
-    const student = useActingUser("student");
-    const { signOut } = useSession();
+    const { user: student, signOut } = useSession();
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [logoutOpen, setLogoutOpen] = useState(false);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setLogoutOpen(false);
-        signOut();
-        navigate("/login");
+        await signOut();
+        navigate("/login", { replace: true });
     };
+
+    // The dropdown only ever renders inside a guarded portal shell.
+    if (!student) return null;
 
     return (
         <>
@@ -57,7 +65,13 @@ export function UserDropdown() {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <button className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 font-medium rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors w-full text-left">
+                        <button
+                            onClick={() => {
+                                setPopoverOpen(false);
+                                navigate(SETTINGS_PATH[student.role]);
+                            }}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 font-medium rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors w-full text-left"
+                        >
                             <Settings01Icon size={16} />
                             Account Settings
                         </button>

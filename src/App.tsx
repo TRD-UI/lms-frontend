@@ -40,12 +40,15 @@ import CohortAttendance from "@/pages/instructor/CohortAttendance";
 
 // Auth & public
 import Login from "@/pages/auth/Login";
+import ResetPassword from "@/pages/auth/ResetPassword";
 import StaffLogin from "@/pages/auth/StaffLogin";
 import Signup from "@/pages/auth/Signup";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import LandingPage from "@/pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { RequireRole, RedirectIfAuthenticated } from "@/components/auth/RequireRole";
+import AccountSettings from "@/pages/settings/AccountSettings";
 
 const queryClient = new QueryClient();
 
@@ -63,13 +66,15 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
 
               {/* Auth Routes */}
-              <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-              <Route path="/staff-login" element={<AuthLayout><StaffLogin /></AuthLayout>} />
-              <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
-              <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+              <Route path="/login" element={<RedirectIfAuthenticated><AuthLayout><Login /></AuthLayout></RedirectIfAuthenticated>} />
+              <Route path="/staff-login" element={<RedirectIfAuthenticated><AuthLayout><StaffLogin /></AuthLayout></RedirectIfAuthenticated>} />
+              <Route path="/signup" element={<RedirectIfAuthenticated><AuthLayout><Signup /></AuthLayout></RedirectIfAuthenticated>} />
+              <Route path="/forgot-password" element={<RedirectIfAuthenticated><AuthLayout><ForgotPassword /></AuthLayout></RedirectIfAuthenticated>} />
+              {/* Not wrapped: arriving here already carries a recovery session. */}
+              <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
 
               {/* Dashboard Routes (Student) */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<RequireRole allow="student"><DashboardLayout /></RequireRole>}>
                 <Route index element={<Overview />} />
                 <Route path="learning" element={<MyLearning />} />
                 <Route path="learning/:id" element={<CourseDetails />} />
@@ -79,10 +84,11 @@ const App = () => (
                 <Route path="assessments/:assessmentId/result/:attemptId" element={<QuizResults />} />
                 <Route path="passes" element={<EntryPasses />} />
                 <Route path="certificates" element={<Certificates />} />
+                <Route path="settings" element={<AccountSettings />} />
               </Route>
 
               {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={<RequireRole allow="admin"><AdminLayout /></RequireRole>}>
                 <Route index element={<Analytics />} />
                 <Route path="courses" element={<CourseManager />} />
                 <Route path="assessments" element={<AdminAssessments />} />
@@ -90,16 +96,18 @@ const App = () => (
                 <Route path="assessments/:courseId/:assessmentId" element={<AdminAssessmentDetail />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="system" element={<SystemHealth />} />
+                <Route path="settings" element={<AccountSettings />} />
               </Route>
 
               {/* Instructor Routes */}
-              <Route path="/instructor" element={<InstructorLayout />}>
+              <Route path="/instructor" element={<RequireRole allow="instructor"><InstructorLayout /></RequireRole>}>
                 <Route index element={<InstructorDashboard />} />
                 <Route path="courses" element={<MyCourses />} />
                 <Route path="courses/:courseId" element={<InstructorCourseDetail />} />
                 <Route path="courses/:courseId/:assessmentId" element={<InstructorAssessmentDetail />} />
                 <Route path="scanner" element={<QRScanner />} />
                 <Route path="attendance" element={<CohortAttendance />} />
+                <Route path="settings" element={<AccountSettings />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

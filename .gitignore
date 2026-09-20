@@ -25,3 +25,14 @@ dist-ssr
 
 # Copilot instructions
 .github/copilot-instructions.md
+.mcp.json
+
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+# Env
+.env
+.env.*
+!.env.example
