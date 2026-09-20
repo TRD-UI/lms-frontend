@@ -13,7 +13,6 @@ export default function Signup() {
     const { signUp } = useSession();
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
-    const [formError, setFormError] = useState<string | null>(null);
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -50,7 +49,6 @@ export default function Signup() {
         const errs = validate();
         if (Object.keys(errs).length) { setErrors(errs); return; }
         setLoading(true);
-        setFormError(null);
         try {
             // Every self-service account is created as a learner. Instructor and
             // admin accounts are provisioned by an administrator.
@@ -69,7 +67,10 @@ export default function Signup() {
             toast.success("Account created");
             navigate("/dashboard", { replace: true });
         } catch (err) {
-            setFormError(describeError(err as { message?: string }));
+            const message = describeError(err as { message?: string });
+            // Duplicate email is the one failure that belongs on a field.
+            if (/already|exists|registered/i.test(message)) setErrors((e) => ({ ...e, email: message }));
+            else toast.error("Could not create your account", { description: message });
         } finally {
             setLoading(false);
         }
@@ -141,12 +142,6 @@ export default function Signup() {
                     value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
                     error={errors.confirmPassword} required disabled={loading}
                 />
-
-                {formError && (
-                    <p role="alert" className="text-xs font-medium text-destructive bg-destructive/5 rounded-xl px-4 py-3">
-                        {formError}
-                    </p>
-                )}
 
                 <Button
                     type="submit"

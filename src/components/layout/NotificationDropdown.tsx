@@ -34,7 +34,7 @@ const bgMap: Record<NotificationType, string> = {
 
 export function NotificationDropdown() {
     const [open, setOpen] = useState(false);
-    const { notifications, markAllNotificationsRead } = useLms();
+    const { notifications, markNotificationRead, markAllNotificationsRead } = useLms();
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -73,8 +73,14 @@ export function NotificationDropdown() {
                             {notifications.map((notification) => {
                                 const Icon = iconMap[notification.type];
                                 return (
-                                    <div 
-                                        key={notification.id} 
+                                    <div
+                                        key={notification.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => markNotificationRead(notification.id)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") markNotificationRead(notification.id);
+                                        }}
                                         className={cn(
                                             "flex items-start gap-3 p-4 border-b border-slate-50 transition-colors hover:bg-slate-50 cursor-pointer",
                                             !notification.isRead ? "bg-primary/[0.02]" : ""
@@ -116,7 +122,12 @@ export function NotificationDropdown() {
 
                 {/* Footer */}
                 <div className="p-2 border-t border-slate-100 bg-slate-50/50">
-                    <Button variant="ghost" className="w-full text-xs font-medium text-primary hover:bg-primary/5 hover:text-primary rounded-xl h-8">
+                    <Button
+                        variant="ghost"
+                        onClick={markAllNotificationsRead}
+                        disabled={unreadCount === 0}
+                        className="w-full text-xs font-medium text-primary hover:bg-primary/5 hover:text-primary rounded-xl h-8 disabled:opacity-40"
+                    >
                         Mark all as read
                     </Button>
                 </div>

@@ -1607,4 +1607,9 @@ update public.enrollments set progress = 68 where course_id = '577ea935-461d-53d
 update public.enrollments set progress = 0 where course_id = 'a011cbb4-addf-58ac-b215-075d496c936f' and student_id = '3639ec96-9d24-56d6-af88-9a6ce62ea66a';
 update public.enrollments set progress = 12 where course_id = 'e56df1b0-d187-50bb-911c-a77deba8e2dd' and student_id = '3639ec96-9d24-56d6-af88-9a6ce62ea66a';
 
+-- ────────────────────────────────────────────────────────────────────────────
+-- Attempt integrity
+-- ────────────────────────────────────────────────────────────────────────────
+select public.backfill_attempt_answers();
+
 commit;

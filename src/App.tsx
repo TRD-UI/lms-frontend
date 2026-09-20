@@ -29,7 +29,6 @@ import AdminCourseAssessments from "@/pages/admin/CourseAssessments";
 import AdminAssessmentDetail from "@/pages/admin/AssessmentDetail";
 import UserManagement from "@/pages/admin/UserManagement";
 import SystemHealth from "@/pages/admin/SystemHealth";
-import AdminSettings from "@/pages/admin/Settings";
 
 // Instructor
 import InstructorDashboard from "@/pages/instructor/Dashboard";
@@ -98,7 +97,6 @@ const App = () => (
                 <Route path="assessments/:courseId/:assessmentId" element={<AdminAssessmentDetail />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="system" element={<SystemHealth />} />
-                <Route path="reference" element={<AdminSettings />} />
                 <Route path="settings" element={<AccountSettings />} />
               </Route>
 

@@ -1,11 +1,10 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
-import { courseCategories as seedCategories } from "@/data/courses";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as coursesApi from "@/lib/api/courses";
 import { fetchInstructors } from "@/lib/api/people";
 import * as assessmentsApi from "@/lib/api/assessments";
 import * as classesApi from "@/lib/api/classes";
-import { venueUsage as seedVenues, adminUsers } from "@/data/admin";
+import * as referenceApi from "@/lib/api/reference";
 import {
     earliestSchedulableDate,
     formatSessionDate,
@@ -16,6 +15,9 @@ import { notifications as seedNotifications, type Notification } from "@/data/no
 import type { EntryPass } from "@/data/entry-passes";
 
 import type { Course, CourseModule, ModuleItem } from "@/data/types";
+import type { Venue } from "@/lib/api/reference";
+
+export type { Venue };
 import type {
     Assessment,
     AssessmentAttempt,
@@ -37,12 +39,6 @@ import { gradeAssessment } from "@/lib/grading";
 
 let idCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${idCounter++}`;
-
-export interface Venue {
-    id: string;
-    name: string;
-    capacity: number;
-}
 
 export interface InstructorOption {
     id: string;
@@ -77,12 +73,12 @@ interface LmsContextValue {
 
     // ─── Reference data (admin-managed) ───
     categories: string[];
-    addCategory: (name: string) => void;
-    deleteCategory: (name: string) => void;
+    addCategory: (name: string) => Promise<void>;
+    deleteCategory: (name: string) => Promise<void>;
     venues: Venue[];
-    addVenue: (name: string, capacity: number) => void;
-    updateVenue: (id: string, patch: Partial<Venue>) => void;
-    deleteVenue: (id: string) => void;
+    addVenue: (name: string, capacity: number) => Promise<void>;
+    updateVenue: (id: string, patch: Partial<Venue>) => Promise<void>;
+    deleteVenue: (id: string) => Promise<void>;
     instructors: InstructorOption[];
 
     // ─── Physical classes ───
@@ -211,12 +207,19 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         [queryClient]
     );
 
-    const [categories, setCategories] = useState<string[]>(seedCategories);
+    const { data: categories = [] } = useQuery({
+        queryKey: ["categories"],
+        queryFn: referenceApi.fetchCategories,
+        staleTime: 5 * 60_000,
+    });
+
+    const { data: venues = [] } = useQuery({
+        queryKey: ["venues"],
+        queryFn: referenceApi.fetchVenues,
+        staleTime: 5 * 60_000,
+    });
     // Notifications are the last thing still held locally; they have no table yet.
     const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
-    const [venues, setVenues] = useState<Venue[]>(
-        seedVenues.map((v) => ({ id: nextId("v"), name: v.venue, capacity: v.capacity }))
-    );
 
     // ─── Courses ───────────────────────────────────────────────────
     //
@@ -369,31 +372,49 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
 
     // ─── Reference data ────────────────────────────────────────────
 
-    const addCategory = useCallback((name: string) => {
-        const clean = name.trim();
-        if (!clean) return;
-        setCategories((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
-    }, []);
+    const addCategory = useCallback(
+        async (name: string) => {
+            const clean = name.trim();
+            if (!clean) return;
+            await referenceApi.addCategory(clean);
+            invalidate("categories");
+        },
+        [invalidate]
+    );
 
-    const deleteCategory = useCallback((name: string) => {
-        setCategories((prev) => prev.filter((c) => c !== name));
-    }, []);
+    const deleteCategory = useCallback(
+        async (name: string) => {
+            await referenceApi.deleteCategory(name);
+            invalidate("categories");
+        },
+        [invalidate]
+    );
 
-    const addVenue = useCallback((name: string, capacity: number) => {
-        const clean = name.trim();
-        if (!clean) return;
-        setVenues((prev) =>
-            prev.some((v) => v.name === clean) ? prev : [...prev, { id: nextId("v"), name: clean, capacity }]
-        );
-    }, []);
+    const addVenue = useCallback(
+        async (name: string, capacity: number) => {
+            const clean = name.trim();
+            if (!clean) return;
+            await referenceApi.addVenue(clean, capacity);
+            invalidate("venues");
+        },
+        [invalidate]
+    );
 
-    const updateVenue = useCallback((id: string, patch: Partial<Venue>) => {
-        setVenues((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
-    }, []);
+    const updateVenue = useCallback(
+        async (id: string, patch: Partial<Venue>) => {
+            await referenceApi.updateVenue(id, patch);
+            invalidate("venues");
+        },
+        [invalidate]
+    );
 
-    const deleteVenue = useCallback((id: string) => {
-        setVenues((prev) => prev.filter((v) => v.id !== id));
-    }, []);
+    const deleteVenue = useCallback(
+        async (id: string) => {
+            await referenceApi.deleteVenue(id);
+            invalidate("venues");
+        },
+        [invalidate]
+    );
 
     // ─── Notifications ─────────────────────────────────────────────
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { syncLogs, auditLogs } from "@/data/admin";
+import { useQuery } from "@tanstack/react-query";
+import * as adminApi from "@/lib/api/admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,17 @@ import { toast } from "sonner";
 
 export default function SystemHealth() {
     const [activeTab, setActiveTab] = useState<"sync" | "audit">("sync");
+    const { data: syncLogs = [] } = useQuery({
+        queryKey: ["sync-logs"],
+        queryFn: adminApi.fetchSyncLogs,
+        staleTime: 30_000,
+    });
+    const { data: auditLogs = [] } = useQuery({
+        queryKey: ["audit-logs"],
+        queryFn: adminApi.fetchAuditLog,
+        staleTime: 30_000,
+    });
+
     const syncPage = usePagination(syncLogs, 8);
     const auditPage = usePagination(auditLogs, 8);
 

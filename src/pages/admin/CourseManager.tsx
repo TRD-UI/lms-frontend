@@ -34,7 +34,9 @@ import {
 } from "@/components/courses/CourseFormDialog";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
-import { waitlistEntries as seedWaitlist } from "@/data/admin";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as adminApi from "@/lib/api/admin";
+import { ReferenceTables } from "@/components/courses/ReferenceTables";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -44,13 +46,18 @@ import { describeError } from "@/lib/supabase";
 export default function CourseManager() {
     const navigate = useNavigate();
     const admin = useActingUser("admin");
-    const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse, instructors } = useLms();
+    const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse, instructors, categories, venues } = useLms();
 
     const [query, setQuery] = useState("");
-    const [tab, setTab] = useState<"courses" | "waitlist">("courses");
+    const [tab, setTab] = useState<"courses" | "waitlist" | "categories" | "venues">("courses");
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
-    const [waitlist, setWaitlist] = useState(seedWaitlist);
+    const queryClient = useQueryClient();
+    const { data: waitlist = [] } = useQuery({
+        queryKey: ["waitlist"],
+        queryFn: adminApi.fetchWaitlist,
+        staleTime: 30_000,
+    });
 
     const filtered = courses.filter(
         (c) =>
@@ -102,24 +109,24 @@ export default function CourseManager() {
         setEditing(null);
     };
 
-    /** Promoting takes the learner off the waitlist and consumes a seat. */
-    const promote = (entry: (typeof seedWaitlist)[number]) => {
-        const course = courses.find((c) => c.title === entry.courseTitle);
-        if (course && course.seats.enrolled < course.seats.total) {
-            updateCourse(course.id, {
-                seats: { ...course.seats, enrolled: course.seats.enrolled + 1 },
+    /**
+     * Promotion runs entirely server-side: promote_from_waitlist() locks the
+     * course, refuses when it is full, consumes a seat, resequences the queue
+     * and issues an entry pass.
+     */
+    const promote = async (entry: adminApi.WaitlistRow) => {
+        try {
+            await adminApi.promoteFromWaitlist(entry.id);
+            void queryClient.invalidateQueries({ queryKey: ["waitlist"] });
+            void queryClient.invalidateQueries({ queryKey: ["courses"] });
+            toast.success(`${entry.studentName} promoted`, {
+                description: `Enrolled onto ${entry.courseTitle}.`,
+            });
+        } catch (e) {
+            toast.error("Could not promote", {
+                description: describeError(e as { message?: string }),
             });
         }
-        setWaitlist((prev) =>
-            prev
-                .filter((e) => e.id !== entry.id)
-                .map((e, i) => ({ ...e, position: i + 1 }))
-        );
-        toast.success(`${entry.studentName} promoted`, {
-            description: course
-                ? `Enrolled onto ${entry.courseTitle}.`
-                : `${entry.courseTitle} is no longer in the catalog — removed from the waitlist.`,
-        });
     };
 
     return (
@@ -164,6 +171,8 @@ export default function CourseManager() {
                         [
                             ["courses", "Courses", courses.length],
                             ["waitlist", "Waitlist", waitlist.length],
+                            ["categories", "Categories", categories.length],
+                            ["venues", "Venues", venues.length],
                         ] as const
                     ).map(([key, label, count]) => (
                         <button
@@ -191,7 +200,11 @@ export default function CourseManager() {
                 </div>
             </div>
 
-            {tab === "courses" ? (
+            {tab === "categories" || tab === "venues" ? (
+                <div className="px-1 sm:px-2">
+                    <ReferenceTables kind={tab} />
+                </div>
+            ) : tab === "courses" ? (
                 filtered.length === 0 ? (
                     <EmptyState
                         icon={BookOpen01Icon}
@@ -419,13 +432,16 @@ export default function CourseManager() {
                                                             icon: Delete02Icon,
                                                             destructive: true,
                                                             separatorBefore: true,
-                                                            onSelect: () => {
-                                                                setWaitlist((prev) =>
-                                                                    prev
-                                                                        .filter((e) => e.id !== entry.id)
-                                                                        .map((e, i) => ({ ...e, position: i + 1 }))
-                                                                );
-                                                                toast.success(`${entry.studentName} removed`);
+                                                            onSelect: async () => {
+                                                                try {
+                                                                    await adminApi.removeFromWaitlist(entry.id);
+                                                                    void queryClient.invalidateQueries({ queryKey: ["waitlist"] });
+                                                                    toast.success(`${entry.studentName} removed`);
+                                                                } catch (e) {
+                                                                    toast.error("Could not remove", {
+                                                                        description: describeError(e as { message?: string }),
+                                                                    });
+                                                                }
                                                             },
                                                             confirm: {
                                                                 title: "Remove from waitlist?",

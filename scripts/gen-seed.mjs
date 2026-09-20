@@ -443,6 +443,12 @@ for (const c of D.courses) {
   out(`update public.enrollments set progress = ${n(c.progress)} where course_id = ${q(idFor("course", c.id))} and student_id = ${q(userId(STUDENT.id))};`);
 }
 
+// The seeded attempts carry a score but no per-question answers, which would
+// make the results screen report every question wrong under a passing score.
+// The repair function synthesises answers consistent with the recorded score.
+section("Attempt integrity");
+out("select public.backfill_attempt_answers();");
+
 out("");
 out("commit;");
 out("");

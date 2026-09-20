@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Field, NumberField, TextArea, TextField } from "@/components/assessments/form-fields";
 import { useLms } from "@/store/lms-store";
+import { describeError } from "@/lib/supabase";
+import { Add01Icon } from "hugeicons-react";
+import { toast } from "sonner";
 import type { Course, FeeStructure } from "@/data/types";
 import { cn } from "@/lib/utils";
 
@@ -109,9 +112,33 @@ export function CourseFormDialog({
     canAssignInstructor = false,
 }: CourseFormDialogProps) {
     const isEdit = Boolean(course);
-    const { categories, venues, instructors } = useLms();
+    const { categories, venues, instructors, addCategory, addVenue } = useLms();
     const [draft, setDraft] = useState<CourseDraft>(EMPTY);
     const [error, setError] = useState<string | null>(null);
+    // An admin hitting a missing option should not have to leave the form.
+    const [adding, setAdding] = useState<null | "category" | "venue">(null);
+    const [newName, setNewName] = useState("");
+    const [newCapacity, setNewCapacity] = useState(20);
+
+    const commitNew = async () => {
+        const name = newName.trim();
+        if (!name) return;
+        try {
+            if (adding === "category") {
+                await addCategory(name);
+                set("category", name);
+            } else {
+                await addVenue(name, Math.max(1, Math.trunc(newCapacity)));
+                set("location", name);
+            }
+            toast.success(adding === "category" ? "Category added" : "Venue added");
+            setAdding(null);
+            setNewName("");
+            setNewCapacity(20);
+        } catch (e) {
+            toast.error("Could not add", { description: describeError(e as { message?: string }) });
+        }
+    };
 
     useEffect(() => {
         if (!open) return;
@@ -199,6 +226,17 @@ export function CourseFormDialog({
                                             {c}
                                         </SelectItem>
                                     ))}
+                                    {canAssignInstructor && (
+                                        <button
+                                            type="button"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => { setAdding("category"); setNewName(""); }}
+                                            className="w-full flex items-center gap-2 px-2 py-2 mt-1 border-t border-slate-100 text-xs font-medium text-primary hover:bg-slate-50 rounded-lg"
+                                        >
+                                            <Add01Icon size={14} />
+                                            Add category
+                                        </button>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </Field>
@@ -261,6 +299,17 @@ export function CourseFormDialog({
                                             </span>
                                         </SelectItem>
                                     ))}
+                                    {canAssignInstructor && (
+                                        <button
+                                            type="button"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => { setAdding("venue"); setNewName(""); }}
+                                            className="w-full flex items-center gap-2 px-2 py-2 mt-1 border-t border-slate-100 text-xs font-medium text-primary hover:bg-slate-50 rounded-lg"
+                                        >
+                                            <Add01Icon size={14} />
+                                            Add venue
+                                        </button>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </Field>
@@ -336,6 +385,54 @@ export function CourseFormDialog({
                             </div>
                         )}
                     </div>
+
+                    {adding && (
+                        <div className="rounded-xl border border-primary/20 bg-accent/10 p-3 space-y-2.5">
+                            <p className="text-xs font-medium text-slate-700">
+                                New {adding === "category" ? "category" : "venue"}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    autoFocus
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") { e.preventDefault(); void commitNew(); }
+                                        if (e.key === "Escape") setAdding(null);
+                                    }}
+                                    placeholder={adding === "category" ? "e.g. Cloud Engineering" : "e.g. Training Lab 4"}
+                                    className="flex-1 h-10 px-3 rounded-lg bg-white border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                                {adding === "venue" && (
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        step={1}
+                                        value={newCapacity}
+                                        onChange={(e) => setNewCapacity(Number(e.target.value))}
+                                        aria-label="Capacity"
+                                        className="w-24 h-10 px-3 rounded-lg bg-white border border-slate-200 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+                                )}
+                                <Button
+                                    type="button"
+                                    onClick={() => void commitNew()}
+                                    disabled={!newName.trim()}
+                                    className="h-10 px-4 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-medium"
+                                >
+                                    Add
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => setAdding(null)}
+                                    className="h-10 px-3 rounded-lg text-slate-500 text-xs"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     {error && <p className="text-xs text-destructive font-medium">{error}</p>}
                 </div>

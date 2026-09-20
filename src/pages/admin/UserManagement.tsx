@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { adminUsers } from "@/data/admin";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as adminApi from "@/lib/api/admin";
+import { describeError } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +50,14 @@ import { toast } from "sonner";
 import type { AdminUser } from "@/data/admin-types";
 
 export default function UserManagement() {
+    const queryClient = useQueryClient();
+    const { data: adminUsers = [], isLoading } = useQuery({
+        queryKey: ["admin-users"],
+        queryFn: adminApi.fetchUsers,
+        staleTime: 30_000,
+    });
+    const refresh = () => void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "instructor" | "student">("all");
     const [editUser, setEditUser] = useState<AdminUser | null>(null);
@@ -83,24 +93,40 @@ export default function UserManagement() {
         student: adminUsers.filter((u) => u.role === "student").length,
     };
 
-    const handleRoleChange = () => {
-        if (editUser && selectedRole) {
+    // These used to fire a toast and change nothing. Both now write to
+    // `profiles`, which the admin RLS policy permits and nobody else does.
+    const handleRoleChange = async () => {
+        if (!editUser || !selectedRole) return;
+        try {
+            await adminApi.setUserRole(editUser.id, selectedRole as AdminUser["role"]);
+            refresh();
             toast.success(`Role updated for ${editUser.name}`, {
                 description: `Changed from ${editUser.role} to ${selectedRole}.`,
             });
-            setEditUser(null);
-            setSelectedRole("");
+        } catch (e) {
+            toast.error("Could not change the role", {
+                description: describeError(e as { message?: string }),
+            });
         }
+        setEditUser(null);
+        setSelectedRole("");
     };
 
-    const handleToggleStatus = () => {
-        if (statusToggleTarget) {
-            const newStatus = statusToggleTarget.status === "active" ? "suspended" : "active";
+    const handleToggleStatus = async () => {
+        if (!statusToggleTarget) return;
+        const newStatus = statusToggleTarget.status === "active" ? "suspended" : "active";
+        try {
+            await adminApi.setUserStatus(statusToggleTarget.id, newStatus);
+            refresh();
             toast.success(`${statusToggleTarget.name} ${newStatus === "active" ? "activated" : "suspended"}`, {
                 description: `Account status changed to ${newStatus}.`,
             });
-            setStatusToggleTarget(null);
+        } catch (e) {
+            toast.error("Could not change the status", {
+                description: describeError(e as { message?: string }),
+            });
         }
+        setStatusToggleTarget(null);
     };
 
     return (

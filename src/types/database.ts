@@ -446,6 +446,24 @@ export type Database = {
           },
         ]
       }
+      course_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       course_fee_tiers: {
         Row: {
           amount: number
@@ -1231,6 +1249,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      backfill_attempt_answers: { Args: never; Returns: number }
       blocking_assessment: {
         Args: { p_course_id: string; p_student_id: string }
         Returns: string

@@ -142,16 +142,11 @@ export default function ResetPassword() {
                     type="password"
                     placeholder="Re-enter password"
                     value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
+                    onChange={(e) => { setConfirm(e.target.value); setError(null); }}
+                    error={error ?? undefined}
                     required
                     disabled={loading}
                 />
-
-                {error && (
-                    <p role="alert" className="text-xs font-medium text-destructive bg-destructive/5 rounded-xl px-4 py-3">
-                        {error}
-                    </p>
-                )}
 
                 <Button
                     type="submit"

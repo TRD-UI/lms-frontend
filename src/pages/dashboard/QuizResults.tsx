@@ -165,30 +165,28 @@ export default function QuizResults() {
                     <>
                         <div className="lg:hidden h-px bg-slate-100" />
 
-                        <aside className="flex flex-col min-h-0 lg:pl-8">
-                            <div className="flex flex-col gap-4 lg:max-h-[248px] overflow-y-auto scrollbar-thin -mr-2 pr-2">
+                        <aside className="flex flex-col min-h-0 lg:pl-8 lg:max-h-[268px]">
+                            <div className="flex flex-col gap-4 min-h-0">
                             {passReleased && (
                                 <div className="flex items-start gap-3">
                                     <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
                                         <QrCode01Icon size={18} />
                                     </div>
-                                    <div className="min-w-0 space-y-1.5">
-                                        <div>
-                                            <h2 className="text-lg font-medium text-slate-900">Entry pass released</h2>
-                                            <p className="text-xs text-slate-500 font-normal leading-relaxed">
-                                                Your QR pass for the {course.title} session is now available.
-                                            </p>
-                                        </div>
-                                        <Link to="/dashboard/passes">
-                                            <Button
-                                                size="sm"
-                                                className="h-8 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs"
-                                            >
-                                                View pass
-                                                <ArrowRight01Icon size={14} className="ml-1" />
-                                            </Button>
-                                        </Link>
+                                    <div className="min-w-0 flex-1">
+                                        <h2 className="text-lg font-medium text-slate-900">Entry pass released</h2>
+                                        <p className="text-xs text-slate-500 font-normal leading-relaxed">
+                                            Your QR pass for the {course.title} session is now available.
+                                        </p>
                                     </div>
+                                    <Link to="/dashboard/passes" className="shrink-0">
+                                        <Button
+                                            size="sm"
+                                            className="h-8 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs"
+                                        >
+                                            View pass
+                                            <ArrowRight01Icon size={14} className="ml-1" />
+                                        </Button>
+                                    </Link>
                                 </div>
                             )}
 
@@ -197,7 +195,7 @@ export default function QuizResults() {
                             )}
 
                             {remedialModules.length > 0 && (
-                                <div className="flex flex-col min-h-0">
+                                <div className="flex flex-col min-h-0 flex-1">
                                     <div className="flex items-start gap-3 mb-2">
                                         <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
                                             <Idea01Icon size={18} />
@@ -210,7 +208,8 @@ export default function QuizResults() {
                                         </div>
                                     </div>
 
-                                    <div>
+                                    {/* The heading is fixed; only the list beneath it moves. */}
+                                    <div className="overflow-y-auto scrollbar-thin -mr-2 pr-2 min-h-0 flex-1">
                                         {remedialModules.map((module, i) => {
                                             const missed = result.graded.filter(
                                                 (g) => !g.correct && g.question.remedialModuleId === module.id

@@ -60,7 +60,7 @@ export default function Login() {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={e => { setEmail(e.target.value); setError(null); }}
                     required
                     disabled={loading}
                 />
@@ -70,16 +70,11 @@ export default function Login() {
                     type="password"
                     placeholder="Enter your password"
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={e => { setPassword(e.target.value); setError(null); }}
+                    error={error ?? undefined}
                     required
                     disabled={loading}
                 />
-
-                {error && (
-                    <p role="alert" className="text-xs font-medium text-destructive bg-destructive/5 rounded-xl px-4 py-3">
-                        {error}
-                    </p>
-                )}
 
                 <div className="flex justify-end">
                     <Link

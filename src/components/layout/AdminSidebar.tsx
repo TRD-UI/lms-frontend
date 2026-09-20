@@ -1,5 +1,4 @@
 import {
-    Location01Icon,
     Analytics01Icon,
     BookOpen01Icon,
     Task01Icon,
@@ -36,7 +35,6 @@ const items = [
     { title: "Courses", url: "/admin/courses", icon: BookOpen01Icon },
     { title: "Assessments", url: "/admin/assessments", icon: Task01Icon },
     { title: "Users", url: "/admin/users", icon: UserMultiple02Icon },
-    { title: "Setup", url: "/admin/reference", icon: Location01Icon },
     { title: "System", url: "/admin/system", icon: Settings01Icon },
 ];
 
