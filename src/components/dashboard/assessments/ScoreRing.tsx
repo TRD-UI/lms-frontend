@@ -71,13 +71,17 @@ export function ScoreRing({ score, passingScore, passed, size = 168, className }
                 <span className="text-4xl font-medium tracking-tight text-slate-900 tabular-nums">
                     {clamped}%
                 </span>
+                {/* On a fail the threshold is carried here, so the summary above
+                    does not need a sentence restating it. */}
                 <span
                     className={cn(
-                        "text-[11px] font-medium uppercase tracking-widest mt-0.5",
-                        passed ? "text-emerald-600" : "text-red-500"
+                        "text-[11px] font-medium uppercase mt-0.5",
+                        passed ? "tracking-widest text-emerald-600" : "tracking-wide text-red-500"
                     )}
                 >
-                    {passed ? "Passed" : "Not passed"}
+                    {passed
+                        ? "Passed"
+                        : `Not passed${passingScore != null ? ` (${passingScore}%)` : ""}`}
                 </span>
             </div>
         </div>

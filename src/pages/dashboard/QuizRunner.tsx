@@ -208,9 +208,9 @@ export default function QuizRunner() {
                 </div>
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-4 px-1 sm:px-2">
+            <div className="flex flex-col lg:flex-row gap-5 px-1 sm:px-2">
                 {/* Question */}
-                <div className="lg:col-span-3 order-2 lg:order-1">
+                <div className="flex-1 min-w-0 order-2 lg:order-1">
                     <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8">
                         <QuestionCard
                             question={question}
@@ -269,12 +269,12 @@ export default function QuizRunner() {
                 </div>
 
                 {/* Navigator */}
-                <aside className="lg:col-span-1 order-1 lg:order-2">
+                <aside className="lg:w-[404px] shrink-0 order-1 lg:order-2">
                     <div className="bg-white rounded-3xl border border-slate-100 p-5 lg:sticky lg:top-3">
                         <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mb-4">
                             Questions
                         </p>
-                        <div className="grid grid-cols-8 lg:grid-cols-5 gap-2">
+                        <div className="grid grid-cols-10 gap-2 max-h-[212px] overflow-y-auto scrollbar-thin -mr-1 pr-1">
                             {assessment.questions.map((q, i) => {
                                 const isAnswered = (answers[q.id]?.length ?? 0) > 0;
                                 const isFlagged = flagged.has(q.id);

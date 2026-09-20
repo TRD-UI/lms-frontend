@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowRight01Icon,
+    PlayIcon,
+    ChartLineData01Icon,
     CheckmarkCircle01Icon,
     Cancel01Icon,
     Search01Icon,
@@ -15,6 +17,16 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
+import { RowActions } from "@/components/shared/RowActions";
+import { TablePagination, usePagination } from "@/components/shared/TablePagination";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
 import { purchasedCourseIds } from "@/data/courses";
@@ -31,6 +43,7 @@ const KIND_LABEL: Record<Assessment["kind"], string> = {
 
 /** The learner's assessment hub across every enrolled course. */
 export default function Assessments() {
+    const navigate = useNavigate();
     const student = useActingUser("student");
     const { courses, assessments, attemptsFor, bestAttempt } = useLms();
     const [query, setQuery] = useState("");
@@ -70,6 +83,8 @@ export default function Assessments() {
         return matchesQuery && matchesFilter;
     });
 
+    const { page, pageCount, pageRows, setPage, total, from, to } = usePagination(visible, 8);
+
     const passedCount = rows.filter((r) => r.best?.passed).length;
     const pendingCount = rows.length - passedCount;
     const avgScore =
@@ -108,7 +123,7 @@ export default function Assessments() {
                 <StatTile label="Assessments" value={String(rows.length)} icon={Task01Icon} />
                 <StatTile label="Passed" value={String(passedCount)} icon={CheckmarkCircle01Icon} />
                 <StatTile label="Outstanding" value={String(pendingCount)} icon={Timer01Icon} />
-                <StatTile label="Average score" value={rows.some((r) => r.best) ? `${avgScore}%` : "—"} />
+                <StatTile label="Average score" value={rows.some((r) => r.best) ? `${avgScore}%` : "—"} icon={ChartLineData01Icon} />
                 </StatGrid>
             </div>
 
@@ -169,99 +184,122 @@ export default function Assessments() {
                     className="mx-1 sm:mx-2"
                 />
             ) : (
-                <div className="grid gap-3 lg:grid-cols-2 px-1 sm:px-2">
-                    {visible.map(({ assessment, course, best, left }) => {
-                        const exhausted = left === 0 && best?.passed !== true;
-                        return (
-                            <div
-                                key={assessment.id}
-                                className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 flex flex-col gap-4 transition-shadow hover:shadow-sm"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0 space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
-                                                {KIND_LABEL[assessment.kind]}
-                                            </span>
-                                            {assessment.gatesEntryPass && (
-                                                <StatusBadge tone="info" icon={QrCode01Icon}>
-                                                    Gates entry pass
-                                                </StatusBadge>
-                                            )}
-                                        </div>
-                                        <h3 className="text-base font-medium text-slate-900 leading-snug">
-                                            {assessment.title}
-                                        </h3>
-                                        <p className="text-xs text-slate-400 font-medium truncate">
-                                            {course.title}
-                                        </p>
-                                    </div>
-
-                                    {best ? (
-                                        <StatusBadge
-                                            tone={best.passed ? "good" : "critical"}
-                                            icon={best.passed ? CheckmarkCircle01Icon : Cancel01Icon}
-                                        >
-                                            {best.score}%
-                                        </StatusBadge>
-                                    ) : (
-                                        <StatusBadge tone="neutral">Not started</StatusBadge>
-                                    )}
-                                </div>
-
-                                <p className="text-xs text-slate-500 font-normal leading-relaxed line-clamp-2">
-                                    {assessment.description}
-                                </p>
-
-                                <div className="flex items-center gap-4 text-[11px] font-medium text-slate-400 flex-wrap">
-                                    <span className="flex items-center gap-1">
-                                        <Task01Icon size={13} />
-                                        {assessment.questions.length} questions
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Timer01Icon size={13} />
-                                        {assessment.timeLimitMinutes} min
-                                    </span>
-                                    <span>Pass mark {assessment.passingScore}%</span>
-                                    {assessment.maxAttempts > 0 && (
-                                        <span>
-                                            {left === Infinity ? "Unlimited" : `${left} of ${assessment.maxAttempts}`}{" "}
-                                            attempts left
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center gap-2 mt-auto pt-1">
-                                    {exhausted ? (
-                                        <Button
-                                            disabled
-                                            className="h-11 px-5 rounded-full bg-slate-100 text-slate-400 font-medium cursor-not-allowed"
-                                        >
-                                            <SquareLock02Icon size={16} className="mr-1.5" />
-                                            No attempts left
-                                        </Button>
-                                    ) : (
-                                        <Link to={`/dashboard/assessments/${assessment.id}/take`}>
-                                            <Button className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10">
-                                                {best ? "Retake" : "Start"}
-                                                <ArrowRight01Icon size={16} className="ml-1.5" />
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    {best && (
-                                        <Link to={`/dashboard/assessments/${assessment.id}/result/${best.id}`}>
-                                            <Button
-                                                variant="ghost"
-                                                className="h-11 px-4 rounded-full text-slate-500 font-medium hover:text-primary hover:bg-primary/5"
+                <div className="px-1 sm:px-2">
+                    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-slate-100 hover:bg-transparent">
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Assessment</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Type</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Questions</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Time</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Attempts</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Best score</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {pageRows.map(({ assessment, course, best, left }) => {
+                                        const exhausted = left === 0 && best?.passed !== true;
+                                        return (
+                                            <TableRow
+                                                key={assessment.id}
+                                                className="border-slate-50 hover:bg-slate-50/50 transition-colors"
                                             >
-                                                View result
-                                            </Button>
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
+                                                <TableCell>
+                                                    <div className="min-w-0 space-y-0.5">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-sm font-medium text-slate-800">
+                                                                {assessment.title}
+                                                            </span>
+                                                            {assessment.gatesEntryPass && (
+                                                                <StatusBadge tone="info" icon={QrCode01Icon}>
+                                                                    Gates pass
+                                                                </StatusBadge>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-400 font-medium truncate">
+                                                            {course.title}
+                                                        </p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-xs font-medium text-slate-500">
+                                                        {KIND_LABEL[assessment.kind]}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-slate-500 tabular-nums">
+                                                    {assessment.questions.length}
+                                                </TableCell>
+                                                <TableCell className="text-sm text-slate-500 tabular-nums">
+                                                    {assessment.timeLimitMinutes} min
+                                                </TableCell>
+                                                <TableCell className="text-sm text-slate-500 tabular-nums">
+                                                    {assessment.maxAttempts === 0
+                                                        ? "Unlimited"
+                                                        : `${left} of ${assessment.maxAttempts}`}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {best ? (
+                                                        <StatusBadge tone={best.passed ? "good" : "critical"}>
+                                                            {best.score}%
+                                                        </StatusBadge>
+                                                    ) : (
+                                                        <StatusBadge tone="neutral">Not started</StatusBadge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <RowActions
+                                                        label={`Actions for ${assessment.title}`}
+                                                        actions={[
+                                                            {
+                                                                label: exhausted
+                                                                    ? "No attempts left"
+                                                                    : best
+                                                                        ? "Retake assessment"
+                                                                        : "Start assessment",
+                                                                icon: exhausted ? SquareLock02Icon : PlayIcon,
+                                                                disabled: exhausted,
+                                                                onSelect: () =>
+                                                                    navigate(`/dashboard/assessments/${assessment.id}/take`),
+                                                            },
+                                                            {
+                                                                label: "View last result",
+                                                                icon: ChartLineData01Icon,
+                                                                disabled: !best,
+                                                                onSelect: () =>
+                                                                    navigate(
+                                                                        `/dashboard/assessments/${assessment.id}/result/${best!.id}`
+                                                                    ),
+                                                            },
+                                                            {
+                                                                label: "Go to course",
+                                                                icon: ArrowRight01Icon,
+                                                                separatorBefore: true,
+                                                                onSelect: () =>
+                                                                    navigate(`/dashboard/learning/${course.id}`),
+                                                            },
+                                                        ]}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        <TablePagination
+                            page={page}
+                            pageCount={pageCount}
+                            from={from}
+                            to={to}
+                            total={total}
+                            onPageChange={setPage}
+                            label="assessments"
+                        />
+                    </div>
                 </div>
             )}
         </div>

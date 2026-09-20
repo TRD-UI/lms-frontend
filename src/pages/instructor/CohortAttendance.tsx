@@ -41,6 +41,7 @@ import {
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { RowActions } from "@/components/shared/RowActions";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { toast } from "sonner";
 import type { InstructorCohort, AttendanceRecord } from "@/data/admin-types";
 
@@ -71,28 +72,20 @@ export default function CohortAttendance() {
 
     return (
         <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex items-center justify-between px-2">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-medium tracking-tight text-slate-800">Cohort Attendance</h1>
-                    <p className="text-slate-400 font-medium text-sm">Manage session attendance and subjective grading.</p>
-                </div>
-            </div>
+            <PageHeader
+                title={selectedCohort ? selectedCohort.courseTitle : "Cohort Attendance"}
+                description={
+                    selectedCohort
+                        ? "Session attendance and subjective grading."
+                        : "Manage session attendance and subjective grading."
+                }
+                onBack={selectedCohort ? () => setSelectedCohort(null) : undefined}
+                backLabel="Back to cohorts"
+            />
 
             {selectedCohort ? (
                 /* Detailed Cohort View */
                 <div className="space-y-6 px-2">
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setSelectedCohort(null)}
-                            className="h-9 px-3 rounded-full text-slate-400 hover:text-primary hover:bg-primary/5 text-sm font-medium gap-1"
-                        >
-                            <ArrowRight01Icon size={14} className="rotate-180" />
-                            Back
-                        </Button>
-                    </div>
-
                     {/* Session Info */}
                     <Card className="border-slate-100 rounded-2xl shadow-none">
                         <CardContent className="p-6">

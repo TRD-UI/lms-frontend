@@ -2,15 +2,18 @@ import { useRef, useState } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera01Icon } from "hugeicons-react";
+import { Camera01Icon, ViewIcon, ViewOffIcon } from "hugeicons-react";
 import { useSession } from "@/store/session";
 import { supabase, describeError } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+type Tab = "profile" | "password";
 
 const FIELD =
     "w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 " +
-    "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/10 " +
-    "focus:border-primary/30 transition-all disabled:opacity-60";
+    "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 " +
+    "focus:border-primary/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
 
 function Field({
     label, id, hint, ...props
@@ -24,15 +27,42 @@ function Field({
     );
 }
 
-function Card({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+/** Password field with a reveal toggle, matching the auth screens. */
+function PasswordField({
+    label, id, value, onChange, disabled, autoComplete,
+}: {
+    label: string;
+    id: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
+    autoComplete?: string;
+}) {
+    const [show, setShow] = useState(false);
     return (
-        <section className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-5 sm:p-8 space-y-5">
-            <div className="space-y-1">
-                <h2 className="text-base sm:text-lg font-medium text-slate-900">{title}</h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium">{description}</p>
+        <div className="space-y-1.5">
+            <label htmlFor={id} className="text-xs font-medium text-slate-600">{label}</label>
+            <div className="relative">
+                <input
+                    id={id}
+                    type={show ? "text" : "password"}
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    autoComplete={autoComplete}
+                    className={cn(FIELD, "pr-12")}
+                />
+                <button
+                    type="button"
+                    onClick={() => setShow((v) => !v)}
+                    aria-label={show ? "Hide password" : "Show password"}
+                    tabIndex={-1}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                >
+                    {show ? <ViewOffIcon size={18} /> : <ViewIcon size={18} />}
+                </button>
             </div>
-            {children}
-        </section>
+        </div>
     );
 }
 
@@ -40,12 +70,13 @@ function Card({ title, description, children }: { title: string; description: st
  * Shared by all three portals — mounted at /dashboard/settings,
  * /instructor/settings and /admin/settings so it renders inside the right shell.
  *
- * Role and status are intentionally read-only here: profiles_guard_privileges()
- * rejects a self-service change to either.
+ * Role and status are read-only: profiles_guard_privileges() rejects a
+ * self-service change to either.
  */
 export default function AccountSettings() {
     const { user, updateProfile, updatePassword } = useSession();
     const fileInput = useRef<HTMLInputElement>(null);
+    const [tab, setTab] = useState<Tab>("profile");
 
     const [name, setName] = useState(user?.name ?? "");
     const [phone, setPhone] = useState(user?.phone ?? "");
@@ -76,14 +107,9 @@ export default function AccountSettings() {
 
     const changePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (password.length < 8) {
-            toast.error("Password must be at least 8 characters.");
-            return;
-        }
-        if (password !== confirm) {
-            toast.error("Passwords do not match.");
-            return;
-        }
+        if (password.length < 8) return toast.error("Password must be at least 8 characters.");
+        if (password !== confirm) return toast.error("Passwords do not match.");
+
         setSavingPassword(true);
         try {
             await updatePassword(password);
@@ -120,23 +146,45 @@ export default function AccountSettings() {
         }
     };
 
-    return (
-        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <PageHeader
-                title="Account settings"
-                description="Your details, photo and password."
-            />
+    const TABS: { key: Tab; label: string }[] = [
+        { key: "profile", label: "Profile" },
+        { key: "password", label: "Password" },
+    ];
 
-            <div className="grid gap-6 px-1 sm:px-2 max-w-3xl">
-                <Card title="Profile photo" description="A square image works best. Up to 2 MB.">
-                    <div className="flex items-center gap-5">
-                        <Avatar className="h-20 w-20 border border-slate-100">
-                            <AvatarImage src={user.avatarUrl} alt="" />
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium text-lg">
-                                {user.initials}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="space-y-2">
+    return (
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+            <PageHeader title="Account settings" description="Your details, photo and password." />
+
+            <div className="px-1 sm:px-2">
+                <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-100">
+                    {TABS.map(({ key, label }) => (
+                        <button
+                            key={key}
+                            onClick={() => setTab(key)}
+                            className={cn(
+                                "pb-3 sm:pb-4 text-xs sm:text-sm font-medium transition-all relative",
+                                tab === key ? "text-primary" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            {label}
+                            {tab === key && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="px-1 sm:px-2 max-w-xl">
+                {tab === "profile" ? (
+                    <form onSubmit={saveProfile} className="space-y-6">
+                        <div className="relative w-fit">
+                            <Avatar className="h-24 w-24 border border-slate-100">
+                                <AvatarImage src={user.avatarUrl} alt="" />
+                                <AvatarFallback className="bg-primary/10 text-primary font-medium text-xl">
+                                    {user.initials}
+                                </AvatarFallback>
+                            </Avatar>
                             <input
                                 ref={fileInput}
                                 type="file"
@@ -148,22 +196,26 @@ export default function AccountSettings() {
                                     e.target.value = "";
                                 }}
                             />
-                            <Button
+                            <button
                                 type="button"
-                                variant="outline"
                                 disabled={uploading}
                                 onClick={() => fileInput.current?.click()}
-                                className="rounded-full h-10 gap-2 border-slate-200"
+                                aria-label="Change profile photo"
+                                className={cn(
+                                    "absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-white",
+                                    "flex items-center justify-center shadow-lg shadow-primary/20",
+                                    "ring-4 ring-white hover:bg-primary/90 transition-all",
+                                    "disabled:opacity-60 disabled:cursor-not-allowed"
+                                )}
                             >
-                                <Camera01Icon size={16} />
-                                {uploading ? "Uploading…" : "Change photo"}
-                            </Button>
+                                {uploading ? (
+                                    <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <Camera01Icon size={15} />
+                                )}
+                            </button>
                         </div>
-                    </div>
-                </Card>
 
-                <Card title="Your details" description="How your name appears across the platform.">
-                    <form onSubmit={saveProfile} className="space-y-4">
                         <Field
                             label="Full name" id="name" value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -175,14 +227,8 @@ export default function AccountSettings() {
                             onChange={(e) => setPhone(e.target.value)}
                             disabled={savingProfile}
                         />
-                        <Field
-                            label="Email address" id="email" value={user.email} readOnly disabled
-                            hint="Contact an administrator to change the email on your account."
-                        />
-                        <Field
-                            label="Role" id="role" value={user.roleLabel} readOnly disabled
-                            hint="Roles are assigned by an administrator."
-                        />
+                        <Field label="Email address" id="email" value={user.email} readOnly disabled />
+                        <Field label="Role" id="role" value={user.roleLabel} readOnly disabled />
 
                         <Button
                             type="submit"
@@ -192,18 +238,16 @@ export default function AccountSettings() {
                             {savingProfile ? "Saving…" : "Save changes"}
                         </Button>
                     </form>
-                </Card>
-
-                <Card title="Password" description="Use at least 8 characters.">
-                    <form onSubmit={changePassword} className="space-y-4">
-                        <Field
-                            label="New password" id="new-password" type="password"
-                            value={password} onChange={(e) => setPassword(e.target.value)}
+                ) : (
+                    <form onSubmit={changePassword} className="space-y-6">
+                        <PasswordField
+                            label="New password" id="new-password" value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             autoComplete="new-password" disabled={savingPassword}
                         />
-                        <Field
-                            label="Confirm new password" id="confirm-password" type="password"
-                            value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                        <PasswordField
+                            label="Confirm new password" id="confirm-password" value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
                             autoComplete="new-password" disabled={savingPassword}
                         />
                         <Button
@@ -214,7 +258,7 @@ export default function AccountSettings() {
                             {savingPassword ? "Updating…" : "Change password"}
                         </Button>
                     </form>
-                </Card>
+                )}
             </div>
         </div>
     );

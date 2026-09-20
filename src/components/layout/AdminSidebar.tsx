@@ -27,6 +27,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSession } from "@/store/session";
 import { useState } from "react";
 
 const items = [
@@ -39,6 +40,7 @@ const items = [
 
 export function AdminSidebar() {
     const navigate = useNavigate();
+    const { signOut } = useSession();
     const location = useLocation();
     const [logoutOpen, setLogoutOpen] = useState(false);
 
@@ -47,9 +49,10 @@ export function AdminSidebar() {
         return location.pathname.startsWith(url);
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setLogoutOpen(false);
-        navigate("/login");
+        await signOut();
+        navigate("/staff-login", { replace: true });
     };
 
     return (

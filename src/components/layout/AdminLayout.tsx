@@ -3,12 +3,9 @@ import { AdminSidebar } from "./AdminSidebar";
 import { Outlet } from "react-router-dom";
 import { Search01Icon } from "hugeicons-react";
 import { NotificationDropdown } from "./NotificationDropdown";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useActingUser } from "@/store/session";
+import { UserDropdown } from "./UserDropdown";
 
 export function AdminLayout() {
-    const admin = useActingUser("admin");
-
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans">
@@ -29,20 +26,7 @@ export function AdminLayout() {
                             </div>
                             <div className="flex items-center justify-end gap-4 w-1/3">
                                 <NotificationDropdown />
-                                <div className="flex items-center gap-3 pl-2 border-l border-slate-100">
-                                    <div className="flex flex-col items-end mr-1">
-                                        <span className="text-sm font-medium text-slate-800">{admin.name}</span>
-                                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">
-                                            {admin.roleLabel}
-                                        </span>
-                                    </div>
-                                    <Avatar className="h-11 w-11 border rounded-full border-slate-100 bg-accent shadow-sm">
-                                        <AvatarImage src={admin.avatarUrl} />
-                                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-medium">
-                                            {admin.initials}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </div>
+                                <UserDropdown />
                             </div>
                         </header>
                         <main className="flex-1 overflow-auto p-10">
