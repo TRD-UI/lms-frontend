@@ -25,13 +25,6 @@ import { PageActions } from "@/components/shared/PageActions";
 import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
 import { MiniDonut } from "@/components/shared/MiniDonut";
 import { PieChart, PieSlice, PieCenter } from "@/components/charts/pie";
-import {
-    Legend,
-    LegendItem,
-    LegendLabel,
-    LegendMarker,
-    LegendValue,
-} from "@/components/charts/legend";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -105,16 +98,6 @@ export default function InstructorDashboard() {
                 .filter((c) => c.seats.enrolled > 0)
                 .map((c) => ({ label: c.title, value: c.seats.enrolled })),
         [myCourses]
-    );
-
-    const legendItems = useMemo(
-        () =>
-            pieData.map((d, i) => ({
-                label: d.label,
-                value: d.value,
-                color: SERIES[i % SERIES.length],
-            })),
-        [pieData]
     );
 
     const attendanceData = instructorCohorts.map((c) => ({
@@ -230,32 +213,20 @@ export default function InstructorDashboard() {
                         description="Share of your learners, by course"
                         className="lg:col-span-4"
                     >
-                        <div className="flex flex-col items-center gap-5 py-2">
+                        <div className="flex items-center justify-center py-4">
                             <PieChart
                                 data={pieData}
                                 hoveredIndex={hoveredSlice}
-                                innerRadius={55}
+                                // increased the size and reduced the thickness
+                                innerRadius={95}
                                 onHoverChange={setHoveredSlice}
-                                size={180}
+                                size={240}
                             >
                                 {pieData.map((_, i) => (
                                     <PieSlice index={i} key={i} />
                                 ))}
                                 <PieCenter defaultLabel="Learners enrolled" />
                             </PieChart>
-
-                            <Legend
-                                hoveredIndex={hoveredSlice}
-                                items={legendItems}
-                                onHoverChange={setHoveredSlice}
-                                className="flex-row flex-wrap justify-center gap-x-1 gap-y-0 w-full"
-                            >
-                                <LegendItem className="flex items-center gap-2">
-                                    <LegendMarker />
-                                    <LegendLabel />
-                                    <LegendValue />
-                                </LegendItem>
-                            </Legend>
                         </div>
                     </ChartCard>
 
@@ -276,8 +247,9 @@ export default function InstructorDashboard() {
                                                 ? 0
                                                 : (nextSession.presentCount / nextSession.totalStudents) * 100
                                         }
-                                        size={72}
-                                        stroke={7}
+                                        // Increase donut size and decrease stroke for thinner ring
+                                        size={88}
+                                        stroke={5}
                                         label="attendance"
                                     />
                                     <div className="min-w-0 space-y-0.5">
@@ -385,8 +357,8 @@ export default function InstructorDashboard() {
                         />
                         }
                     >
-                        <div className="h-[240px] w-full flex items-center justify-center">
-                            <RadarChart data={radarData} metrics={radarMetrics} size={220}>
+                        <div className="h-[280px] w-full flex items-center justify-center">
+                            <RadarChart data={radarData} metrics={radarMetrics} size={260}>
                                 <RadarGrid />
                                 <RadarAxis />
                                 <RadarLabels />

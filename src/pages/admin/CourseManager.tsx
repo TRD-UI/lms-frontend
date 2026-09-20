@@ -37,6 +37,7 @@ import { useActingUser } from "@/store/session";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as adminApi from "@/lib/api/admin";
 import { ReferenceTables } from "@/components/courses/ReferenceTables";
+import { ReferenceFormDialog } from "@/components/courses/ReferenceFormDialog";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,6 +51,7 @@ export default function CourseManager() {
 
     const [query, setQuery] = useState("");
     const [tab, setTab] = useState<"courses" | "waitlist" | "categories" | "venues">("courses");
+    const [referenceOpen, setReferenceOpen] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
     const queryClient = useQueryClient();
@@ -133,10 +135,10 @@ export default function CourseManager() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="Course Manager"
-                description="Define courses, capacity and fees, and control the waitlist."
+                description="Courses, capacity and fees, the waitlist, and the lists they draw on."
                 actions={
                     <div className="flex items-center gap-3">
-                        <div className="relative group w-full lg:w-64">
+                        {tab === "courses" && <div className="relative group w-full lg:w-64">
                             <Search01Icon
                                 size={18}
                                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors"
@@ -149,17 +151,25 @@ export default function CourseManager() {
                                 aria-label="Search courses"
                                 className="h-11 w-full pl-11 pr-4 rounded-xl bg-slate-100 border-none text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-400"
                             />
-                        </div>
-                        <Button
-                            onClick={() => {
-                                setEditing(null);
-                                setFormOpen(true);
-                            }}
-                            className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
-                        >
-                            <Add01Icon size={16} className="mr-1.5" />
-                            New course
-                        </Button>
+                        </div>}
+                        {/* The waitlist is populated by learners, so it has
+                            nothing for an admin to create. */}
+                        {tab !== "waitlist" && (
+                            <Button
+                                onClick={() => {
+                                    if (tab === "courses") {
+                                        setEditing(null);
+                                        setFormOpen(true);
+                                    } else {
+                                        setReferenceOpen(true);
+                                    }
+                                }}
+                                className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
+                            >
+                                <Add01Icon size={16} className="mr-1.5" />
+                                {tab === "courses" ? "New course" : tab === "categories" ? "Add category" : "Add venue"}
+                            </Button>
+                        )}
                     </div>
                 }
             />
@@ -201,9 +211,7 @@ export default function CourseManager() {
             </div>
 
             {tab === "categories" || tab === "venues" ? (
-                <div className="px-1 sm:px-2">
-                    <ReferenceTables kind={tab} />
-                </div>
+                <ReferenceTables kind={tab} />
             ) : tab === "courses" ? (
                 filtered.length === 0 ? (
                     <EmptyState
@@ -469,6 +477,12 @@ export default function CourseManager() {
                     </CardContent>
                 </Card>
             )}
+
+            <ReferenceFormDialog
+                open={referenceOpen}
+                onOpenChange={setReferenceOpen}
+                kind={tab === "venues" ? "venues" : "categories"}
+            />
 
             <CourseFormDialog
                 canAssignInstructor

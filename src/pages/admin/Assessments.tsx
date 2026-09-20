@@ -8,6 +8,7 @@ import {
     Task01Icon,
     UserMultiple02Icon,
     ViewIcon,
+    Alert02Icon,
 } from "hugeicons-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { RowActions } from "@/components/shared/RowActions";
@@ -111,6 +112,7 @@ export default function AdminAssessments() {
                     label="Courses without one"
                     value={String(totals.coursesWithout)}
                     hint="No assessment configured yet"
+                    icon={Alert02Icon}
                 />
                 </StatGrid>
             </div>
