@@ -279,7 +279,7 @@ export default function QuizResults() {
                     <div
                         key={g.question.id}
                         className={cn(
-                            "bg-white rounded-3xl border p-5 sm:p-7",
+                            "bg-white rounded-2xl sm:rounded-3xl border p-3.5 sm:p-7",
                             g.correct ? "border-slate-100" : "border-red-100"
                         )}
                     >

@@ -158,7 +158,6 @@ export default function InstructorDashboard() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title={`Welcome back, ${instructor.name.split(" ").slice(-1)[0]}`}
-                description="Your courses, learners and upcoming sessions at a glance."
                 actions={
                     <PageActions
                         mergedLabel="Actions"

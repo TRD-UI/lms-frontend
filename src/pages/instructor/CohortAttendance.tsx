@@ -42,6 +42,7 @@ import {
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { toast } from "sonner";
 import { useActingUser } from "@/store/session";
@@ -123,6 +124,8 @@ export default function CohortAttendance() {
         }
     };
 
+    const rowMenu = useRowMenu();
+
     const studentActions = (student: AttendanceRecord) => [
         {
             label: "Mark present",
@@ -154,11 +157,6 @@ export default function CohortAttendance() {
         <div className="flex flex-col gap-6 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title={selectedCohort ? selectedCohort.courseTitle : "Cohort Attendance"}
-                description={
-                    selectedCohort
-                        ? "Session attendance and subjective grading."
-                        : "Manage session attendance and subjective grading."
-                }
                 onBack={selectedCohort ? () => setSelectedCohort(null) : undefined}
                 backLabel="Back to cohorts"
             />
@@ -215,7 +213,11 @@ export default function CohortAttendance() {
                                         {selectedCohort.students.map((student) => {
                                             const StatusIcon = statusConfig[student.status].icon;
                                             return (
-                                                <TableRow key={student.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                <TableRow
+                                                    key={student.id}
+                                                    onClick={rowMenu.rowClick(`row:${student.id}`)}
+                                                    className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                                >
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
                                                             <Avatar className="h-8 w-8 border border-slate-100 rounded-full">
@@ -248,6 +250,7 @@ export default function CohortAttendance() {
                                                         <RowActions
                                                             label={`Actions for ${student.studentName}`}
                                                             actions={studentActions(student)}
+                                                            {...rowMenu.menu(`row:${student.id}`)}
                                                         />
                                                     </TableCell>
                                                 </TableRow>
@@ -261,7 +264,11 @@ export default function CohortAttendance() {
                                 {selectedCohort.students.map((student) => {
                                     const StatusIcon = statusConfig[student.status].icon;
                                     return (
-                                        <div key={student.id} className="flex items-center gap-2.5 px-3 py-2.5">
+                                        <div
+                                            key={student.id}
+                                            onClick={rowMenu.rowClick(`card:${student.id}`)}
+                                            className="flex items-center gap-2.5 px-3 py-2.5 active:bg-slate-50 transition-colors"
+                                        >
                                             <Avatar className="h-8 w-8 border border-slate-100 rounded-full shrink-0">
                                                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.studentName.split(" ")[0].toLowerCase()}`} />
                                                 <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-medium">
@@ -293,6 +300,7 @@ export default function CohortAttendance() {
                                             <RowActions
                                                 label={`Actions for ${student.studentName}`}
                                                 actions={studentActions(student)}
+                                                {...rowMenu.menu(`card:${student.id}`)}
                                             />
                                         </div>
                                     );

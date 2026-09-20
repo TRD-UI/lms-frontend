@@ -6,12 +6,9 @@ export default function Overview() {
     return (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center justify-between px-1 sm:px-2">
-                <div className="space-y-0.5 sm:space-y-1 min-w-0">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-800">Overview</h1>
-                    <p className="text-slate-400 font-medium text-xs sm:text-sm">
-                        Manage and track your learning progress and certifications.
-                    </p>
-                </div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-800">
+                    Overview
+                </h1>
             </div>
 
             <StatsGrid />

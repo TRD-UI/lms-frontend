@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
@@ -53,6 +54,7 @@ export default function CourseManager() {
     const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse, instructors, categories, venues } = useLms();
 
     const [query, setQuery] = useState("");
+    const rowMenu = useRowMenu();
     const [tab, setTab] = useState<
         "courses" | "applications" | "waitlist" | "categories" | "venues" | "institution"
     >("courses");
@@ -148,7 +150,6 @@ export default function CourseManager() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="Course Manager"
-                description="Courses, capacity and fees, the waitlist, and the lists they draw on."
                 search={
                     tab === "courses" ? (
                         <div className="relative group w-full lg:w-64">
@@ -279,7 +280,8 @@ export default function CourseManager() {
                                             return (
                                                 <TableRow
                                                     key={course.id}
-                                                    className="border-slate-50 hover:bg-slate-50/50 transition-colors"
+                                                    onClick={rowMenu.rowClick(course.id)}
+                                                    className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
                                                 >
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
@@ -319,6 +321,7 @@ export default function CourseManager() {
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <RowActions
+                                                            {...rowMenu.menu(course.id)}
                                                             label={`Actions for ${course.title}`}
                                                             actions={[
                                                                 {
@@ -433,7 +436,8 @@ export default function CourseManager() {
                                     {waitlistPage.pageRows.map((entry) => (
                                         <TableRow
                                             key={entry.id}
-                                            className="border-slate-50 hover:bg-slate-50/50 transition-colors"
+                                            onClick={rowMenu.rowClick(entry.id)}
+                                            className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
                                         >
                                             <TableCell className="text-sm font-medium text-slate-400 tabular-nums">
                                                 #{entry.position}
@@ -449,6 +453,7 @@ export default function CourseManager() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <RowActions
+                                                    {...rowMenu.menu(entry.id)}
                                                     label={`Actions for ${entry.studentName}`}
                                                     actions={[
                                                         {

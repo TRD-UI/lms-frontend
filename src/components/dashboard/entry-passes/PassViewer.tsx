@@ -15,6 +15,8 @@ import {
     Share01Icon,
     SquareLock02Icon
 } from "hugeicons-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { EntryPass } from "@/data/entry-passes";
 import { usePassQr } from "./use-pass-qr";
 
@@ -33,16 +35,55 @@ export function PassViewer({ pass, open, onOpenChange }: PassViewerProps) {
 
 function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: EntryPass }) {
     const { dataUrl, isLoading, withheldBecause } = usePassQr(pass.id, open);
+    const ticketRef = useRef<HTMLDivElement>(null);
+    const [saving, setSaving] = useState(false);
 
-    /* The QR is drawn locally, so "save" is just the data URL — no fetch. */
-    const handleDownload = () => {
-        if (!dataUrl) return;
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `${pass.eventTitle}_Pass.png`;
+    const save = (href: string) => {
+        const link = document.createElement("a");
+        link.href = href;
+        link.download = `${pass.eventTitle.replace(/[^\w\s-]/g, "")} Pass.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    /*
+     * Saves the whole ticket, not just the code. What gets shown at the door is
+     * the pass — venue, date, room, the code underneath — so a bare QR in the
+     * camera roll is missing everything the learner would need to check.
+     *
+     * html2canvas is ~200KB and only matters at the moment of saving, so it is
+     * loaded on demand rather than shipped with the page.
+     */
+    const handleDownload = async () => {
+        const node = ticketRef.current;
+        if (!node) return;
+
+        setSaving(true);
+        try {
+            const { default: html2canvas } = await import("html2canvas");
+            const canvas = await html2canvas(node, {
+                // Retina without letting a high-DPI desktop produce a huge file.
+                scale: Math.min(window.devicePixelRatio || 1, 3),
+                backgroundColor: null,
+                useCORS: true,
+                logging: false,
+                ignoreElements: (el) => el.hasAttribute("data-capture-ignore"),
+            });
+            save(canvas.toDataURL("image/png"));
+        } catch {
+            // Rather than leave them with nothing, save the code itself and say so.
+            if (dataUrl) {
+                save(dataUrl);
+                toast.info("Saved the QR code", {
+                    description: "The full pass image could not be generated on this device.",
+                });
+            } else {
+                toast.error("Could not save the pass");
+            }
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -55,7 +96,10 @@ function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: Entr
 
                 <div className="relative animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
                     {/* Ticket Design */}
-                    <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-slate-200">
+                    <div
+                        ref={ticketRef}
+                        className="bg-white rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-slate-200"
+                    >
                         {/* Top Section - Event Info */}
                         <div className="p-5 sm:p-8 bg-primary/5 border-b-2 border-dashed border-slate-200 relative">
                             {/* Decorative "Notches" for ticket look */}
@@ -125,14 +169,14 @@ function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: Entr
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-3 sm:gap-4 w-full">
+                            <div data-capture-ignore className="flex items-center gap-3 sm:gap-4 w-full">
                                 <Button
-                                    onClick={handleDownload}
-                                    disabled={!dataUrl}
+                                    onClick={() => void handleDownload()}
+                                    disabled={!dataUrl || saving}
                                     className="flex-1 h-10 sm:h-12 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shadow-lg shadow-primary/10"
                                 >
                                     <Download01Icon size={18} className="mr-2" />
-                                    Save Pass
+                                    {saving ? "Saving…" : "Save Pass"}
                                 </Button>
                                 <Button
                                     variant="outline"

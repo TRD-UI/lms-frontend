@@ -39,15 +39,10 @@ export default function MyLearning() {
         <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Tab Section & Header */}
             <div className="space-y-6 px-2">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-medium tracking-tight text-slate-900">
-                            {activeTab === 'my-courses' ? "My Learning" : "Explore Courses"}
-                        </h1>
-                        <p className="text-slate-500 font-medium text-sm">
-                            {activeTab === 'my-courses' ? "Continue your educational journey where you left off." : "Choose from our curated selection of premium educational paths."}
-                        </p>
-                    </div>
+                <div className="flex flex-col gap-4 lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-900">
+                        {activeTab === 'my-courses' ? "My Learning" : "Explore Courses"}
+                    </h1>
                     <div className="flex items-center gap-3">
                         <div className="relative group w-full lg:w-72">
                             <Search01Icon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />

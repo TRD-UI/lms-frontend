@@ -24,11 +24,13 @@ import {
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { toast } from "sonner";
 
 export default function SystemHealth() {
     const [activeTab, setActiveTab] = useState<"sync" | "audit">("sync");
+    const rowMenu = useRowMenu();
     const { data: syncLogs = [] } = useQuery({
         queryKey: ["sync-logs"],
         queryFn: adminApi.fetchSyncLogs,
@@ -166,7 +168,11 @@ export default function SystemHealth() {
                                     {syncPage.pageRows.map((log) => {
                                         const StatusIcon = syncStatusConfig[log.status].icon;
                                         return (
-                                            <TableRow key={log.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                            <TableRow
+                                                key={log.id}
+                                                onClick={rowMenu.rowClick(log.id)}
+                                                className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                            >
                                                 <TableCell className="text-sm font-medium text-slate-800">{log.instructorName}</TableCell>
                                                 <TableCell>
                                                     <Badge variant="secondary" className="bg-slate-50 text-slate-500 border-none text-[10px] font-medium rounded-full">
@@ -183,6 +189,7 @@ export default function SystemHealth() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <RowActions
+                                                        {...rowMenu.menu(log.id)}
                                                         label={`Actions for ${log.deviceId}`}
                                                         actions={[
                                                             {

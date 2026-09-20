@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
 import { MiniDonut } from "@/components/shared/MiniDonut";
@@ -75,6 +76,8 @@ export default function MyCourses() {
     );
 
     const { page, pageCount, pageRows, setPage, total, from, to } = usePagination(visible, 8);
+
+    const rowMenu = useRowMenu();
 
     const courseActions = (course: Course) => {
         const assessments = assessmentsForCourse(course.id);
@@ -164,7 +167,6 @@ export default function MyCourses() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="My Courses"
-                description={`${myCourses.length} ${myCourses.length === 1 ? "course" : "courses"} assigned to you.`}
                 search={
                     <div className="relative group w-full lg:w-64">
                         <Search01Icon
@@ -281,7 +283,11 @@ export default function MyCourses() {
                                             ? 0
                                             : Math.round((course.seats.enrolled / course.seats.total) * 100);
                                         return (
-                                            <TableRow key={course.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                            <TableRow
+                                                key={course.id}
+                                                onClick={rowMenu.rowClick(`row:${course.id}`)}
+                                                className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                            >
                                                 <TableCell>
                                                     <Link to={`/instructor/courses/${course.id}`} className="block min-w-0 group">
                                                         <span className="text-sm font-medium text-slate-800 group-hover:text-primary transition-colors">
@@ -316,6 +322,7 @@ export default function MyCourses() {
                                                     <RowActions
                                                         label={`Actions for ${course.title}`}
                                                         actions={courseActions(course)}
+                                                        {...rowMenu.menu(`row:${course.id}`)}
                                                     />
                                                 </TableCell>
                                             </TableRow>
@@ -335,7 +342,11 @@ export default function MyCourses() {
                                     ? 0
                                     : Math.round((course.seats.enrolled / course.seats.total) * 100);
                                 return (
-                                    <div key={course.id} className="flex items-center gap-3 p-4">
+                                    <div
+                                        key={course.id}
+                                        onClick={rowMenu.rowClick(`card:${course.id}`)}
+                                        className="flex items-center gap-3 p-4 active:bg-slate-50 transition-colors"
+                                    >
                                         <MiniDonut value={filled} size={40} label="of seats filled" />
                                         <Link to={`/instructor/courses/${course.id}`} className="min-w-0 flex-1">
                                             <span className="block text-sm font-medium text-slate-800 truncate">
@@ -354,6 +365,7 @@ export default function MyCourses() {
                                         <RowActions
                                             label={`Actions for ${course.title}`}
                                             actions={courseActions(course)}
+                                            {...rowMenu.menu(`card:${course.id}`)}
                                         />
                                     </div>
                                 );

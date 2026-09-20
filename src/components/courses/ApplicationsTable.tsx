@@ -122,7 +122,11 @@ export function ApplicationsTable({ className }: { className?: string }) {
                                 </TableHeader>
                                 <TableBody>
                                     {paged.pageRows.map((a) => (
-                                        <TableRow key={a.id} className="border-slate-100">
+                                        <TableRow
+                                            key={a.id}
+                                            onClick={() => setReviewing(a)}
+                                            className="border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                        >
                                             <TableCell className="py-4">
                                                 <span className="block text-sm font-medium text-slate-800">{a.studentName}</span>
                                                 <span className="block text-xs text-slate-400">{a.studentEmail}</span>

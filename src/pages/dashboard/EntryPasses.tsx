@@ -55,12 +55,12 @@ export default function EntryPasses() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 px-1 sm:px-2">
                 <div className="flex items-center gap-5">
                     <div className="space-y-0.5 sm:space-y-1">
-                        <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-900">Entry Passes</h1>
-                        <p className="text-slate-500 font-medium text-xs sm:text-sm">
-                            {lockedCount > 0
-                                ? `${lockedCount} ${lockedCount === 1 ? "pass is" : "passes are"} held until you clear the prerequisite test.`
-                                : "Access your physical workshop and event entry tickets."}
-                        </p>
+                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-900">Entry Passes</h1>
+                        {lockedCount > 0 && (
+                            <p className="text-slate-500 font-medium text-xs sm:text-sm">
+                                {`${lockedCount} ${lockedCount === 1 ? "pass is" : "passes are"} held until you clear the prerequisite test.`}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

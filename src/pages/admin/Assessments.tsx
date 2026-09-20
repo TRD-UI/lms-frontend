@@ -12,6 +12,7 @@ import {
 } from "hugeicons-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -37,6 +38,7 @@ export default function AdminAssessments() {
     const navigate = useNavigate();
     const { courses, assessments, attempts } = useLms();
     const [query, setQuery] = useState("");
+    const rowMenu = useRowMenu();
 
     const rows = useMemo(
         () =>
@@ -79,7 +81,6 @@ export default function AdminAssessments() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="Assessments"
-                description="Coverage and outcomes per course. Instructors author their own assessments."
                 search={
                     <div className="relative group w-full lg:w-72">
                         <Search01Icon
@@ -146,7 +147,8 @@ export default function AdminAssessments() {
                                     {pageRows.map((row) => (
                                         <TableRow
                                             key={row.course.id}
-                                            className="border-slate-50 hover:bg-slate-50/50 transition-colors"
+                                            onClick={rowMenu.rowClick(row.course.id)}
+                                            className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
                                         >
                                             <TableCell>
                                                 <Link to={`/admin/assessments/${row.course.id}`} className="min-w-0 block group">
@@ -195,6 +197,7 @@ export default function AdminAssessments() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <RowActions
+                                                    {...rowMenu.menu(row.course.id)}
                                                     label={`Actions for ${row.course.title}`}
                                                     actions={[
                                                         {

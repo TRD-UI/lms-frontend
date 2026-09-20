@@ -45,6 +45,7 @@ import {
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { toast } from "sonner";
 import type { AdminUser } from "@/data/admin-types";
@@ -59,6 +60,7 @@ export default function UserManagement() {
     const refresh = () => void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
 
     const [searchQuery, setSearchQuery] = useState("");
+    const rowMenu = useRowMenu();
     const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "instructor" | "student">("all");
     const [editUser, setEditUser] = useState<AdminUser | null>(null);
     const [selectedRole, setSelectedRole] = useState<string>("");
@@ -210,7 +212,11 @@ export default function UserManagement() {
                                     {userPage.pageRows.map((user) => {
                                         const StatusIcon = statusConfig[user.status].icon;
                                         return (
-                                            <TableRow key={user.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                            <TableRow
+                                                key={user.id}
+                                                onClick={rowMenu.rowClick(user.id)}
+                                                className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                            >
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-9 w-9 border border-slate-100 rounded-full">
@@ -240,6 +246,7 @@ export default function UserManagement() {
                                                 <TableCell className="text-sm text-slate-400">{user.joinDate}</TableCell>
                                                 <TableCell className="text-right">
                                                     <RowActions
+                                                        {...rowMenu.menu(user.id)}
                                                         label={`Actions for ${user.name}`}
                                                         actions={[
                                                             {

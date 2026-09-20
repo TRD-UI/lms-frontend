@@ -43,6 +43,12 @@ interface RowActionsProps {
     label?: string;
     align?: "start" | "end";
     className?: string;
+    /**
+     * Controlled open state, so a click anywhere on the row can raise the same
+     * menu the three dots do. Leave unset for the uncontrolled default.
+     */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -56,12 +62,14 @@ export function RowActions({
     label = "Row actions",
     align = "end",
     className,
+    open,
+    onOpenChange,
 }: RowActionsProps) {
     const [pending, setPending] = useState<RowAction | null>(null);
 
     return (
         <>
-            <DropdownMenu>
+            <DropdownMenu open={open} onOpenChange={onOpenChange}>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="ghost"

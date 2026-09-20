@@ -1,6 +1,7 @@
 import { Delete02Icon, Location01Icon, BookOpen01Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { EmptyState } from "@/components/shared/EmptyState";
 import {
     Table,
@@ -24,6 +25,7 @@ const HEAD = "text-[10px] font-medium text-slate-400 uppercase tracking-widest";
  */
 export function ReferenceTables({ kind }: { kind: "categories" | "venues" }) {
     const { categories, deleteCategory, venues, deleteVenue, courses, classSessions } = useLms();
+    const rowMenu = useRowMenu();
 
     const guard = async (action: () => Promise<void>, success: string) => {
         try {
@@ -61,7 +63,11 @@ export function ReferenceTables({ kind }: { kind: "categories" | "venues" }) {
                                 {categories.map((c) => {
                                     const inUse = courses.filter((x) => x.category === c).length;
                                     return (
-                                        <TableRow key={c} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                        <TableRow
+                                            key={c}
+                                            onClick={rowMenu.rowClick(`category:${c}`)}
+                                            className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                        >
                                             <TableCell className="text-sm font-medium text-slate-800">
                                                 <span className="flex items-center gap-2.5">
                                                     <BookOpen01Icon size={15} className="text-slate-300" />
@@ -71,6 +77,7 @@ export function ReferenceTables({ kind }: { kind: "categories" | "venues" }) {
                                             <TableCell className="text-sm text-slate-500 tabular-nums">{inUse}</TableCell>
                                             <TableCell className="text-right">
                                                 <RowActions
+                                                    {...rowMenu.menu(`category:${c}`)}
                                                     label={`Actions for ${c}`}
                                                     actions={[
                                                         {
@@ -127,7 +134,11 @@ export function ReferenceTables({ kind }: { kind: "categories" | "venues" }) {
                             {venues.map((v) => {
                                 const booked = classSessions.filter((s) => s.venue === v.name).length;
                                 return (
-                                    <TableRow key={v.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                    <TableRow
+                                        key={v.id}
+                                        onClick={rowMenu.rowClick(`venue:${v.id}`)}
+                                        className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                    >
                                         <TableCell className="text-sm font-medium text-slate-800">
                                             <span className="flex items-center gap-2.5">
                                                 <Location01Icon size={15} className="text-slate-300" />
@@ -138,6 +149,7 @@ export function ReferenceTables({ kind }: { kind: "categories" | "venues" }) {
                                         <TableCell className="text-sm text-slate-500 tabular-nums">{booked}</TableCell>
                                         <TableCell className="text-right">
                                             <RowActions
+                                                {...rowMenu.menu(`venue:${v.id}`)}
                                                 label={`Actions for ${v.name}`}
                                                 actions={[
                                                     {

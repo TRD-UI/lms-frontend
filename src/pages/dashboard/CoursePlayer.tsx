@@ -74,16 +74,28 @@ export default function CoursePlayer() {
             )}
 
             <div className="flex-1 flex flex-col min-w-0 relative">
-                {/* Mobile-only affordance for the drawer, since there is no header. */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsMobileSidebarOpen(true)}
-                    aria-label="Open lesson list"
-                    className="md:hidden absolute left-3 top-3 z-20 h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-slate-100 text-slate-500 shadow-sm"
-                >
-                    <Menu01Icon size={18} />
-                </Button>
+                {/* There is no header here, so the way back and the lesson
+                    list both live as floating controls over the content. */}
+                <div className="md:hidden absolute left-3 top-3 z-20 flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(-1)}
+                        aria-label="Go back"
+                        className="h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-slate-100 text-slate-500 shadow-sm"
+                    >
+                        <ArrowLeft01Icon size={18} />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsMobileSidebarOpen(true)}
+                        aria-label="Open lesson list"
+                        className="h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-slate-100 text-slate-500 shadow-sm"
+                    >
+                        <Menu01Icon size={18} />
+                    </Button>
+                </div>
 
                 <MediaViewer currentItem={currentItem} course={course} />
 

@@ -53,18 +53,38 @@ export function QuestionCard({
     };
 
     /**
-     * Control tint in review. `disabled` would grey the control out, but this is
-     * a results screen — the state has to stay legible, so opacity is restored
-     * and the colour is carried through to the border and the dot.
+     * Control tint in review.
+     *
+     * `disabled` would grey the control out, but this is a results screen — the
+     * state has to stay legible, so opacity is restored and the colour carries
+     * through. The shapes stay exactly as they behave during the quiz: a radio
+     * is a white circle with a coloured ring and a coloured dot, a checkbox is
+     * a filled box with a white tick. Previously both were given a solid
+     * background, which filled the radio's circle and hid the dot inside it,
+     * and put an emerald tick on an emerald box.
      */
-    const controlTone = (isCorrectOption: boolean, selected: boolean) =>
+    const reviewBase = "disabled:opacity-100 disabled:cursor-default";
+
+    const radioTone = (isCorrectOption: boolean, selected: boolean) =>
         review
             ? cn(
-                "disabled:opacity-100",
+                reviewBase,
                 isCorrectOption
-                    ? "border-emerald-500 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500 [&_svg]:fill-emerald-600 [&_svg]:text-emerald-600"
+                    ? "border-emerald-500 data-[state=checked]:border-emerald-500 [&_svg]:fill-emerald-600 [&_svg]:text-emerald-600"
                     : selected
-                        ? "border-red-500 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500 [&_svg]:fill-red-600 [&_svg]:text-red-600"
+                        ? "border-red-500 data-[state=checked]:border-red-500 [&_svg]:fill-red-600 [&_svg]:text-red-600"
+                        : "border-slate-300"
+            )
+            : undefined;
+
+    const checkboxTone = (isCorrectOption: boolean, selected: boolean) =>
+        review
+            ? cn(
+                reviewBase,
+                isCorrectOption
+                    ? "border-emerald-500 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-white"
+                    : selected
+                        ? "border-red-500 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-white"
                         : "border-slate-300"
             )
             : undefined;
@@ -114,7 +134,7 @@ export function QuestionCard({
                                     checked={selected}
                                     onCheckedChange={() => toggle(option.id)}
                                     disabled={review}
-                                    className={cn("mt-0.5", controlTone(isCorrectOption, selected))}
+                                    className={cn("mt-0.5", checkboxTone(isCorrectOption, selected))}
                                 />
                                 <span className="text-sm text-slate-700 font-medium leading-relaxed flex-1 min-w-0">
                                     {option.label}
@@ -137,7 +157,7 @@ export function QuestionCard({
                             <label key={option.id} className={rowClass(selected, isCorrectOption)}>
                                 <RadioGroupItem
                                     value={option.id}
-                                    className={cn("mt-0.5", controlTone(isCorrectOption, selected))}
+                                    className={cn("mt-0.5", radioTone(isCorrectOption, selected))}
                                 />
                                 <span className="text-sm text-slate-700 font-medium leading-relaxed flex-1 min-w-0">
                                     {option.label}

@@ -38,8 +38,7 @@ export default function Certificates() {
             <div className="space-y-4 sm:space-y-6 px-1 sm:px-2">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-0.5 sm:space-y-1">
-                        <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-900">My Certificates</h1>
-                        <p className="text-slate-500 font-medium text-xs sm:text-sm">View and manage your verified learning achievements.</p>
+                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-900">My Certificates</h1>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="relative group w-full lg:w-72">

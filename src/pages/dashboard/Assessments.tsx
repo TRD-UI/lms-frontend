@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import {
     Table,
@@ -94,6 +95,8 @@ export default function Assessments() {
             )
             : 0;
 
+    const rowMenu = useRowMenu();
+
     type Row = (typeof rows)[number];
 
     const rowActions = ({ assessment, course, best, left }: Row) => {
@@ -125,7 +128,6 @@ export default function Assessments() {
         <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="Assessments"
-                description="Prerequisite tests, module checkpoints and final exams for your courses."
                 search={
                     <div className="relative group w-full lg:w-72">
                         <Search01Icon
@@ -231,7 +233,8 @@ export default function Assessments() {
                                         return (
                                             <TableRow
                                                 key={assessment.id}
-                                                className="border-slate-50 hover:bg-slate-50/50 transition-colors"
+                                                onClick={rowMenu.rowClick(`row:${assessment.id}`)}
+                                                className="border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
                                             >
                                                 <TableCell>
                                                     <div className="min-w-0 space-y-0.5">
@@ -279,6 +282,7 @@ export default function Assessments() {
                                                     <RowActions
                                                         label={`Actions for ${assessment.title}`}
                                                         actions={rowActions(row)}
+                                                        {...rowMenu.menu(`row:${assessment.id}`)}
                                                     />
                                                 </TableCell>
                                             </TableRow>
@@ -294,7 +298,11 @@ export default function Assessments() {
                             {pageRows.map((row) => {
                                 const { assessment, course, best, left } = row;
                                 return (
-                                    <div key={assessment.id} className="flex items-start gap-3 p-4">
+                                    <div
+                                        key={assessment.id}
+                                        onClick={rowMenu.rowClick(`card:${assessment.id}`)}
+                                        className="flex items-start gap-3 p-4 active:bg-slate-50 transition-colors"
+                                    >
                                         <div className="min-w-0 flex-1 space-y-1.5">
                                             <span className="block text-sm font-medium text-slate-800">
                                                 {assessment.title}
@@ -327,6 +335,7 @@ export default function Assessments() {
                                         <RowActions
                                             label={`Actions for ${assessment.title}`}
                                             actions={rowActions(row)}
+                                            {...rowMenu.menu(`card:${assessment.id}`)}
                                         />
                                     </div>
                                 );

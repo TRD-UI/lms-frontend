@@ -153,7 +153,7 @@ export default function AccountSettings() {
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            <PageHeader title="Account settings" description="Your details, photo and password." />
+            <PageHeader title="Account settings" />
 
             <div className="px-1 sm:px-2">
                 <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-100">

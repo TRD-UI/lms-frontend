@@ -81,12 +81,9 @@ export default function QRScanner() {
         <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
             <div className="flex items-center justify-between px-2">
-                <div className="space-y-1">
-                    <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-800">QR Scanner</h1>
-                    <p className="text-slate-400 font-medium text-xs sm:text-sm">
-                        Validate student entry passes for physical sessions.
-                    </p>
-                </div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-800">
+                    QR Scanner
+                </h1>
             </div>
 
             <div className="grid gap-6 lg:gap-8 lg:grid-cols-5 px-2">
@@ -126,32 +123,38 @@ export default function QRScanner() {
                     {/* Last Result */}
                     {lastResult && (
                         <Card className={cn(
-                            "rounded-2xl shadow-none border transition-all animate-in fade-in zoom-in-95 duration-500",
-                            lastResult.valid ? "border-emerald-200 bg-emerald-50/30" : "border-red-200 bg-red-50/30"
+                            "rounded-2xl shadow-none border-0 sm:border transition-all animate-in fade-in zoom-in-95 duration-500",
+                            lastResult.valid
+                                ? "sm:border-emerald-200 bg-emerald-50/40 sm:bg-emerald-50/30"
+                                : "sm:border-red-200 bg-red-50/40 sm:bg-red-50/30"
                         )}>
-                            <CardContent className="p-6 space-y-4">
-                                <div className="flex items-center gap-3">
+                            <CardContent className="p-3.5 sm:p-6 space-y-3 sm:space-y-4">
+                                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                                     <div className={cn(
-                                        "h-12 w-12 rounded-full flex items-center justify-center",
+                                        "h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shrink-0",
                                         lastResult.valid ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-500"
                                     )}>
-                                        {lastResult.valid ? <CheckmarkCircle01Icon size={24} /> : <Cancel01Icon size={24} />}
+                                        {lastResult.valid ? <CheckmarkCircle01Icon size={22} /> : <Cancel01Icon size={22} />}
                                     </div>
-                                    <div>
-                                        <h3 className={cn("text-lg font-medium", lastResult.valid ? "text-emerald-800" : "text-red-800")}>
+                                    <div className="min-w-0">
+                                        <h3 className={cn("text-base sm:text-lg font-medium", lastResult.valid ? "text-emerald-800" : "text-red-800")}>
                                             {lastResult.valid ? "Verified" : "Denied"}
                                         </h3>
-                                        <p className="text-xs text-slate-400">{lastResult.passCode}</p>
+                                        <p className="text-xs text-slate-400 truncate">{lastResult.passCode}</p>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-500">Student</span>
-                                        <span className="font-medium text-slate-800">{lastResult.studentName}</span>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <div className="flex items-center justify-between gap-3 text-[13px] sm:text-sm">
+                                        <span className="text-slate-500 shrink-0">Student</span>
+                                        <span className="font-medium text-slate-800 truncate" title={lastResult.studentName}>
+                                            {lastResult.studentName}
+                                        </span>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-500">Course</span>
-                                        <span className="font-medium text-slate-800">{lastResult.courseName}</span>
+                                    <div className="flex items-center justify-between gap-3 text-[13px] sm:text-sm">
+                                        <span className="text-slate-500 shrink-0">Course</span>
+                                        <span className="font-medium text-slate-800 truncate" title={lastResult.courseName}>
+                                            {lastResult.courseName}
+                                        </span>
                                     </div>
                                 </div>
                                 {!lastResult.valid && (

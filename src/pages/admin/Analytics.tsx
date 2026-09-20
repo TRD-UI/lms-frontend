@@ -30,6 +30,7 @@ import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
 import { RowActions } from "@/components/shared/RowActions";
+import { useRowMenu } from "@/components/shared/use-row-menu";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { RetentionHeatGrid } from "@/components/admin/RetentionHeatGrid";
 import { DonutChart } from "@/components/admin/DonutChart";
@@ -64,6 +65,7 @@ import { toast } from "sonner";
  */
 export default function AdminAnalytics() {
     const [funnelHover, setFunnelHover] = useState<number | null>(null);
+    const rowMenu = useRowMenu();
 
     // Each panel is aggregated in Postgres; the client only renders the summary.
     const STALE = 60_000;
@@ -146,7 +148,6 @@ export default function AdminAnalytics() {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title="Global Analytics"
-                description="Revenue, learner flow and course health across the whole platform."
                 actions={
                     <Link to="/admin/assessments">
                         <Button
@@ -495,7 +496,11 @@ export default function AdminAnalytics() {
                             </TableHeader>
                             <TableBody>
                                 {txPage.pageRows.map((tx) => (
-                                    <TableRow key={tx.id} className="border-slate-50 hover:bg-slate-50/50">
+                                    <TableRow
+                                        key={tx.id}
+                                        onClick={rowMenu.rowClick(tx.id)}
+                                        className="border-slate-50 hover:bg-slate-50/50 cursor-pointer"
+                                    >
                                         <TableCell className="pl-5">
                                             <span className="text-xs font-medium text-slate-800 tabular-nums">
                                                 {tx.reference}
@@ -516,6 +521,7 @@ export default function AdminAnalytics() {
                                         </TableCell>
                                         <TableCell className="text-right pr-5">
                                             <RowActions
+                                                {...rowMenu.menu(tx.id)}
                                                 label={`Actions for ${tx.reference}`}
                                                 actions={[
                                                     {
