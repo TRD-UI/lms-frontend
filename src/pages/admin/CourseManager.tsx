@@ -149,9 +149,9 @@ export default function CourseManager() {
             <PageHeader
                 title="Course Manager"
                 description="Courses, capacity and fees, the waitlist, and the lists they draw on."
-                actions={
-                    <div className="flex items-center gap-3">
-                        {tab === "courses" && <div className="relative group w-full lg:w-64">
+                search={
+                    tab === "courses" ? (
+                        <div className="relative group w-full lg:w-64">
                             <Search01Icon
                                 size={18}
                                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors"
@@ -164,9 +164,13 @@ export default function CourseManager() {
                                 aria-label="Search courses"
                                 className="h-11 w-full pl-11 pr-4 rounded-xl bg-slate-100 border-none text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-400"
                             />
-                        </div>}
-                        {/* The waitlist is populated by learners, so it has
-                            nothing for an admin to create. */}
+                        </div>
+                    ) : null
+                }
+                actions={
+                    <div className="flex items-center gap-3">
+                        {/* The waitlist and the application queue are filled by
+                            learners, so they have nothing for an admin to create. */}
                         {tab !== "waitlist" && tab !== "institution" && tab !== "applications" && (
                             <Button
                                 onClick={() => {
@@ -177,10 +181,13 @@ export default function CourseManager() {
                                         setReferenceOpen(true);
                                     }
                                 }}
-                                className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
+                                aria-label={tab === "courses" ? "New course" : tab === "categories" ? "Add category" : "Add venue"}
+                                className="h-11 w-11 px-0 sm:w-auto sm:px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
                             >
-                                <Add01Icon size={16} className="mr-1.5" />
-                                {tab === "courses" ? "New course" : tab === "categories" ? "Add category" : "Add venue"}
+                                <Add01Icon size={16} className="sm:mr-1.5" />
+                                <span className="hidden sm:inline">
+                                    {tab === "courses" ? "New course" : tab === "categories" ? "Add category" : "Add venue"}
+                                </span>
                             </Button>
                         )}
                     </div>

@@ -80,7 +80,7 @@ export default function AdminAssessments() {
             <PageHeader
                 title="Assessments"
                 description="Coverage and outcomes per course. Instructors author their own assessments."
-                actions={
+                search={
                     <div className="relative group w-full lg:w-72">
                         <Search01Icon
                             size={18}

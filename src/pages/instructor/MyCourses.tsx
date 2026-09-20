@@ -165,34 +165,35 @@ export default function MyCourses() {
             <PageHeader
                 title="My Courses"
                 description={`${myCourses.length} ${myCourses.length === 1 ? "course" : "courses"} assigned to you.`}
+                search={
+                    <div className="relative group w-full lg:w-64">
+                        <Search01Icon
+                            size={18}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Search courses..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            aria-label="Search my courses"
+                            className="h-11 w-full pl-11 pr-4 rounded-xl bg-slate-100 border-none text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-400"
+                        />
+                    </div>
+                }
                 actions={
                     tab === "applications" ? null : (
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="relative group w-full lg:w-64">
-                            <Search01Icon
-                                size={18}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Search courses..."
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                aria-label="Search my courses"
-                                className="h-11 w-full pl-11 pr-4 rounded-xl bg-slate-100 border-none text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-400"
-                            />
-                        </div>
                         <Button
                             onClick={() => {
                                 setEditing(null);
                                 setFormOpen(true);
                             }}
-                            className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
+                            aria-label="New course"
+                            className="h-11 w-11 px-0 sm:w-auto sm:px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
                         >
-                            <Add01Icon size={16} className="mr-1.5" />
-                            New course
+                            <Add01Icon size={16} className="sm:mr-1.5" />
+                            <span className="hidden sm:inline">New course</span>
                         </Button>
-                    </div>
                     )
                 }
             />

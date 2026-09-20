@@ -31,6 +31,9 @@ interface PageActionsProps {
  *
  * One or two render as buttons. Beyond that they collapse into a single
  * "Create" dropdown, so a header never turns into a row of competing CTAs.
+ *
+ * On a phone the label is dropped and only the icon remains — a header has
+ * room for a title or a worded button, not both. Desktop is unchanged.
  */
 export function PageActions({
     actions,
@@ -53,15 +56,17 @@ export function PageActions({
                             onClick={action.onSelect}
                             disabled={action.disabled}
                             variant={primary ? "default" : "outline"}
+                            aria-label={action.label}
                             className={cn(
-                                "h-11 px-5 rounded-full font-medium",
+                                "h-11 rounded-full font-medium",
+                                Icon ? "w-11 px-0 sm:w-auto sm:px-5" : "px-5",
                                 primary
                                     ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/10"
                                     : "border-slate-200 text-slate-600"
                             )}
                         >
-                            {Icon && <Icon size={16} className="mr-1.5" />}
-                            {action.label}
+                            {Icon && <Icon size={16} className={cn(Icon && "sm:mr-1.5")} />}
+                            <span className={cn(Icon && "hidden sm:inline")}>{action.label}</span>
                         </Button>
                     );
                 })}
@@ -73,14 +78,15 @@ export function PageActions({
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
+                    aria-label={mergedLabel}
                     className={cn(
-                        "h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 gap-1.5",
+                        "h-11 w-11 px-0 sm:w-auto sm:px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 gap-0 sm:gap-1.5",
                         className
                     )}
                 >
                     <Add01Icon size={16} />
-                    {mergedLabel}
-                    <ArrowDown01Icon size={15} className="opacity-80" />
+                    <span className="hidden sm:inline">{mergedLabel}</span>
+                    <ArrowDown01Icon size={15} className="hidden sm:inline opacity-80" />
                 </Button>
             </DropdownMenuTrigger>
 

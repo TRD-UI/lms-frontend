@@ -10,8 +10,14 @@ export interface Crumb {
 interface PageHeaderProps {
     title: string;
     description?: string;
-    /** Trailing controls — search, primary action. */
+    /** Trailing controls — the page's primary action(s). Always sits on the title's line. */
     actions?: React.ReactNode;
+    /**
+     * A search field. Kept apart from `actions` because it needs room: it sits
+     * beside the actions on a wide screen and drops to its own row on a phone,
+     * where squeezing it next to the title would leave neither usable.
+     */
+    search?: React.ReactNode;
     /** Renders a breadcrumb trail above the title. */
     breadcrumbs?: Crumb[];
     /** Renders an icon-only back control to the left of the title. */
@@ -27,6 +33,7 @@ export function PageHeader({
     title,
     description,
     actions,
+    search,
     breadcrumbs,
     backTo,
     onBack,
@@ -58,8 +65,8 @@ export function PageHeader({
                 </nav>
             )}
 
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     {backTo ? (
                         <Link to={backTo} aria-label={backLabel} title={backLabel} className={backClass}>
                             <ArrowLeft01Icon size={18} />
@@ -70,16 +77,24 @@ export function PageHeader({
                         </button>
                     ) : null}
                     <div className="space-y-0.5 sm:space-y-1 min-w-0">
-                        <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-900 truncate">
+                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight text-slate-900 truncate">
                             {title}
                         </h1>
                         {description && (
-                            <p className="text-slate-500 font-medium text-xs sm:text-sm">{description}</p>
+                            <p className="text-slate-500 font-medium text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">
+                                {description}
+                            </p>
                         )}
                     </div>
                 </div>
-                {actions && <div className="flex items-center gap-3 shrink-0">{actions}</div>}
+
+                <div className="flex items-center gap-3 shrink-0">
+                    {search && <div className="hidden lg:block">{search}</div>}
+                    {actions}
+                </div>
             </div>
+
+            {search && <div className="lg:hidden">{search}</div>}
         </div>
     );
 }

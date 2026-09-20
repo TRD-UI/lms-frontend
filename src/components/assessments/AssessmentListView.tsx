@@ -109,10 +109,11 @@ export function AssessmentListView({
                                 setEditing(null);
                                 setFormOpen(true);
                             }}
-                            className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
+                            aria-label="New assessment"
+                            className="h-11 w-11 px-0 sm:w-auto sm:px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 shrink-0"
                         >
-                            <Add01Icon size={16} className="mr-1.5" />
-                            New assessment
+                            <Add01Icon size={16} className="sm:mr-1.5" />
+                            <span className="hidden sm:inline">New assessment</span>
                         </Button>
                     )
                 }

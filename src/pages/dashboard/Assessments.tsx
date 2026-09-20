@@ -99,7 +99,7 @@ export default function Assessments() {
             <PageHeader
                 title="Assessments"
                 description="Prerequisite tests, module checkpoints and final exams for your courses."
-                actions={
+                search={
                     <div className="relative group w-full lg:w-72">
                         <Search01Icon
                             size={18}
