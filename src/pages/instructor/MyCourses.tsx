@@ -18,6 +18,15 @@ import { RowActions } from "@/components/shared/RowActions";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
 import { Progress } from "@/components/ui/progress";
+import { TablePagination, usePagination } from "@/components/shared/TablePagination";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import {
     CourseFormDialog,
     draftToFees,
@@ -50,6 +59,8 @@ export default function MyCourses() {
             c.title.toLowerCase().includes(query.toLowerCase()) ||
             c.category.toLowerCase().includes(query.toLowerCase())
     );
+
+    const { page, pageCount, pageRows, setPage, total, from, to } = usePagination(visible, 8);
 
     const handleSubmit = (draft: CourseDraft) => {
         const shared = {
@@ -146,134 +157,123 @@ export default function MyCourses() {
                     className="mx-1 sm:mx-2"
                 />
             ) : (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 px-1 sm:px-2">
-                    {visible.map((course) => {
-                        const list = assessmentsForCourse(course.id);
-                        const fill =
-                            course.seats.total === 0
-                                ? 0
-                                : Math.round((course.seats.enrolled / course.seats.total) * 100);
+                <div className="px-1 sm:px-2">
+                    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-slate-100 hover:bg-transparent">
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Course</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Status</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest w-44">Seats</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Modules</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Assessments</TableHead>
+                                        <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {pageRows.map((course) => {
+                                        const assessments = assessmentsForCourse(course.id);
+                                        const lessons = course.modules.reduce((n, m) => n + m.items.length, 0);
+                                        const filled = course.seats.total === 0
+                                            ? 0
+                                            : Math.round((course.seats.enrolled / course.seats.total) * 100);
+                                        return (
+                                            <TableRow key={course.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                <TableCell>
+                                                    <Link to={`/instructor/courses/${course.id}`} className="block min-w-0 group">
+                                                        <span className="text-sm font-medium text-slate-800 group-hover:text-primary transition-colors">
+                                                            {course.title}
+                                                        </span>
+                                                        <p className="text-[11px] text-slate-400 font-medium truncate">
+                                                            {course.category} · {course.duration}
+                                                        </p>
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <StatusBadge tone={toneForStatus(course.status ?? "draft")}>
+                                                        {course.status ?? "draft"}
+                                                    </StatusBadge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="space-y-1 w-36">
+                                                        <div className="flex items-center justify-between text-[11px] font-medium">
+                                                            <span className="text-slate-400">
+                                                                {course.seats.enrolled} / {course.seats.total}
+                                                            </span>
+                                                            <span className="text-slate-400 tabular-nums">{filled}%</span>
+                                                        </div>
+                                                        <Progress value={filled} className="h-1.5" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-slate-500 tabular-nums">
+                                                    {course.modules.length}
+                                                    <span className="text-slate-300 text-xs"> · {lessons} lessons</span>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-slate-500 tabular-nums">
+                                                    {assessments.length}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <RowActions
+                                                        label={`Actions for ${course.title}`}
+                                                        actions={[
+                                                            {
+                                                                label: "Manage course",
+                                                                icon: ViewIcon,
+                                                                onSelect: () => navigate(`/instructor/courses/${course.id}`),
+                                                            },
+                                                            {
+                                                                label: "Edit settings",
+                                                                icon: Edit01Icon,
+                                                                onSelect: () => {
+                                                                    setEditing(course);
+                                                                    setFormOpen(true);
+                                                                },
+                                                            },
+                                                            {
+                                                                label: (course.status ?? "draft") === "published" ? "Unpublish" : "Publish",
+                                                                icon: Task01Icon,
+                                                                onSelect: () => {
+                                                                    const next = (course.status ?? "draft") === "published" ? "draft" : "published";
+                                                                    updateCourse(course.id, { status: next });
+                                                                    toast.success(next === "published" ? "Course published" : "Moved to draft");
+                                                                },
+                                                            },
+                                                            {
+                                                                label: "Delete course",
+                                                                icon: Delete02Icon,
+                                                                destructive: true,
+                                                                separatorBefore: true,
+                                                                onSelect: () => {
+                                                                    deleteCourse(course.id);
+                                                                    toast.success("Course deleted");
+                                                                },
+                                                                confirm: {
+                                                                    title: "Delete this course?",
+                                                                    description: `"${course.title}" and its ${assessments.length} assessments will be removed.`,
+                                                                    actionLabel: "Delete",
+                                                                },
+                                                            },
+                                                        ]}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
 
-                        return (
-                            <div
-                                key={course.id}
-                                className="group bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-4 transition-shadow hover:shadow-sm"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <Link to={`/instructor/courses/${course.id}`} className="min-w-0 space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest truncate">
-                                                {course.category}
-                                            </p>
-                                            <StatusBadge tone={toneForStatus(course.status ?? "published")}>
-                                                {course.status ?? "published"}
-                                            </StatusBadge>
-                                        </div>
-                                        <h3 className="text-base font-medium text-slate-900 leading-snug group-hover:text-primary transition-colors">
-                                            {course.title}
-                                        </h3>
-                                    </Link>
-
-                                    <RowActions
-                                        label={`Actions for ${course.title}`}
-                                        actions={[
-                                            {
-                                                label: "Open course",
-                                                icon: ViewIcon,
-                                                onSelect: () => navigate(`/instructor/courses/${course.id}`),
-                                            },
-                                            {
-                                                label: "Edit details",
-                                                icon: Edit01Icon,
-                                                onSelect: () => {
-                                                    setEditing(course);
-                                                    setFormOpen(true);
-                                                },
-                                            },
-                                            {
-                                                label: "Add assessment",
-                                                icon: Add01Icon,
-                                                onSelect: () => navigate(`/instructor/courses/${course.id}`),
-                                            },
-                                            {
-                                                label:
-                                                    (course.status ?? "published") === "published"
-                                                        ? "Move to draft"
-                                                        : "Publish course",
-                                                icon: Copy01Icon,
-                                                onSelect: () => {
-                                                    const next =
-                                                        (course.status ?? "published") === "published"
-                                                            ? "draft"
-                                                            : "published";
-                                                    updateCourse(course.id, { status: next });
-                                                    toast.success(
-                                                        next === "published" ? "Course published" : "Moved to draft"
-                                                    );
-                                                },
-                                            },
-                                            {
-                                                label: "Delete course",
-                                                icon: Delete02Icon,
-                                                destructive: true,
-                                                separatorBefore: true,
-                                                onSelect: () => {
-                                                    deleteCourse(course.id);
-                                                    toast.success("Course deleted", {
-                                                        description: `"${course.title}" and its ${list.length} assessments were removed.`,
-                                                    });
-                                                },
-                                                confirm: {
-                                                    title: "Delete this course?",
-                                                    description: `"${course.title}", its ${course.modules.length} modules and ${list.length} assessments will be removed.`,
-                                                    actionLabel: "Delete",
-                                                },
-                                            },
-                                        ]}
-                                    />
-                                </div>
-
-                                <p className="text-xs text-slate-500 font-normal leading-relaxed line-clamp-2 min-h-[2rem]">
-                                    {course.description || "No description yet."}
-                                </p>
-
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-[11px] font-medium">
-                                        <span className="text-slate-400">Seats filled</span>
-                                        <span className="text-slate-900 tabular-nums">
-                                            {course.seats.enrolled} / {course.seats.total}
-                                        </span>
-                                    </div>
-                                    <Progress value={fill} className="h-1.5 bg-slate-100" />
-                                </div>
-
-                                <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-50 text-[11px] font-medium text-slate-400">
-                                    <span className="flex items-center gap-1">
-                                        <BookOpen01Icon size={12} />
-                                        {course.modules.length} modules
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Task01Icon size={12} />
-                                        {list.length} assessments
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <UserMultiple02Icon size={12} />
-                                        {course.seats.enrolled}
-                                    </span>
-                                </div>
-
-                                <Link to={`/instructor/courses/${course.id}`} className="mt-auto">
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full h-10 rounded-xl text-primary hover:bg-primary/5 font-medium text-sm justify-between px-3"
-                                    >
-                                        Manage course
-                                        <ArrowRight01Icon size={16} />
-                                    </Button>
-                                </Link>
-                            </div>
-                        );
-                    })}
+                        <TablePagination
+                            page={page}
+                            pageCount={pageCount}
+                            from={from}
+                            to={to}
+                            total={total}
+                            onPageChange={setPage}
+                            label="courses"
+                        />
+                    </div>
                 </div>
             )}
 

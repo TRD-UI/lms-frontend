@@ -29,10 +29,8 @@ export function UserDropdown() {
 
     const handleLogout = async () => {
         setLogoutOpen(false);
-        const role = student?.role;
         await signOut();
-        // Staff sign back in on their own surface.
-        navigate(role === "student" ? "/login" : "/staff-login", { replace: true });
+        navigate("/login", { replace: true });
     };
 
     // The dropdown only ever renders inside a guarded portal shell.

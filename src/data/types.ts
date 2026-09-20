@@ -14,6 +14,8 @@ export interface ModuleItem {
     url?: string;
     /** Required when `type` is 'quiz' — points at an Assessment. */
     assessmentId?: string;
+    /** Sanitised rich text shown under the media in the player. */
+    notes?: string;
 }
 
 export interface CourseModule {

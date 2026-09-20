@@ -448,6 +448,7 @@ export default function CourseManager() {
             )}
 
             <CourseFormDialog
+                canAssignInstructor
                 open={formOpen}
                 onOpenChange={(o) => {
                     setFormOpen(o);

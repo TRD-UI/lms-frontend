@@ -37,7 +37,7 @@ export function RequireRole({
 
     if (status === "anonymous" || !user) {
         // Staff land on the staff form; everyone else on the learner one.
-        const target = allowed.includes("student") ? "/login" : "/staff-login";
+        const target = allowed.includes("student") ? "/login" : "/login";
         return <Navigate to={target} replace state={{ from: location.pathname + location.search }} />;
     }
 

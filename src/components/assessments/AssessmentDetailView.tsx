@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader, type Crumb } from "@/components/shared/PageHeader";
 import { RowActions } from "@/components/shared/RowActions";
+import { PageActions } from "@/components/shared/PageActions";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
@@ -119,44 +120,30 @@ export function AssessmentDetailView({
                 breadcrumbs={breadcrumbs}
                 actions={
                     canEdit ? (
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={togglePublish}
-                                className="h-11 px-5 rounded-full border-slate-200 text-slate-600 font-medium"
-                            >
-                                {assessment.status === "published" ? "Unpublish" : "Publish"}
-                            </Button>
-                            <Button
-                                onClick={() => setEditOpen(true)}
-                                className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
-                            >
-                                <Edit01Icon size={16} className="mr-1.5" />
-                                Settings
-                            </Button>
-                            <RowActions
-                                label={`More actions for ${assessment.title}`}
-                                actions={[
-                                    {
-                                        label: "Delete assessment",
-                                        icon: Delete02Icon,
-                                        destructive: true,
-                                        onSelect: () => {
-                                            deleteAssessment(assessment.id);
-                                            toast.success("Assessment deleted", {
-                                                description: `"${assessment.title}" was removed from ${course.title}.`,
-                                            });
-                                            onDeleted();
-                                        },
-                                        confirm: {
-                                            title: "Delete this assessment?",
-                                            description: `"${assessment.title}" and its ${assessment.questions.length} questions will be removed. Attempt history is kept for reporting.`,
-                                            actionLabel: "Delete",
-                                        },
+                        <PageActions
+                            mergedLabel="Manage"
+                            actions={[
+                                {
+                                    label: assessment.status === "published" ? "Unpublish" : "Publish",
+                                    icon: Task01Icon,
+                                    onSelect: togglePublish,
+                                },
+                                { label: "Edit settings", icon: Edit01Icon, onSelect: () => setEditOpen(true) },
+                                { label: "Add question", icon: Add01Icon, onSelect: () => { setEditingQuestion(null); setQuestionOpen(true); } },
+                                {
+                                    label: "Delete assessment",
+                                    icon: Delete02Icon,
+                                    separatorBefore: true,
+                                    onSelect: () => {
+                                        deleteAssessment(assessment.id);
+                                        toast.success("Assessment deleted", {
+                                            description: `"${assessment.title}" was removed from ${course.title}.`,
+                                        });
+                                        onDeleted();
                                     },
-                                ]}
-                            />
-                        </div>
+                                },
+                            ]}
+                        />
                     ) : undefined
                 }
             />
@@ -285,119 +272,103 @@ export function AssessmentDetailView({
                             }
                         />
                     ) : (
-                        <div className="space-y-2">
-                            {assessment.questions.map((question, i) => (
-                                <div
-                                    key={question.id}
-                                    className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 flex items-start gap-4"
-                                >
-                                    <span className="h-8 w-8 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium flex items-center justify-center shrink-0 mt-0.5">
-                                        {i + 1}
-                                    </span>
-
-                                    <div className="flex-1 min-w-0 space-y-2.5">
-                                        <p className="text-sm font-medium text-slate-800 leading-snug">
-                                            {question.prompt}
-                                        </p>
-
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {question.options.map((o) => {
-                                                const correct = question.correctOptionIds.includes(o.id);
-                                                return (
-                                                    <span
-                                                        key={o.id}
-                                                        className={cn(
-                                                            "inline-flex items-center gap-1 text-[11px] font-normal rounded-lg px-2 py-1 border",
-                                                            correct
-                                                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                                                : "border-slate-100 bg-slate-50 text-slate-500"
-                                                        )}
-                                                    >
-                                                        {correct ? (
-                                                            <CheckmarkCircle01Icon size={11} />
-                                                        ) : (
-                                                            <span className="font-medium">{o.id.toUpperCase()}</span>
-                                                        )}
-                                                        {o.label}
-                                                    </span>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span
-                                                className={cn(
-                                                    "text-[10px] font-medium rounded-full px-2 py-0.5 capitalize",
-                                                    DIFFICULTY_TONE[question.difficulty]
-                                                )}
-                                            >
-                                                {question.difficulty}
-                                            </span>
-                                            <span className="text-[10px] font-medium text-slate-400">
-                                                {question.points} {question.points === 1 ? "point" : "points"}
-                                            </span>
-                                            <span className="text-[10px] font-medium text-slate-400 capitalize">
-                                                {question.type === "boolean" ? "true / false" : question.type} choice
-                                            </span>
-                                            {question.tags.map((t) => (
-                                                <span
-                                                    key={t}
-                                                    className="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5"
-                                                >
-                                                    {t}
-                                                </span>
-                                            ))}
-                                            {question.remedialModuleId && (
-                                                <span className="text-[10px] font-medium text-primary bg-accent/30 rounded-full px-2 py-0.5">
-                                                    ↻{" "}
-                                                    {course.modules.find((m) => m.id === question.remedialModuleId)
-                                                        ?.title ?? question.remedialModuleId}
-                                                </span>
+                        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="border-slate-100 hover:bg-transparent">
+                                            <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest w-12">#</TableHead>
+                                            <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Question</TableHead>
+                                            <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Type</TableHead>
+                                            <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Answer</TableHead>
+                                            <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Points</TableHead>
+                                            <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Revision</TableHead>
+                                            {canEdit && (
+                                                <TableHead className="text-[10px] font-medium text-slate-400 uppercase tracking-widest text-right">Actions</TableHead>
                                             )}
-                                        </div>
-                                    </div>
-
-                                    {canEdit && (
-                                        <RowActions
-                                            label={`Actions for question ${i + 1}`}
-                                            actions={[
-                                                {
-                                                    label: "Edit question",
-                                                    icon: Edit01Icon,
-                                                    onSelect: () => {
-                                                        setEditingQuestion(question);
-                                                        setQuestionOpen(true);
-                                                    },
-                                                },
-                                                {
-                                                    label: "Duplicate",
-                                                    icon: Copy01Icon,
-                                                    onSelect: () => {
-                                                        const { id: _id, ...rest } = question;
-                                                        addQuestion(assessment.id, rest);
-                                                        toast.success("Question duplicated");
-                                                    },
-                                                },
-                                                {
-                                                    label: "Delete question",
-                                                    icon: Delete02Icon,
-                                                    destructive: true,
-                                                    separatorBefore: true,
-                                                    onSelect: () => {
-                                                        deleteQuestion(assessment.id, question.id);
-                                                        toast.success("Question removed");
-                                                    },
-                                                    confirm: {
-                                                        title: "Delete this question?",
-                                                        description: "It will be removed from the assessment immediately.",
-                                                        actionLabel: "Delete",
-                                                    },
-                                                },
-                                            ]}
-                                        />
-                                    )}
-                                </div>
-                            ))}
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {assessment.questions.map((question, i) => {
+                                            const answers = question.options.filter((o) =>
+                                                question.correctOptionIds.includes(o.id)
+                                            );
+                                            const remedial = course.modules.find(
+                                                (m) => m.id === question.remedialModuleId
+                                            );
+                                            return (
+                                                <TableRow key={question.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                    <TableCell className="text-xs font-medium text-slate-400 tabular-nums">
+                                                        {i + 1}
+                                                    </TableCell>
+                                                    <TableCell className="max-w-md">
+                                                        <p className="text-sm font-medium text-slate-800 leading-snug">
+                                                            {question.prompt}
+                                                        </p>
+                                                        <p className="text-[11px] text-slate-400 font-medium truncate">
+                                                            {question.options.length} options
+                                                        </p>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-slate-500 capitalize whitespace-nowrap">
+                                                        {question.type === "boolean" ? "True / false" : question.type}
+                                                    </TableCell>
+                                                    <TableCell className="max-w-[16rem]">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {answers.map((o) => (
+                                                                <span
+                                                                    key={o.id}
+                                                                    className="inline-flex items-center gap-1 text-[11px] font-normal rounded-lg px-2 py-0.5 border border-emerald-200 bg-emerald-50 text-emerald-700"
+                                                                >
+                                                                    <CheckmarkCircle01Icon size={11} />
+                                                                    {o.label}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-sm text-slate-500 tabular-nums">
+                                                        {question.points}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-slate-500 max-w-[12rem] truncate">
+                                                        {remedial ? remedial.title : <span className="text-slate-300">—</span>}
+                                                    </TableCell>
+                                                    {canEdit && (
+                                                        <TableCell className="text-right">
+                                                            <RowActions
+                                                                label={`Actions for question ${i + 1}`}
+                                                                actions={[
+                                                                    {
+                                                                        label: "Edit question",
+                                                                        icon: Edit01Icon,
+                                                                        onSelect: () => {
+                                                                            setEditingQuestion(question);
+                                                                            setQuestionOpen(true);
+                                                                        },
+                                                                    },
+                                                                    {
+                                                                        label: "Delete question",
+                                                                        icon: Delete02Icon,
+                                                                        destructive: true,
+                                                                        separatorBefore: true,
+                                                                        onSelect: () => {
+                                                                            deleteQuestion(assessment.id, question.id);
+                                                                            toast.success("Question deleted");
+                                                                        },
+                                                                        confirm: {
+                                                                            title: "Delete this question?",
+                                                                            description: "It will be removed from the assessment.",
+                                                                            actionLabel: "Delete",
+                                                                        },
+                                                                    },
+                                                                ]}
+                                                            />
+                                                        </TableCell>
+                                                    )}
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     )}
                 </div>

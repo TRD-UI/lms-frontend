@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowRight01Icon,
     BookOpen01Icon,
@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { PageActions } from "@/components/shared/PageActions";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -43,6 +44,7 @@ import { SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "
  * learners enrolled on them, their assessments and their session attendance.
  */
 export default function InstructorDashboard() {
+    const navigate = useNavigate();
     const instructor = useActingUser("instructor");
     const { coursesByInstructor, assessmentsForCourse, attemptsForAssessment } = useLms();
 
@@ -135,23 +137,12 @@ export default function InstructorDashboard() {
                 title={`Welcome back, ${instructor.name.split(" ").slice(-1)[0]}`}
                 description="Your courses, learners and upcoming sessions at a glance."
                 actions={
-                    <div className="flex items-center gap-2">
-                        <Link to="/instructor/scanner">
-                            <Button
-                                variant="outline"
-                                className="h-11 px-5 rounded-full border-slate-200 text-slate-600 font-medium"
-                            >
-                                <QrCode01Icon size={16} className="mr-1.5" />
-                                Scan passes
-                            </Button>
-                        </Link>
-                        <Link to="/instructor/courses">
-                            <Button className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10">
-                                My courses
-                                <ArrowRight01Icon size={16} className="ml-1.5" />
-                            </Button>
-                        </Link>
-                    </div>
+                    <PageActions
+                        actions={[
+                            { label: "Scan passes", icon: QrCode01Icon, onSelect: () => navigate("/instructor/scanner") },
+                            { label: "My courses", icon: BookOpen01Icon, onSelect: () => navigate("/instructor/courses") },
+                        ]}
+                    />
                 }
             />
 

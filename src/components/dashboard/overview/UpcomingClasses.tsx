@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Calendar03Icon, ArrowRight01Icon, Location01Icon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
 import { useLms } from "@/store/lms-store";
 import { purchasedCourseIds } from "@/data/courses";
 import { formatSessionDate, formatSessionTime, toDateKey } from "@/data/classes";
@@ -13,7 +14,7 @@ import { formatSessionDate, formatSessionTime, toDateKey } from "@/data/classes"
  * enrolled on. "Schedule" opens the full calendar.
  */
 export function UpcomingClasses() {
-    const navigate = useNavigate();
+    const [scheduleOpen, setScheduleOpen] = useState(false);
     const { sessionsForCourses, getCourse } = useLms();
 
     const today = toDateKey(new Date());
@@ -27,7 +28,7 @@ export function UpcomingClasses() {
                 <h2 className="text-xl font-medium text-slate-800">Upcoming Classes</h2>
                 <Button
                     variant="link"
-                    onClick={() => navigate("/dashboard/schedule")}
+                    onClick={() => setScheduleOpen(true)}
                     className="text-primary font-medium text-xs p-0"
                 >
                     Schedule
@@ -45,9 +46,9 @@ export function UpcomingClasses() {
                 <div className="space-y-1">
                     {upcoming.map((session, index) => (
                         <div key={session.id}>
-                            <Link
-                                to="/dashboard/schedule"
-                                className="group flex items-center justify-between py-4 hover:bg-slate-50/50 px-2 rounded-xl transition-colors text-left"
+                            <button
+                                onClick={() => setScheduleOpen(true)}
+                                className="w-full group flex items-center justify-between py-4 hover:bg-slate-50/50 px-2 rounded-xl transition-colors text-left"
                             >
                                 <div className="flex items-center gap-4 min-w-0">
                                     <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
@@ -72,12 +73,14 @@ export function UpcomingClasses() {
                                     size={16}
                                     className="text-slate-200 group-hover:text-primary transition-colors shrink-0"
                                 />
-                            </Link>
+                            </button>
                             {index < upcoming.length - 1 && <Separator className="bg-slate-100" />}
                         </div>
                     ))}
                 </div>
             )}
+
+            <ScheduleDialog open={scheduleOpen} onOpenChange={setScheduleOpen} />
         </div>
     );
 }

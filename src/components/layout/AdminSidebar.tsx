@@ -54,7 +54,7 @@ export function AdminSidebar() {
     const handleLogout = async () => {
         setLogoutOpen(false);
         await signOut();
-        navigate("/staff-login", { replace: true });
+        navigate("/login", { replace: true });
     };
 
     return (

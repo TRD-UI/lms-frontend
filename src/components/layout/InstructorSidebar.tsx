@@ -1,4 +1,5 @@
 import {
+    Home01Icon,
     Calendar03Icon,
     QrCode01Icon,
     UserGroupIcon,
@@ -31,7 +32,7 @@ import { useSession } from "@/store/session";
 import { useState } from "react";
 
 const items = [
-    { title: "Home", url: "/instructor", icon: Analytics01Icon },
+    { title: "Home", url: "/instructor", icon: Home01Icon },
     { title: "Courses", url: "/instructor/courses", icon: BookOpen01Icon },
     { title: "Classes", url: "/instructor/classes", icon: Calendar03Icon },
     { title: "Scanner", url: "/instructor/scanner", icon: QrCode01Icon },
@@ -52,7 +53,7 @@ export function InstructorSidebar() {
     const handleLogout = async () => {
         setLogoutOpen(false);
         await signOut();
-        navigate("/staff-login", { replace: true });
+        navigate("/login", { replace: true });
     };
 
     return (

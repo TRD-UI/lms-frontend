@@ -51,30 +51,15 @@ export default function InstructorCourseDetail() {
         { key: "assessments", label: "Assessments", count: assessmentCount },
     ];
 
-    // The assessment tab brings its own header and breadcrumbs.
-    if (tab === "assessments") {
-        return (
-            <div className="flex flex-col gap-4">
-                <Tabs tab={tab} setTab={setTab} tabs={TABS} />
-                <AssessmentListView
-                    course={course}
-                    authorName={instructor.name}
-                    backTo="/instructor/courses"
-                    detailBase={`/instructor/courses/${course.id}`}
-                    breadcrumbs={[
-                        { label: "My Courses", to: "/instructor/courses" },
-                        { label: course.title },
-                    ]}
-                />
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <PageHeader
                 title={course.title}
-                description="Build the curriculum learners work through in the player."
+                description={
+                    tab === "content"
+                        ? "Build the curriculum learners work through in the player."
+                        : `${assessmentCount} ${assessmentCount === 1 ? "assessment" : "assessments"} · ${course.seats.enrolled} enrolled`
+                }
                 backTo="/instructor/courses"
                 backLabel="My courses"
                 breadcrumbs={[
@@ -82,10 +67,22 @@ export default function InstructorCourseDetail() {
                     { label: course.title },
                 ]}
             />
+
             <Tabs tab={tab} setTab={setTab} tabs={TABS} />
-            <div className="px-1 sm:px-2">
-                <CourseContentEditor course={course} />
-            </div>
+
+            {tab === "content" ? (
+                <div className="px-1 sm:px-2">
+                    <CourseContentEditor course={course} />
+                </div>
+            ) : (
+                <AssessmentListView
+                    embedded
+                    course={course}
+                    authorName={instructor.name}
+                    detailBase={`/instructor/courses/${course.id}`}
+                    breadcrumbs={[]}
+                />
+            )}
         </div>
     );
 }

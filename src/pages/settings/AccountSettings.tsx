@@ -156,7 +156,7 @@ export default function AccountSettings() {
             <PageHeader title="Account settings" description="Your details, photo and password." />
 
             <div className="px-1 sm:px-2">
-                <div className="flex items-center justify-center gap-6 sm:gap-8 border-b border-slate-100">
+                <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-100">
                     {TABS.map(({ key, label }) => (
                         <button
                             key={key}

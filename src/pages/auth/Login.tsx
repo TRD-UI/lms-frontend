@@ -7,10 +7,16 @@ import { describeError } from "@/lib/supabase";
 import { toast } from "sonner";
 
 
+const HOME_FOR = {
+    student: "/dashboard",
+    instructor: "/instructor",
+    admin: "/admin",
+} as const;
+
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { signIn, signOut } = useSession();
+    const { signIn } = useSession();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -27,16 +33,12 @@ export default function Login() {
         try {
             const user = await signIn(email, password);
 
-            // The two sign-in surfaces stay separate: staff belong on
-            // /staff-login, which routes them to the right portal.
-            if (user.role !== "student") {
-                await signOut();
-                setError("This is a staff account. Use the staff sign-in page.");
-                return;
-            }
-
+            // One form for everyone. The account's role decides the portal —
+            // splitting this in two only duplicated the form and the redirect,
+            // and hiding /admin behind a second URL was never a security
+            // boundary; RLS is.
             toast.success(`Welcome back, ${user.name.split(" ")[0]}`);
-            navigate(from ?? "/dashboard", { replace: true });
+            navigate(from ?? HOME_FOR[user.role], { replace: true });
         } catch (err) {
             setError(describeError(err as { message?: string }));
         } finally {
@@ -48,7 +50,7 @@ export default function Login() {
         <div className="w-full space-y-8">
             <div className="space-y-1">
                 <h1 className="text-2xl font-medium text-slate-900">Welcome back</h1>
-                <p className="text-sm text-slate-500 font-normal">Sign in to access your learning dashboard.</p>
+                <p className="text-sm text-slate-500 font-normal">Sign in to your account.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">

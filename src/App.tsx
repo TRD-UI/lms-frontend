@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SessionProvider } from "@/store/session";
 import { LmsProvider } from "@/store/lms-store";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
@@ -20,7 +20,6 @@ import CoursePlayer from "@/pages/dashboard/CoursePlayer";
 import StudentAssessments from "@/pages/dashboard/Assessments";
 import QuizRunner from "@/pages/dashboard/QuizRunner";
 import QuizResults from "@/pages/dashboard/QuizResults";
-import Schedule from "@/pages/dashboard/Schedule";
 
 // Admin
 import Analytics from "@/pages/admin/Analytics";
@@ -44,7 +43,6 @@ import InstructorClasses from "@/pages/instructor/Classes";
 // Auth & public
 import Login from "@/pages/auth/Login";
 import ResetPassword from "@/pages/auth/ResetPassword";
-import StaffLogin from "@/pages/auth/StaffLogin";
 import Signup from "@/pages/auth/Signup";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import LandingPage from "@/pages/LandingPage";
@@ -70,7 +68,8 @@ const App = () => (
 
               {/* Auth Routes */}
               <Route path="/login" element={<RedirectIfAuthenticated><AuthLayout><Login /></AuthLayout></RedirectIfAuthenticated>} />
-              <Route path="/staff-login" element={<RedirectIfAuthenticated><AuthLayout><StaffLogin /></AuthLayout></RedirectIfAuthenticated>} />
+              {/* Retired in favour of a single login; kept so old links still land. */}
+              <Route path="/staff-login" element={<Navigate to="/login" replace />} />
               <Route path="/signup" element={<RedirectIfAuthenticated><AuthLayout><Signup /></AuthLayout></RedirectIfAuthenticated>} />
               <Route path="/forgot-password" element={<RedirectIfAuthenticated><AuthLayout><ForgotPassword /></AuthLayout></RedirectIfAuthenticated>} />
               {/* Not wrapped: arriving here already carries a recovery session. */}
@@ -87,7 +86,6 @@ const App = () => (
                 <Route path="assessments/:assessmentId/result/:attemptId" element={<QuizResults />} />
                 <Route path="passes" element={<EntryPasses />} />
                 <Route path="certificates" element={<Certificates />} />
-                <Route path="schedule" element={<Schedule />} />
                 <Route path="settings" element={<AccountSettings />} />
               </Route>
 

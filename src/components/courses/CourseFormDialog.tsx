@@ -93,10 +93,21 @@ interface CourseFormDialogProps {
     /** Omit to create. */
     course?: Course | null;
     onSubmit: (draft: CourseDraft) => void;
+    /**
+     * Only an admin reassigns ownership. An instructor creating their own
+     * course is implicitly its instructor, so the picker is hidden for them.
+     */
+    canAssignInstructor?: boolean;
 }
 
 /** Create / edit a course. */
-export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: CourseFormDialogProps) {
+export function CourseFormDialog({
+    open,
+    onOpenChange,
+    course,
+    onSubmit,
+    canAssignInstructor = false,
+}: CourseFormDialogProps) {
     const isEdit = Boolean(course);
     const { categories, venues, instructors } = useLms();
     const [draft, setDraft] = useState<CourseDraft>(EMPTY);
@@ -235,7 +246,7 @@ export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: Cours
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className={cn("grid gap-3", canAssignInstructor ? "grid-cols-2" : "grid-cols-1")}>
                         <Field label="Venue" htmlFor="course-location">
                             <Select value={draft.location} onValueChange={(v) => set("location", v)}>
                                 <SelectTrigger id="course-location" className="h-11 rounded-xl bg-slate-50 border-slate-200 text-sm">
@@ -257,7 +268,7 @@ export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: Cours
                         {/* Assigning here is what puts the course on that
                             instructor's dashboard and lets them author its
                             modules and assessments. */}
-                        <Field label="Instructor" htmlFor="course-instructor">
+                        {canAssignInstructor && <Field label="Instructor" htmlFor="course-instructor">
                             <Select
                                 value={draft.instructorId || "unassigned"}
                                 onValueChange={(v) => set("instructorId", v === "unassigned" ? "" : v)}
@@ -274,7 +285,7 @@ export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: Cours
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </Field>
+                        </Field>}
                     </div>
 
                     {/* Fees */}

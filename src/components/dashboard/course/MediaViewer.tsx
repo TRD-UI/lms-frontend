@@ -10,6 +10,7 @@ import {
 } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RichText } from "@/components/shared/RichTextEditor";
 import { ModuleItem, Course } from "@/data/types";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
@@ -106,17 +107,11 @@ export function MediaViewer({ currentItem, course }: MediaViewerProps) {
                     </div>
                 )}
 
-                {currentItem.type !== 'quiz' && (
-                <div className="mt-6 sm:mt-8">
-                    <div>
+                {currentItem.type !== 'quiz' && currentItem.notes && (
+                    <div className="mt-6 sm:mt-8 max-w-3xl">
                         <h3 className="text-base font-medium text-slate-800 mb-2">Lesson notes</h3>
-                        <p className="text-slate-600 leading-relaxed text-sm max-w-3xl">
-                            In this lesson, we cover the core principles of {currentItem?.title || 'this topic'}.
-                            By the end of this section, you should have a solid understanding of how these concepts apply to {course.title}.
-                            Be sure to check the resources section for additional reading materials and exercise files to practice what you've learned.
-                        </p>
+                        <RichText html={currentItem.notes} />
                     </div>
-                </div>
                 )}
             </div>
         </ScrollArea>

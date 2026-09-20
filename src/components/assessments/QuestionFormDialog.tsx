@@ -163,6 +163,8 @@ export function QuestionFormDialog({
             prompt: draft.prompt.trim(),
             options: draft.options.map((o) => ({ ...o, label: o.label.trim() })),
             explanation: draft.explanation?.trim() || undefined,
+            // Difficulty and tags are carried for schema compatibility but are
+            // no longer authored: nothing filtered, scored or reported on them.
             tags: tagInput
                 .split(",")
                 .map((t) => t.trim())
@@ -206,22 +208,6 @@ export function QuestionFormDialog({
                                     <SelectItem value="single">Single choice</SelectItem>
                                     <SelectItem value="multiple">Multiple answers</SelectItem>
                                     <SelectItem value="boolean">True / False</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field label="Difficulty" htmlFor="question-difficulty">
-                            <Select
-                                value={draft.difficulty}
-                                onValueChange={(v) => set("difficulty", v as Difficulty)}
-                            >
-                                <SelectTrigger id="question-difficulty" className="h-11 rounded-xl bg-slate-50 border-slate-200 text-sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="easy">Easy</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="hard">Hard</SelectItem>
                                 </SelectContent>
                             </Select>
                         </Field>
@@ -333,16 +319,7 @@ export function QuestionFormDialog({
                         hint="Optional, but it turns a wrong answer into a teaching moment."
                     />
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <TextField
-                            id="question-tags"
-                            label="Tags"
-                            value={tagInput}
-                            onChange={setTagInput}
-                            placeholder="Networking, Security"
-                            hint="Comma separated."
-                        />
-
+                    <div className="grid grid-cols-1 gap-3">
                         {course && course.modules.length > 0 && (
                             <Field
                                 label="Revision module"

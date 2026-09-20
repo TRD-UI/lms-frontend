@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Field, TextField } from "@/components/assessments/form-fields";
+import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { useLms } from "@/store/lms-store";
 import type { ModuleItem } from "@/data/types";
 
@@ -28,7 +29,7 @@ const TYPE_LABEL: Record<ModuleItem["type"], string> = {
     quiz: "Quiz",
 };
 
-const EMPTY: ModuleItemDraft = { title: "", type: "video", url: "" };
+const EMPTY: ModuleItemDraft = { title: "", type: "video", url: "", notes: "" };
 
 interface ModuleItemFormDialogProps {
     open: boolean;
@@ -63,7 +64,11 @@ export function ModuleItemFormDialog({
     useEffect(() => {
         if (!open) return;
         setError(null);
-        setDraft(item ? { title: item.title, type: item.type, url: item.url, assessmentId: item.assessmentId } : EMPTY);
+        setDraft(
+            item
+                ? { title: item.title, type: item.type, url: item.url, assessmentId: item.assessmentId, notes: item.notes ?? "" }
+                : EMPTY
+        );
     }, [open, item]);
 
     const set = <K extends keyof ModuleItemDraft>(key: K, value: ModuleItemDraft[K]) =>
@@ -82,15 +87,20 @@ export function ModuleItemFormDialog({
         }
         onSubmit(
             isQuiz
-                ? { title: draft.title.trim(), type: "quiz", assessmentId: draft.assessmentId }
-                : { title: draft.title.trim(), type: draft.type, url: draft.url?.trim() || undefined }
+                ? { title: draft.title.trim(), type: "quiz", assessmentId: draft.assessmentId, notes: draft.notes }
+                : {
+                    title: draft.title.trim(),
+                    type: draft.type,
+                    url: draft.url?.trim() || undefined,
+                    notes: draft.notes,
+                }
         );
         onOpenChange(false);
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="rounded-2xl border-slate-100 shadow-xl max-w-md">
+            <DialogContent className="rounded-2xl border-slate-100 shadow-xl max-w-lg max-h-[88vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-lg font-medium text-slate-900">
                         {isEdit ? "Edit lesson" : "Add lesson"}
@@ -165,6 +175,18 @@ export function ModuleItemFormDialog({
                             hint="Leave blank to add the file later — the lesson will show as pending."
                         />
                     )}
+
+                    <Field
+                        label="Lesson notes"
+                        htmlFor="item-notes"
+                        hint="Shown under the media. Supports headings, lists and links."
+                    >
+                        <RichTextEditor
+                            value={draft.notes ?? ""}
+                            onChange={(html) => set("notes", html)}
+                            placeholder="What this lesson covers, key points, further reading…"
+                        />
+                    </Field>
 
                     {error && <p className="text-xs text-destructive font-medium">{error}</p>}
                 </div>

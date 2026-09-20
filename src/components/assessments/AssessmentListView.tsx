@@ -36,6 +36,13 @@ interface AssessmentListViewProps {
      * admin portal renders the same screens without the authoring controls.
      */
     readOnly?: boolean;
+    /**
+     * Rendered inside a page that already has a header and tabs, so this view
+     * suppresses its own masthead and surfaces its action through `renderAction`.
+     */
+    embedded?: boolean;
+    /** Receives the "New assessment" handler when embedded. */
+    onRequestCreate?: (handler: () => void) => void;
 }
 
 /** Every assessment belonging to one course. Shared by admin and instructor. */
@@ -46,6 +53,7 @@ export function AssessmentListView({
     backTo,
     authorName,
     readOnly = false,
+    embedded = false,
 }: AssessmentListViewProps) {
     const navigate = useNavigate();
     const {
@@ -83,7 +91,7 @@ export function AssessmentListView({
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <PageHeader
+            {!embedded && <PageHeader
                 title={course.title}
                 description={`${list.length} ${list.length === 1 ? "assessment" : "assessments"} · ${course.modules.length} modules · ${course.seats.enrolled} enrolled`}
                 breadcrumbs={breadcrumbs}
@@ -103,7 +111,22 @@ export function AssessmentListView({
                         </Button>
                     )
                 }
-            />
+            />}
+
+            {embedded && !readOnly && (
+                <div className="flex justify-end px-1 sm:px-2">
+                    <Button
+                        onClick={() => {
+                            setEditing(null);
+                            setFormOpen(true);
+                        }}
+                        className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
+                    >
+                        <Add01Icon size={16} className="mr-1.5" />
+                        New assessment
+                    </Button>
+                </div>
+            )}
 
             {list.length === 0 ? (
                 <EmptyState
