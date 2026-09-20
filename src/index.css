@@ -229,3 +229,56 @@
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0 transparent;
 }
+
+
+/* ─── Schedule-X ──────────────────────────────────────────────────────────
+   The calendar ships its own theme. These overrides pull its tokens onto our
+   palette and typography rather than restyling its internals, so a library
+   upgrade does not silently undo the look. */
+.sx-lms {
+  --sx-color-primary: hsl(var(--primary));
+  --sx-color-on-primary: #fff;
+  --sx-color-primary-container: hsl(var(--accent) / 0.25);
+  --sx-color-on-primary-container: hsl(var(--primary));
+  --sx-color-surface: #fff;
+  --sx-color-surface-container: #f8fafc;
+  --sx-color-on-surface: #1e293b;
+  --sx-color-outline: #e2e8f0;
+  --sx-color-outline-variant: #f1f5f9;
+  --sx-internal-color-text: #64748b;
+  --sx-color-neutral-variant: #94a3b8;
+  height: 100%;
+}
+
+.sx-lms .sx__calendar {
+  border: none;
+  font-family: inherit;
+  height: 100%;
+}
+
+.sx-lms .sx__calendar-header {
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Our own card markup fills the slot, so the wrapper must not paint over it. */
+.sx-lms .sx__time-grid-event {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.sx-lms .sx__week-grid__date,
+.sx-lms .sx__week-grid__date-number {
+  font-family: inherit;
+}
+
+.sx-lms .sx__time-grid-day,
+.sx-lms .sx__week-grid__hour {
+  border-color: #f1f5f9;
+}
+
+.sx-lms .sx__current-time-indicator {
+  background-color: hsl(var(--primary));
+}

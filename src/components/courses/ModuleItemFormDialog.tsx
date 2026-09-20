@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Field, TextField } from "@/components/assessments/form-fields";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
+import { FileDropzone } from "@/components/shared/FileDropzone";
+import { storageCourseId } from "@/data/supabase-ids";
+import { cn } from "@/lib/utils";
 import { useLms } from "@/store/lms-store";
 import type { ModuleItem } from "@/data/types";
 
@@ -58,6 +61,7 @@ export function ModuleItemFormDialog({
     const { assessmentsForCourse } = useLms();
     const [draft, setDraft] = useState<ModuleItemDraft>(EMPTY);
     const [error, setError] = useState<string | null>(null);
+    const [source, setSource] = useState<"upload" | "link">("upload");
 
     const assessments = assessmentsForCourse(courseId);
 
@@ -166,14 +170,47 @@ export function ModuleItemFormDialog({
                             </Select>
                         </Field>
                     ) : (
-                        <TextField
-                            id="item-url"
-                            label="Content URL"
-                            value={draft.url ?? ""}
-                            onChange={(v) => set("url", v)}
-                            placeholder="https://…"
-                            hint="Leave blank to add the file later — the lesson will show as pending."
-                        />
+                        <div className="space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-slate-600">Content</span>
+                                <div className="flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5">
+                                    {(["upload", "link"] as const).map((m) => (
+                                        <button
+                                            key={m}
+                                            type="button"
+                                            onClick={() => setSource(m)}
+                                            className={cn(
+                                                "px-2.5 py-1 rounded-md text-[11px] font-medium capitalize transition-all",
+                                                source === m
+                                                    ? "bg-white text-slate-800 shadow-sm"
+                                                    : "text-slate-400 hover:text-slate-600"
+                                            )}
+                                        >
+                                            {m}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {source === "upload" ? (
+                                <FileDropzone
+                                    courseStorageId={storageCourseId(courseId)}
+                                    kind={draft.type === "video" ? "video" : draft.type === "pdf" ? "pdf" : "document"}
+                                    value={draft.url}
+                                    onUploaded={(url) => set("url", url)}
+                                    onCleared={() => set("url", "")}
+                                />
+                            ) : (
+                                <TextField
+                                    id="item-url"
+                                    label=""
+                                    value={draft.url ?? ""}
+                                    onChange={(v) => set("url", v)}
+                                    placeholder="https://…"
+                                    hint="Leave blank to add the file later — the lesson will show as pending."
+                                />
+                            )}
+                        </div>
                     )}
 
                     <Field

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Add01Icon, QrCode01Icon, SquareLock02Icon } from "hugeicons-react";
+import { Add01Icon } from "hugeicons-react";
 import {
     Dialog,
     DialogContent,
@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { WeekSchedule } from "./WeekSchedule";
+import { ScheduleXWeek } from "./ScheduleXWeek";
 import { ScheduleClassDialog } from "./ScheduleClassDialog";
 import { useLms } from "@/store/lms-store";
 import { useSession } from "@/store/session";
@@ -133,31 +133,15 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
                     </DialogHeader>
 
                     <div className="flex-1 min-h-0">
-                        <WeekSchedule
+                        <ScheduleXWeek
                             sessions={sessions}
                             courseTitle={(id) => getCourse(id)?.title ?? "Unknown course"}
                             onAdd={isInstructor && myCourses.length > 0 ? openAdd : undefined}
                             onEventClick={handleEventClick}
-                            eventTone={
+                            passState={
                                 isInstructor
                                     ? undefined
                                     : (session) => (passFor(session).unlocked ? "ready" : "locked")
-                            }
-                            renderEventExtra={
-                                isInstructor
-                                    ? undefined
-                                    : (session) =>
-                                        passFor(session).unlocked ? (
-                                            <span className="mt-1 inline-flex items-center gap-1 text-[9px] font-medium text-emerald-700">
-                                                <QrCode01Icon size={10} />
-                                                Pass ready
-                                            </span>
-                                        ) : (
-                                            <span className="mt-1 inline-flex items-center gap-1 text-[9px] font-medium text-amber-700">
-                                                <SquareLock02Icon size={10} />
-                                                Pass locked
-                                            </span>
-                                        )
                             }
                         />
                     </div>

@@ -13,6 +13,8 @@ export interface EntryPass {
      * every entry-pass-gating assessment on that course has been passed.
      */
     courseId: string;
+    /** The class session this pass admits the learner to, when it came from one. */
+    sessionId?: string;
 }
 
 export const entryPasses: EntryPass[] = [

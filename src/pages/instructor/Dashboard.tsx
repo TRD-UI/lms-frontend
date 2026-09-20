@@ -23,6 +23,14 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PageActions } from "@/components/shared/PageActions";
 import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
+import { PieChart, PieSlice, PieCenter } from "@/components/charts/pie";
+import {
+    Legend,
+    LegendItem,
+    LegendLabel,
+    LegendMarker,
+    LegendValue,
+} from "@/components/charts/legend";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -47,6 +55,7 @@ import { SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "
 export default function InstructorDashboard() {
     const navigate = useNavigate();
     const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [hoveredSlice, setHoveredSlice] = useState<number | null>(null);
     const instructor = useActingUser("instructor");
     const { coursesByInstructor, assessmentsForCourse, attemptsForAssessment } = useLms();
 
@@ -87,6 +96,25 @@ export default function InstructorDashboard() {
         enrolled: c.seats.enrolled,
         capacity: c.seats.total,
     }));
+
+    /** Enrollment share per course — categorical, so slots are assigned in order. */
+    const pieData = useMemo(
+        () =>
+            myCourses
+                .filter((c) => c.seats.enrolled > 0)
+                .map((c) => ({ label: c.title, value: c.seats.enrolled })),
+        [myCourses]
+    );
+
+    const legendItems = useMemo(
+        () =>
+            pieData.map((d, i) => ({
+                label: d.label,
+                value: d.value,
+                color: SERIES[i % SERIES.length],
+            })),
+        [pieData]
+    );
 
     const attendanceData = instructorCohorts.map((c) => ({
         session: c.courseTitle.length > 16 ? `${c.courseTitle.slice(0, 15)}…` : c.courseTitle,
@@ -198,60 +226,35 @@ export default function InstructorDashboard() {
                     {/* Enrollment per course */}
                     <ChartCard
                         title="Enrollment by course"
-                        description="Learners enrolled against capacity"
+                        description="Share of your learners, by course"
                         className="lg:col-span-4"
                     >
-                        <div className="h-[280px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={enrollmentData}
-                                    layout="vertical"
-                                    margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
-                                    barCategoryGap={10}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" horizontal={false} />
-                                    <XAxis
-                                        type="number"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fill: "var(--chart-label)", fontSize: 11 }}
-                                    />
-                                    <YAxis
-                                        type="category"
-                                        dataKey="course"
-                                        width={120}
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fill: "var(--chart-label)", fontSize: 11 }}
-                                    />
-                                    <RechartsTooltip
-                                        cursor={{ fill: "var(--chart-grid)" }}
-                                        contentStyle={TOOLTIP_STYLE}
-                                        labelStyle={TOOLTIP_LABEL_STYLE}
-                                        itemStyle={TOOLTIP_ITEM_STYLE}
-                                        labelFormatter={(_, payload) =>
-                                            payload?.[0]?.payload?.fullTitle ?? ""
-                                        }
-                                    />
-                                    {/* Capacity sits behind as a recessive track */}
-                                    <Bar
-                                        dataKey="capacity"
-                                        name="Capacity"
-                                        fill="var(--chart-grid)"
-                                        radius={[0, 6, 6, 0]}
-                                        barSize={16}
-                                        stackId="a"
-                                        hide
-                                    />
-                                    <Bar
-                                        dataKey="enrolled"
-                                        name="Enrolled"
-                                        fill={SERIES[0]}
-                                        radius={[0, 6, 6, 0]}
-                                        barSize={16}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="flex flex-col sm:flex-row items-center gap-8 py-2">
+                            <PieChart
+                                data={pieData}
+                                hoveredIndex={hoveredSlice}
+                                innerRadius={55}
+                                onHoverChange={setHoveredSlice}
+                                size={180}
+                            >
+                                {pieData.map((_, i) => (
+                                    <PieSlice index={i} key={i} />
+                                ))}
+                                <PieCenter defaultLabel="Learners enrolled" />
+                            </PieChart>
+
+                            <Legend
+                                hoveredIndex={hoveredSlice}
+                                items={legendItems}
+                                onHoverChange={setHoveredSlice}
+                                className="flex-1 min-w-0"
+                            >
+                                <LegendItem>
+                                    <LegendMarker />
+                                    <LegendLabel />
+                                    <LegendValue />
+                                </LegendItem>
+                            </Legend>
                         </div>
                     </ChartCard>
 

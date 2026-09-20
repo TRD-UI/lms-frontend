@@ -9,6 +9,8 @@ import {
     type ClassSession,
 } from "@/data/classes";
 import { notifications as seedNotifications, type Notification } from "@/data/notifications";
+import { entryPasses as seedPasses, type EntryPass } from "@/data/entry-passes";
+import { purchasedCourseIds } from "@/data/courses";
 import { assessments as seedAssessments, seedAttempts } from "@/data/assessments";
 import type { Course, CourseModule, ModuleItem } from "@/data/types";
 import type {
@@ -85,6 +87,10 @@ interface LmsContextValue {
     sessionsForInstructor: (instructorId: string) => ClassSession[];
     sessionsForCourses: (courseIds: string[]) => ClassSession[];
 
+    // ─── Entry passes ───
+    entryPasses: EntryPass[];
+    passesForStudent: (studentId: string) => EntryPass[];
+
     // ─── Notifications ───
     notifications: Notification[];
     markNotificationRead: (id: string) => void;
@@ -129,6 +135,7 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
     const [categories, setCategories] = useState<string[]>(seedCategories);
     const [classSessions, setClassSessions] = useState<ClassSession[]>(seedClasses);
     const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
+    const [entryPasses, setEntryPasses] = useState<EntryPass[]>(seedPasses);
     const [venues, setVenues] = useState<Venue[]>(
         seedVenues.map((v) => ({ id: nextId("v"), name: v.venue, capacity: v.capacity }))
     );
@@ -329,10 +336,42 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
             const session: ClassSession = { ...input, id: nextId("cls") };
             setClassSessions((prev) => [...prev, session]);
 
+            // A class is entered with a pass, so scheduling one issues passes to
+            // everybody enrolled. Release still depends on the course's gating
+            // assessment — that is read at display time, not baked in here.
+            if (purchasedCourseIds.includes(session.courseId)) {
+                const code = `${session.title
+                    .split(/\s+/)
+                    .map((w) => w[0])
+                    .join("")
+                    .replace(/[^A-Za-z]/g, "")
+                    .toUpperCase()
+                    .slice(0, 3)}-${session.date.replace(/-/g, "").slice(2)}-${Math.floor(
+                    Math.random() * 900 + 100
+                )}`;
+
+                setEntryPasses((prev) => [
+                    ...prev,
+                    {
+                        id: nextId("pass"),
+                        eventTitle: session.title,
+                        date: formatSessionDate(session.date),
+                        time: `${session.startTime} - ${session.endTime}`,
+                        venue: session.venue,
+                        roomNumber: session.roomNumber || "TBC",
+                        passCode: code,
+                        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${code}`,
+                        status: "active",
+                        courseId: session.courseId,
+                        sessionId: session.id,
+                    },
+                ]);
+            }
+
             pushNotification({
                 type: "new_class",
                 title: "New class scheduled",
-                message: `${session.title} on ${formatSessionDate(session.date)} at ${session.venue}.`,
+                message: `${session.title} on ${formatSessionDate(session.date)} at ${session.venue}. Your entry pass is ready.`,
             });
 
             return session;
@@ -346,6 +385,8 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
 
     const cancelClassSession = useCallback((id: string) => {
         setClassSessions((prev) => prev.filter((c) => c.id !== id));
+        // A pass to a cancelled class should not still scan at the door.
+        setEntryPasses((prev) => prev.filter((p) => p.sessionId !== id));
     }, []);
 
     // ─── Assessments ───────────────────────────────────────────────
@@ -527,6 +568,8 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
                     .filter((c) => ids.has(c.courseId))
                     .sort((a, b) => a.date.localeCompare(b.date));
             },
+            entryPasses,
+            passesForStudent: () => entryPasses,
             notifications,
             markNotificationRead,
             markAllNotificationsRead,
@@ -558,6 +601,7 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         venues,
         classSessions,
         notifications,
+        entryPasses,
         scheduleClass,
         updateClassSession,
         cancelClassSession,

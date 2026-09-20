@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { entryPasses, EntryPass } from "@/data/entry-passes";
+import type { EntryPass } from "@/data/entry-passes";
 import { EntryPassCard } from "@/components/dashboard/entry-passes/EntryPassCard";
 import { PassViewer } from "@/components/dashboard/entry-passes/PassViewer";
 import { useLms } from "@/store/lms-store";
@@ -20,7 +20,7 @@ export default function EntryPasses() {
     const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
 
     const student = useActingUser("student");
-    const { entryPassUnlocked, assessmentsForCourse, bestAttempt } = useLms();
+    const { entryPassUnlocked, assessmentsForCourse, bestAttempt, entryPasses } = useLms();
 
     const activePasses = entryPasses.filter(p => p.status === 'active');
     const pastPasses = entryPasses.filter(p => p.status === 'past');
