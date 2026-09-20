@@ -13,7 +13,11 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/data/types";
+// Enrolment rules, facilities and phone numbers are institution copy with no
+// table behind them. The application fee is per-course and comes from the row.
 import { courseMetadata } from "@/data/courses";
+import { useQuery } from "@tanstack/react-query";
+import { fetchApplicationFee } from "@/lib/api/courses";
 
 interface EnrollmentCardProps {
     course: Course;
@@ -23,6 +27,11 @@ interface EnrollmentCardProps {
 
 export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardProps) {
     const navigate = useNavigate();
+    const { data: applicationFee = 0 } = useQuery({
+        queryKey: ["application-fee", course.id],
+        queryFn: () => fetchApplicationFee(course.id),
+        staleTime: 5 * 60_000,
+    });
 
     return (
         <div className="space-y-4 sm:space-y-6">
@@ -66,7 +75,7 @@ export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardP
                         </div>
                         <div className="flex items-center justify-between text-xs sm:text-sm py-3 sm:py-4 border-y border-slate-100 font-medium">
                             <span className="text-slate-400">Application Form</span>
-                            <span className="text-slate-900">₦{courseMetadata.applicationFee.toLocaleString()}</span>
+                            <span className="text-slate-900">₦{applicationFee.toLocaleString()}</span>
                         </div>
                     </div>
 

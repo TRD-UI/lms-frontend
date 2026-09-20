@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { instructorCohorts } from "@/data/instructor";
+import { useQuery } from "@tanstack/react-query";
+import { fetchCohorts } from "@/lib/api/attendance";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +44,28 @@ import { cn } from "@/lib/utils";
 import { RowActions } from "@/components/shared/RowActions";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { toast } from "sonner";
+import { useActingUser } from "@/store/session";
+import { markAttendance, recordSubjectiveGrade } from "@/lib/api/attendance";
+import { useQueryClient } from "@tanstack/react-query";
+import { describeError } from "@/lib/supabase";
 import type { InstructorCohort, AttendanceRecord } from "@/data/admin-types";
 
 export default function CohortAttendance() {
-    const [selectedCohort, setSelectedCohort] = useState<InstructorCohort | null>(null);
+    const instructor = useActingUser("instructor");
+    const queryClient = useQueryClient();
+
+    const { data: instructorCohorts = [] } = useQuery({
+        queryKey: ["cohorts", instructor.id],
+        queryFn: () => fetchCohorts(instructor.id),
+        staleTime: 30_000,
+    });
+
+    const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null);
+    const selectedCohort = instructorCohorts.find((c) => c.id === selectedCohortId) ?? null;
+    const setSelectedCohort = (c: InstructorCohort | null) => setSelectedCohortId(c?.id ?? null);
     const [gradeDialogStudent, setGradeDialogStudent] = useState<AttendanceRecord | null>(null);
+    const [gradeScore, setGradeScore] = useState("");
+    const [gradeNotes, setGradeNotes] = useState("");
 
     const statusConfig = {
         present: { color: "bg-emerald-50 text-emerald-600", icon: CheckmarkCircle01Icon },
@@ -55,18 +73,53 @@ export default function CohortAttendance() {
         excused: { color: "bg-amber-50 text-amber-600", icon: Clock01Icon },
     };
 
-    const handleMarkAttendance = (student: AttendanceRecord, newStatus: "present" | "absent" | "excused") => {
-        toast.success(`${student.studentName} marked as ${newStatus}`, {
-            description: `Attendance updated for ${student.courseTitle} session.`,
-        });
+    const refreshCohorts = () => {
+        void queryClient.invalidateQueries({ queryKey: ["cohorts", instructor.id] });
     };
 
-    const handleGradeSubmit = () => {
-        if (gradeDialogStudent) {
+    // Both of these previously fired a toast and wrote nothing.
+    const handleMarkAttendance = async (
+        student: AttendanceRecord,
+        newStatus: "present" | "absent" | "excused"
+    ) => {
+        if (!selectedCohort) return;
+        try {
+            await markAttendance(selectedCohort.id, student.studentId, newStatus);
+            refreshCohorts();
+            toast.success(`${student.studentName} marked as ${newStatus}`, {
+                description: `Attendance updated for ${student.courseTitle} session.`,
+            });
+        } catch (e) {
+            toast.error("Could not update attendance", {
+                description: describeError(e as { message?: string }),
+            });
+        }
+    };
+
+    const handleGradeSubmit = async () => {
+        if (!gradeDialogStudent || !selectedCohort) return;
+        const score = Number(gradeScore);
+        if (!Number.isFinite(score) || score < 0 || score > 100) {
+            toast.error("Enter a score between 0 and 100.");
+            return;
+        }
+        try {
+            await recordSubjectiveGrade(
+                selectedCohort.id,
+                gradeDialogStudent.studentId,
+                Math.round(score),
+                gradeNotes.trim() || undefined
+            );
             toast.success(`Grade submitted for ${gradeDialogStudent.studentName}`, {
                 description: "Subjective assessment recorded.",
             });
             setGradeDialogStudent(null);
+            setGradeScore("");
+            setGradeNotes("");
+        } catch (e) {
+            toast.error("Could not save the grade", {
+                description: describeError(e as { message?: string }),
+            });
         }
     };
 
@@ -280,6 +333,8 @@ export default function CohortAttendance() {
                                 type="number"
                                 min={0}
                                 max={100}
+                                value={gradeScore}
+                                onChange={(e) => setGradeScore(e.target.value)}
                                 placeholder="e.g. 85"
                                 className="h-11 w-full px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-400"
                             />
@@ -289,6 +344,8 @@ export default function CohortAttendance() {
                             <textarea
                                 id="grade-notes"
                                 rows={3}
+                                value={gradeNotes}
+                                onChange={(e) => setGradeNotes(e.target.value)}
                                 placeholder="Assessment remarks..."
                                 className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none placeholder:text-slate-400"
                             />

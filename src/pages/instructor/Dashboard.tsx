@@ -37,7 +37,8 @@ import { RadarGrid } from "@/components/charts/radar-grid";
 import { RadarLabels } from "@/components/charts/radar-labels";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
-import { instructorCohorts } from "@/data/instructor";
+import { useQuery } from "@tanstack/react-query";
+import { fetchCohorts } from "@/lib/api/attendance";
 import { SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "@/lib/chart-palette";
 
 /**
@@ -51,6 +52,12 @@ export default function InstructorDashboard() {
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [hoveredSlice, setHoveredSlice] = useState<number | null>(null);
     const instructor = useActingUser("instructor");
+
+    const { data: instructorCohorts = [] } = useQuery({
+        queryKey: ["cohorts", instructor.id],
+        queryFn: () => fetchCohorts(instructor.id),
+        staleTime: 30_000,
+    });
     const { coursesByInstructor, assessmentsForCourse, attemptsForAssessment } = useLms();
 
     const myCourses = coursesByInstructor(instructor.id);

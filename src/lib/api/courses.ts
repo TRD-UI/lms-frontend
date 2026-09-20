@@ -125,6 +125,17 @@ export async function fetchCourses(): Promise<Course[]> {
 
 // ─── Courses ─────────────────────────────────────────────────────────────────
 
+/** Application fee for one course, in naira. */
+export async function fetchApplicationFee(courseId: string): Promise<number> {
+    const { data, error } = await supabase
+        .from("courses")
+        .select("application_fee")
+        .eq("id", courseId)
+        .single();
+    if (error) throw error;
+    return toNaira(data.application_fee ?? 0);
+}
+
 export interface CourseInput {
     title: string;
     description: string;

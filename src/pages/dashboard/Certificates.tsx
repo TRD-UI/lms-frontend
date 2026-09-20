@@ -6,11 +6,19 @@ import {
     Download01Icon
 } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
-import { certificates, Certificate } from "@/data/certificates";
+import type { Certificate } from "@/data/certificates";
+import { useQuery } from "@tanstack/react-query";
+import { fetchMyCertificates } from "@/lib/api/learner";
 import { CertificateCard } from "@/components/dashboard/certificates/CertificateCard";
 import { CertificateViewer } from "@/components/dashboard/certificates/CertificateViewer";
 
 export default function Certificates() {
+    const { data: certificates = [] } = useQuery({
+        queryKey: ["my-certificates"],
+        queryFn: fetchMyCertificates,
+        staleTime: 60_000,
+    });
+
     const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
     const [viewerOpen, setViewerOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");

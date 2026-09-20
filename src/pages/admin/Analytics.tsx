@@ -46,20 +46,11 @@ import { RadarArea } from "@/components/charts/radar-area";
 import { RadarAxis } from "@/components/charts/radar-axis";
 import { RadarGrid } from "@/components/charts/radar-grid";
 import { RadarLabels } from "@/components/charts/radar-labels";
-import {
-    assessmentThroughput,
-    cohortRetention,
-    courseHealth,
-    courseHealthMetrics,
-    enrollmentFunnel,
-    formatCompactNaira,
-    formatNaira,
-    learnerJourney,
-    paymentMethods,
-    revenueByMonth,
-    topCourses,
-    transactions,
-} from "@/data/analytics";
+import { courseHealthMetrics, formatCompactNaira, formatNaira } from "@/data/analytics";
+import { useQuery } from "@tanstack/react-query";
+import * as analyticsApi from "@/lib/api/analytics";
+import * as adminApi from "@/lib/api/admin";
+import { toNaira } from "@/lib/money";
 import { ORDINAL, SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "@/lib/chart-palette";
 import { toast } from "sonner";
 
@@ -72,19 +63,82 @@ import { toast } from "sonner";
  */
 export default function AdminAnalytics() {
     const [funnelHover, setFunnelHover] = useState<number | null>(null);
+
+    // Each panel is aggregated in Postgres; the client only renders the summary.
+    const STALE = 60_000;
+    const { data: overview = { revenue: 0, activeLearners: 0, passRate: 0, retention: 0 } } = useQuery({
+        queryKey: ["an-overview"], queryFn: analyticsApi.fetchOverview, staleTime: STALE,
+    });
+    const { data: revenueRows = [] } = useQuery({
+        queryKey: ["an-revenue"], queryFn: () => analyticsApi.fetchRevenue(6), staleTime: STALE,
+    });
+    const { data: funnel = [] } = useQuery({
+        queryKey: ["an-funnel"], queryFn: analyticsApi.fetchFunnel, staleTime: STALE,
+    });
+    const { data: paymentMethods = [] } = useQuery({
+        queryKey: ["an-mix"], queryFn: analyticsApi.fetchPaymentMix, staleTime: STALE,
+    });
+    const { data: topCourses = [] } = useQuery({
+        queryKey: ["an-top"], queryFn: () => analyticsApi.fetchTopCourses(5), staleTime: STALE,
+    });
+    const { data: health = [] } = useQuery({
+        queryKey: ["an-health"], queryFn: analyticsApi.fetchCourseHealth, staleTime: STALE,
+    });
+    const { data: retention = [] } = useQuery({
+        queryKey: ["an-retention"], queryFn: analyticsApi.fetchRetention, staleTime: STALE,
+    });
+    const { data: learnerJourney = { nodes: [], links: [] } } = useQuery({
+        queryKey: ["an-journey"], queryFn: analyticsApi.fetchJourney, staleTime: STALE,
+    });
+    const { data: assessmentThroughput = [] } = useQuery({
+        queryKey: ["an-throughput"], queryFn: () => analyticsApi.fetchThroughput(8), staleTime: STALE,
+    });
+    const { data: txRows = [] } = useQuery({
+        queryKey: ["an-transactions"], queryFn: adminApi.fetchTransactions, staleTime: STALE,
+    });
+
+    const revenueByMonth = revenueRows.map((r) => ({
+        month: r.month,
+        tuition: r.tuition,
+        applications: r.applicationFees,
+    }));
+    const transactions = txRows.map((t) => ({ ...t, amount: toNaira(t.amount) }));
+
     const txPage = usePagination(transactions, 5);
 
-    const funnelData = enrollmentFunnel.map((stage, i) => ({
-        ...stage,
+    const funnelData = funnel.map((stage, i) => ({
+        label: stage.stage,
+        value: stage.value,
         color: ORDINAL[i % ORDINAL.length],
     }));
 
-    const funnelLegend = enrollmentFunnel.map((stage, i) => ({
-        label: stage.label,
+    const funnelLegend = funnel.map((stage, i) => ({
+        label: stage.stage,
         color: ORDINAL[i % ORDINAL.length],
     }));
 
-    const totalRevenue = revenueByMonth.reduce((s, r) => s + r.tuition + r.applications, 0);
+    /** The radar expects normalised 0–100 values keyed by metric. */
+    const courseHealth = health.slice(0, 5).map((h, i) => ({
+        label: h.category,
+        color: SERIES[i % SERIES.length],
+        values: {
+            completion: h.completion,
+            attendance: h.attendance,
+            passRate: h.passRate,
+            retention: h.retention,
+            satisfaction: h.seatsFilled,
+            punctuality: h.attendance,
+        },
+    }));
+
+    const cohortRetention = retention.map((r) => ({
+        cohort: r.cohort,
+        size: r.size,
+        weeks: r.weeks.map((w) => w ?? 0),
+    }));
+
+
+    const totalRevenue = overview.revenue;
     const paymentTotal = paymentMethods.reduce((s, p) => s + p.amount, 0);
 
     return (
@@ -400,14 +454,14 @@ export default function AdminAnalytics() {
                             .sort((a, b) => b.revenue - a.revenue)
                             .map((c, i) => (
                                 <div
-                                    key={c.title}
+                                    key={c.course}
                                     className="flex items-center gap-3 py-2.5 border-b border-slate-50 last:border-0"
                                 >
                                     <span className="h-6 w-6 rounded-lg bg-slate-100 text-slate-500 text-[10px] font-medium flex items-center justify-center shrink-0">
                                         {i + 1}
                                     </span>
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-medium text-slate-800 truncate">{c.title}</p>
+                                        <p className="text-xs font-medium text-slate-800 truncate">{c.course}</p>
                                         <p className="text-[10px] text-slate-400 font-medium">
                                             {c.enrolled} enrolled · {c.passRate}% pass
                                         </p>

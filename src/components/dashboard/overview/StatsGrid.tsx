@@ -1,11 +1,35 @@
+import { useQuery } from "@tanstack/react-query";
+import {
+    BookOpen01Icon,
+    Mortarboard01Icon,
+    Certificate01Icon,
+    Calendar03Icon,
+} from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { dashboardStats } from "@/data/dashboard";
+import { fetchLearnerStats } from "@/lib/api/learner";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
 export function StatsGrid() {
+    const { data } = useQuery({
+        queryKey: ["learner-stats"],
+        queryFn: fetchLearnerStats,
+        staleTime: 60_000,
+    });
+
+    const dashboardStats = [
+        { title: "Current Enrollments", value: String(data?.activeEnrollments ?? 0), icon: BookOpen01Icon },
+        { title: "Completed Courses", value: String(data?.completedCourses ?? 0), icon: Mortarboard01Icon },
+        { title: "Certificates Earned", value: String(data?.certificates ?? 0), icon: Certificate01Icon },
+        {
+            title: "Next Class",
+            value: data?.nextClass ? data.nextClass.date : "—",
+            icon: Calendar03Icon,
+        },
+    ];
+
     return (
         <div className="mb-12 md:mb-0">
             <div className="bg-slate-100 p-2 md:p-4 rounded-2xl md:rounded-[2rem] overflow-hidden">
