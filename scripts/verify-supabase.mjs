@@ -150,5 +150,65 @@ console.log('\n── Admin reach ──');
   (tx?.length ?? 0) >= 8 ? ok('admin sees payments', `${tx.length}`) : bad('admin payments reach', `${tx?.length}`);
 }
 
+console.log('\n── Assessments belong to the instructor, not the admin ──');
+{
+  const { c: adm } = await login('eze.n@trd.edu');
+  const { c: funke } = await login('funke.a@trd.edu');   // teaches Tech Odyssey + Cybersecurity
+  const { c: seun } = await login('seun.f@trd.edu');     // teaches other courses
+
+  const { data: mine } = await funke.from('assessments').select('id, title, course_id').limit(1).single();
+  if (!mine) { bad('instructor can see their own assessment'); }
+  else {
+    ok('instructor sees their own assessment', mine.title);
+
+    const { error: admErr } = await adm.from('assessments')
+      .update({ title: mine.title + ' (admin edit)' }).eq('id', mine.id);
+    const { data: afterAdm } = await adm.from('assessments').select('title').eq('id', mine.id).single();
+    afterAdm?.title === mine.title
+      ? ok('admin CANNOT edit an assessment', 'row unchanged')
+      : bad('ADMIN EDITED AN ASSESSMENT', `${mine.title} -> ${afterAdm?.title}`);
+
+    const { data: afterOther } = await (async () => {
+      await seun.from('assessments').update({ title: 'hijacked' }).eq('id', mine.id);
+      return seun.from('assessments').select('title').eq('id', mine.id).maybeSingle();
+    })();
+    (afterOther?.title ?? mine.title) === mine.title
+      ? ok('another instructor CANNOT edit it', 'row unchanged')
+      : bad('WRONG INSTRUCTOR EDITED IT', String(afterOther?.title));
+
+    const renamed = mine.title + ' ✎';
+    await funke.from('assessments').update({ title: renamed }).eq('id', mine.id);
+    const { data: afterOwn } = await funke.from('assessments').select('title').eq('id', mine.id).single();
+    if (afterOwn?.title === renamed) {
+      ok('assigned instructor CAN edit it');
+      await funke.from('assessments').update({ title: mine.title }).eq('id', mine.id);
+    } else {
+      bad('assigned instructor could not edit their own assessment', String(afterOwn?.title));
+    }
+  }
+
+  const { data: admAll } = await adm.from('assessments').select('id');
+  (admAll?.length ?? 0) >= 17
+    ? ok('admin still reads every assessment', `${admAll.length}`)
+    : bad('admin lost read access', `${admAll?.length}`);
+}
+
+console.log('\n── Long-form paper reached the database ──');
+{
+  const { c: stu } = await login('cyber.smith@example.com');
+  const { data: a } = await stu.from('assessments')
+    .select('id, title').eq('title', 'Cybersecurity Final Examination').maybeSingle();
+  if (!a) { bad('30-question paper not seeded'); }
+  else {
+    const { data: started, error } = await stu.rpc('start_attempt', { p_assessment_id: a.id });
+    if (error) bad('start 30-question paper', error.message.slice(0, 60));
+    else {
+      started.questions?.length === 30
+        ? ok('30-question paper starts', `${started.questions.length} questions returned`)
+        : bad('unexpected question count', String(started.questions?.length));
+    }
+  }
+}
+
 console.log(`\n${'─'.repeat(50)}\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

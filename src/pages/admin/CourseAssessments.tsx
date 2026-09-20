@@ -37,6 +37,7 @@ export default function AdminCourseAssessments() {
             authorName={admin.name}
             backTo="/admin/assessments"
             detailBase={`/admin/assessments/${course.id}`}
+            readOnly
             breadcrumbs={[
                 { label: "Assessments", to: "/admin/assessments" },
                 { label: course.title },

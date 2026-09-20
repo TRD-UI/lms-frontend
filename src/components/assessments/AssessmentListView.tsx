@@ -31,6 +31,11 @@ interface AssessmentListViewProps {
     backTo?: string;
     /** Name recorded as the author on newly created assessments. */
     authorName: string;
+    /**
+     * Oversight mode. Assessments belong to the course's instructor, so the
+     * admin portal renders the same screens without the authoring controls.
+     */
+    readOnly?: boolean;
 }
 
 /** Every assessment belonging to one course. Shared by admin and instructor. */
@@ -40,6 +45,7 @@ export function AssessmentListView({
     detailBase,
     backTo,
     authorName,
+    readOnly = false,
 }: AssessmentListViewProps) {
     const navigate = useNavigate();
     const {
@@ -84,16 +90,18 @@ export function AssessmentListView({
                 backTo={backTo}
                 backLabel="All courses"
                 actions={
-                    <Button
-                        onClick={() => {
-                            setEditing(null);
-                            setFormOpen(true);
-                        }}
-                        className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
-                    >
-                        <Add01Icon size={16} className="mr-1.5" />
-                        New assessment
-                    </Button>
+                    readOnly ? undefined : (
+                        <Button
+                            onClick={() => {
+                                setEditing(null);
+                                setFormOpen(true);
+                            }}
+                            className="h-11 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
+                        >
+                            <Add01Icon size={16} className="mr-1.5" />
+                            New assessment
+                        </Button>
+                    )
                 }
             />
 
@@ -101,17 +109,23 @@ export function AssessmentListView({
                 <EmptyState
                     icon={Task01Icon}
                     title="No assessments on this course"
-                    description="Create a prerequisite test, a module checkpoint, or a final exam."
+                    description={
+                        readOnly
+                            ? `${course.instructorName ?? "The assigned instructor"} has not added any assessments to this course yet.`
+                            : "Create a prerequisite test, a module checkpoint, or a final exam."
+                    }
                     action={
-                        <Button
-                            onClick={() => {
-                                setEditing(null);
-                                setFormOpen(true);
-                            }}
-                            className="h-11 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
-                        >
-                            Create the first assessment
-                        </Button>
+                        readOnly ? undefined : (
+                            <Button
+                                onClick={() => {
+                                    setEditing(null);
+                                    setFormOpen(true);
+                                }}
+                                className="h-11 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
+                            >
+                                Create the first assessment
+                            </Button>
+                        )
                     }
                 />
             ) : (
@@ -195,7 +209,7 @@ export function AssessmentListView({
                                                 icon: ViewIcon,
                                                 onSelect: () => navigate(`${detailBase}/${assessment.id}`),
                                             },
-                                            {
+                                            ...(readOnly ? [] : [{
                                                 label: "Edit settings",
                                                 icon: Edit01Icon,
                                                 onSelect: () => {
@@ -244,7 +258,7 @@ export function AssessmentListView({
                                                     description: `"${assessment.title}" and its ${assessment.questions.length} questions will be removed.`,
                                                     actionLabel: "Delete",
                                                 },
-                                            },
+                                            }]),
                                         ]}
                                     />
                                 </div>
@@ -254,7 +268,7 @@ export function AssessmentListView({
                 </div>
             )}
 
-            <AssessmentFormDialog
+            {!readOnly && <AssessmentFormDialog
                 open={formOpen}
                 onOpenChange={(o) => {
                     setFormOpen(o);
@@ -263,7 +277,7 @@ export function AssessmentListView({
                 assessment={editing}
                 course={course}
                 onSubmit={handleSubmit}
-            />
+            />}
         </div>
     );
 }

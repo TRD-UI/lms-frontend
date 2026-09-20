@@ -35,6 +35,7 @@ export default function AdminAssessmentDetail() {
         <AssessmentDetailView
             assessment={assessment}
             course={course}
+            canEdit={false}
             onDeleted={() => navigate(`/admin/assessments/${course.id}`)}
             breadcrumbs={[
                 { label: "Assessments", to: "/admin/assessments" },

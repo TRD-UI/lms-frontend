@@ -1,52 +1,41 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useLms } from "@/store/lms-store";
-import { PlayerSidebar } from "@/components/dashboard/course/PlayerSidebar";
-import { PlayerHeader } from "@/components/dashboard/course/PlayerHeader";
-import { MediaViewer } from "@/components/dashboard/course/MediaViewer";
 import { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft01Icon, ArrowRight01Icon, Menu01Icon } from "hugeicons-react";
+import { Button } from "@/components/ui/button";
+import { PlayerSidebar } from "@/components/dashboard/course/PlayerSidebar";
+import { MediaViewer } from "@/components/dashboard/course/MediaViewer";
+import { useLms } from "@/store/lms-store";
 
 export default function CoursePlayer() {
     const { courseId, moduleId, itemId } = useParams<{ courseId: string; moduleId: string; itemId: string }>();
     const navigate = useNavigate();
     const { courses } = useLms();
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-    const course = useMemo(() => courses.find(c => c.id === courseId), [courses, courseId]);
+    const course = useMemo(() => courses.find((c) => c.id === courseId), [courses, courseId]);
 
     // Every hook runs before the early return below, so hook order stays stable
     // across renders regardless of whether the course resolves.
     const allItems = useMemo(() => {
         if (!course) return [];
-        return course.modules.flatMap(m =>
-            m.items.map(i => ({ moduleId: m.id, itemId: i.id }))
-        );
+        return course.modules.flatMap((m) => m.items.map((i) => ({ moduleId: m.id, itemId: i.id })));
     }, [course]);
 
     if (!course) return <div className="p-8">Course not found</div>;
 
-    const currentModule = course.modules.find(m => m.id === moduleId);
-    const currentItem = currentModule?.items.find(i => i.id === itemId) || currentModule?.items[0];
+    const currentModule = course.modules.find((m) => m.id === moduleId);
+    const currentItem = currentModule?.items.find((i) => i.id === itemId) || currentModule?.items[0];
 
-    const currentIndex = allItems.findIndex(path =>
-        path.moduleId === moduleId && path.itemId === itemId
+    const currentIndex = allItems.findIndex(
+        (path) => path.moduleId === moduleId && path.itemId === itemId
     );
 
     const hasPrevious = currentIndex > 0;
     const hasNext = currentIndex < allItems.length - 1;
 
-    const handlePrevious = () => {
-        if (hasPrevious) {
-            const prev = allItems[currentIndex - 1];
-            navigate(`/dashboard/player/${courseId}/${prev.moduleId}/${prev.itemId}`);
-        }
-    };
-
-    const handleNext = () => {
-        if (hasNext) {
-            const next = allItems[currentIndex + 1];
-            navigate(`/dashboard/player/${courseId}/${next.moduleId}/${next.itemId}`);
-        }
+    const go = (delta: number) => {
+        const next = allItems[currentIndex + delta];
+        if (next) navigate(`/dashboard/player/${courseId}/${next.moduleId}/${next.itemId}`);
     };
 
     const handleItemClick = (mId: string, iId: string) => {
@@ -54,20 +43,19 @@ export default function CoursePlayer() {
         setIsMobileSidebarOpen(false);
     };
 
+    const sidebar = (onBack: () => void) => (
+        <PlayerSidebar
+            course={course}
+            currentModuleId={moduleId || ""}
+            currentItemId={itemId || ""}
+            onItemClick={handleItemClick}
+            onBack={onBack}
+        />
+    );
+
     return (
-        <div className="flex h-[calc(100vh-5rem)] md:h-[calc(95vh-100px)] -m-4 md:-m-10 bg-white overflow-hidden md:rounded-3xl md:border md:border-slate-100 md:shadow-sm">
-            {/* Desktop sidebar */}
-            <div className="hidden md:block">
-                <PlayerSidebar
-                    course={course}
-                    currentModuleId={moduleId || ""}
-                    currentItemId={itemId || ""}
-                    onItemClick={handleItemClick}
-                    onBack={() => navigate(-1)}
-                    isCollapsed={isSidebarCollapsed}
-                    onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                />
-            </div>
+        <div className="flex h-[calc(100vh-5rem)] md:h-[calc(100vh-7rem)] -m-4 md:-m-10 bg-white overflow-hidden relative">
+            <div className="hidden md:block">{sidebar(() => navigate(-1))}</div>
 
             {/* Mobile sidebar overlay */}
             {isMobileSidebarOpen && (
@@ -76,35 +64,56 @@ export default function CoursePlayer() {
                         className="absolute inset-0 bg-black/40"
                         onClick={() => setIsMobileSidebarOpen(false)}
                     />
-                    <div className="relative w-[85vw] max-w-xs">
-                        <PlayerSidebar
-                            course={course}
-                            currentModuleId={moduleId || ""}
-                            currentItemId={itemId || ""}
-                            onItemClick={handleItemClick}
-                            onBack={() => { setIsMobileSidebarOpen(false); navigate(-1); }}
-                            isCollapsed={false}
-                            onToggle={() => setIsMobileSidebarOpen(false)}
-                        />
+                    <div className="relative w-[85vw] max-w-xs bg-white">
+                        {sidebar(() => {
+                            setIsMobileSidebarOpen(false);
+                            navigate(-1);
+                        })}
                     </div>
                 </div>
             )}
 
-            <div className="flex-1 flex flex-col bg-white min-w-0">
-                <PlayerHeader
-                    currentItem={currentItem}
-                    currentModule={currentModule}
-                    onPrevious={handlePrevious}
-                    onNext={handleNext}
-                    hasPrevious={hasPrevious}
-                    hasNext={hasNext}
-                    onMenuToggle={() => setIsMobileSidebarOpen(true)}
-                />
+            <div className="flex-1 flex flex-col min-w-0 relative">
+                {/* Mobile-only affordance for the drawer, since there is no header. */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsMobileSidebarOpen(true)}
+                    aria-label="Open lesson list"
+                    className="md:hidden absolute left-3 top-3 z-20 h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-slate-100 text-slate-500 shadow-sm"
+                >
+                    <Menu01Icon size={18} />
+                </Button>
 
-                <MediaViewer
-                    currentItem={currentItem}
-                    course={course}
-                />
+                <MediaViewer currentItem={currentItem} course={course} />
+
+                {/* Floating pager, over the content rather than in a header. */}
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
+                    <div className="flex items-center gap-1 rounded-full bg-white/95 backdrop-blur border border-slate-200 shadow-lg shadow-slate-900/5 p-1.5">
+                        <Button
+                            variant="ghost"
+                            onClick={() => go(-1)}
+                            disabled={!hasPrevious}
+                            className="h-9 rounded-full px-4 text-slate-600 font-medium text-sm hover:text-primary hover:bg-primary/5 disabled:opacity-30"
+                        >
+                            <ArrowLeft01Icon size={16} className="mr-1.5" />
+                            Previous
+                        </Button>
+
+                        <span className="text-[11px] font-medium text-slate-400 tabular-nums px-1 shrink-0">
+                            {currentIndex + 1} / {allItems.length}
+                        </span>
+
+                        <Button
+                            onClick={() => go(1)}
+                            disabled={!hasNext}
+                            className="h-9 rounded-full px-5 bg-primary hover:bg-primary/90 text-white font-medium text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100"
+                        >
+                            Next
+                            <ArrowRight01Icon size={16} className="ml-1.5" />
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );
