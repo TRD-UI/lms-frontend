@@ -144,8 +144,8 @@ function QuizLauncher({ item }: { item: ModuleItem }) {
         );
     }
 
-    const best = bestAttempt(assessment.id, student.dataId);
-    const used = attemptsFor(assessment.id, student.dataId).length;
+    const best = bestAttempt(assessment.id, student.id);
+    const used = attemptsFor(assessment.id, student.id).length;
     const left = assessment.maxAttempts === 0 ? Infinity : Math.max(0, assessment.maxAttempts - used);
     const exhausted = left === 0 && !best?.passed;
 

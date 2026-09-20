@@ -21,6 +21,7 @@ import { useLms } from "@/store/lms-store";
 import type { Assessment } from "@/data/assessment-types";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { describeError } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface AssessmentListViewProps {
@@ -70,12 +71,13 @@ export function AssessmentListView({
 
     const list = assessmentsForCourse(course.id);
 
-    const handleSubmit = (draft: AssessmentDraft) => {
+    const handleSubmit = async (draft: AssessmentDraft) => {
+        try {
         if (editing) {
-            updateAssessment(editing.id, { ...draft, updatedAt: "Just now" });
+            await updateAssessment(editing.id, { ...draft, updatedAt: "Just now" });
             toast.success("Assessment updated", { description: `"${draft.title}" saved.` });
         } else {
-            const created = createAssessment({
+            const created = await createAssessment({
                 ...draft,
                 courseId: course.id,
                 createdBy: authorName,
@@ -85,6 +87,9 @@ export function AssessmentListView({
                 description: "Add questions to make it available to learners.",
             });
             navigate(`${detailBase}/${created.id}`);
+        }
+        } catch (e) {
+            toast.error("Could not save", { description: describeError(e as { message?: string }) });
         }
         setEditing(null);
     };

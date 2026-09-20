@@ -10,6 +10,7 @@ import {
     PlayIcon,
     Task01Icon,
     Alert02Icon,
+    ArrowRight01Icon,
 } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -20,6 +21,7 @@ import { useLms } from "@/store/lms-store";
 import type { Course, CourseModule, ModuleItem } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { describeError } from "@/lib/supabase";
 
 const ITEM_ICON: Record<ModuleItem["type"], React.ComponentType<{ size?: number; className?: string }>> = {
     video: PlayIcon,
@@ -55,29 +57,52 @@ export function CourseContentEditor({ course, readOnly = false }: CourseContentE
     } = useLms();
 
     const [itemDialog, setItemDialog] = useState<{ moduleId: string; item: ModuleItem | null } | null>(null);
+    // Collapsed by exception: a long curriculum is unreadable fully expanded,
+    // but a course with one module should not need a click to see anything.
+    const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+    const toggleModule = (moduleId: string) =>
+        setCollapsed((prev) => {
+            const next = new Set(prev);
+            if (next.has(moduleId)) next.delete(moduleId);
+            else next.add(moduleId);
+            return next;
+        });
 
     const totalItems = course.modules.reduce((s, m) => s + m.items.length, 0);
 
-    const handleAddModule = () => {
-        const module = addModule(course.id, `Module ${course.modules.length + 1}`);
-        toast.success("Module added", { description: "Rename it, then add lessons." });
-        return module;
+    /** Wraps a write so an RLS rejection surfaces instead of vanishing. */
+    const run = async (action: () => Promise<unknown>, success: string, description?: string) => {
+        try {
+            await action();
+            toast.success(success, description ? { description } : undefined);
+        } catch (e) {
+            toast.error("Could not save", { description: describeError(e as { message?: string }) });
+        }
     };
+
+    const handleAddModule = () =>
+        run(
+            () => addModule(course.id, `Module ${course.modules.length + 1}`),
+            "Module added",
+            "Rename it, then add lessons."
+        );
 
     const renameModule = (module: CourseModule) => {
         const next = window.prompt("Module title", module.title);
-        if (next && next.trim()) updateModule(course.id, module.id, { title: next.trim() });
+        if (next && next.trim()) void run(() => updateModule(course.id, module.id, { title: next.trim() }), "Module renamed");
     };
 
     const submitItem = (draft: ModuleItemDraft) => {
         if (!itemDialog) return;
-        if (itemDialog.item) {
-            updateModuleItem(course.id, itemDialog.moduleId, itemDialog.item.id, draft);
-            toast.success("Lesson updated");
-        } else {
-            addModuleItem(course.id, itemDialog.moduleId, draft);
-            toast.success("Lesson added");
-        }
+        const { moduleId, item } = itemDialog;
+        void run(
+            () =>
+                item
+                    ? updateModuleItem(course.id, moduleId, item.id, draft)
+                    : addModuleItem(course.id, moduleId, draft),
+            item ? "Lesson updated" : "Lesson added"
+        );
     };
 
     return (
@@ -120,21 +145,44 @@ export function CourseContentEditor({ course, readOnly = false }: CourseContentE
                     }
                 />
             ) : (
-                course.modules.map((module, moduleIndex) => (
+                course.modules.map((module, moduleIndex) => {
+                    const isCollapsed = collapsed.has(module.id);
+                    return (
                     <div
                         key={module.id}
                         className="bg-white rounded-2xl border border-slate-100 overflow-hidden"
                     >
                         <div className="flex items-center gap-3 p-4 border-b border-slate-50">
-                            <div className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-medium text-slate-500 shrink-0">
+                            <button
+                                onClick={() => toggleModule(module.id)}
+                                aria-expanded={!isCollapsed}
+                                aria-label={isCollapsed ? `Expand ${module.title}` : `Collapse ${module.title}`}
+                                className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-medium text-slate-500 shrink-0 hover:bg-slate-200 transition-colors"
+                            >
                                 {moduleIndex + 1}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <h3 className="text-sm font-medium text-slate-800 truncate">{module.title}</h3>
+                            </button>
+                            <button
+                                onClick={() => toggleModule(module.id)}
+                                className="min-w-0 flex-1 text-left group/head"
+                            >
+                                <h3 className="text-sm font-medium text-slate-800 truncate group-hover/head:text-primary transition-colors">
+                                    {module.title}
+                                </h3>
                                 <p className="text-[11px] text-slate-400 font-medium">
                                     {module.items.length} {module.items.length === 1 ? "lesson" : "lessons"}
                                 </p>
-                            </div>
+                            </button>
+                            <button
+                                onClick={() => toggleModule(module.id)}
+                                aria-hidden
+                                tabIndex={-1}
+                                className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:text-primary hover:bg-slate-50 transition-colors shrink-0"
+                            >
+                                <ArrowRight01Icon
+                                    size={16}
+                                    className={cn("transition-transform", !isCollapsed && "rotate-90")}
+                                />
+                            </button>
 
                             {!readOnly && (
                                 <>
@@ -155,23 +203,20 @@ export function CourseContentEditor({ course, readOnly = false }: CourseContentE
                                                 label: "Move up",
                                                 icon: ArrowUp01Icon,
                                                 disabled: moduleIndex === 0,
-                                                onSelect: () => moveModule(course.id, module.id, -1),
+                                                onSelect: () => void moveModule(course.id, module.id, -1),
                                             },
                                             {
                                                 label: "Move down",
                                                 icon: ArrowDown01Icon,
                                                 disabled: moduleIndex === course.modules.length - 1,
-                                                onSelect: () => moveModule(course.id, module.id, 1),
+                                                onSelect: () => void moveModule(course.id, module.id, 1),
                                             },
                                             {
                                                 label: "Delete module",
                                                 icon: Delete02Icon,
                                                 destructive: true,
                                                 separatorBefore: true,
-                                                onSelect: () => {
-                                                    deleteModule(course.id, module.id);
-                                                    toast.success("Module deleted");
-                                                },
+                                                onSelect: () => void run(() => deleteModule(course.id, module.id), "Module deleted"),
                                                 confirm: {
                                                     title: "Delete this module?",
                                                     description: `"${module.title}" and its ${module.items.length} lessons will be removed.`,
@@ -184,7 +229,7 @@ export function CourseContentEditor({ course, readOnly = false }: CourseContentE
                             )}
                         </div>
 
-                        {module.items.length === 0 ? (
+                        {isCollapsed ? null : module.items.length === 0 ? (
                             <p className="px-4 py-6 text-center text-xs text-slate-400 font-medium">
                                 No lessons in this module yet.
                             </p>
@@ -234,23 +279,24 @@ export function CourseContentEditor({ course, readOnly = false }: CourseContentE
                                                             label: "Move up",
                                                             icon: ArrowUp01Icon,
                                                             disabled: itemIndex === 0,
-                                                            onSelect: () => moveModuleItem(course.id, module.id, item.id, -1),
+                                                            onSelect: () => void moveModuleItem(course.id, module.id, item.id, -1),
                                                         },
                                                         {
                                                             label: "Move down",
                                                             icon: ArrowDown01Icon,
                                                             disabled: itemIndex === module.items.length - 1,
-                                                            onSelect: () => moveModuleItem(course.id, module.id, item.id, 1),
+                                                            onSelect: () => void moveModuleItem(course.id, module.id, item.id, 1),
                                                         },
                                                         {
                                                             label: "Delete lesson",
                                                             icon: Delete02Icon,
                                                             destructive: true,
                                                             separatorBefore: true,
-                                                            onSelect: () => {
-                                                                deleteModuleItem(course.id, module.id, item.id);
-                                                                toast.success("Lesson deleted");
-                                                            },
+                                                            onSelect: () =>
+                                                                void run(
+                                                                    () => deleteModuleItem(course.id, module.id, item.id),
+                                                                    "Lesson deleted"
+                                                                ),
                                                             confirm: {
                                                                 title: "Delete this lesson?",
                                                                 description: `"${item.title}" will be removed from ${module.title}.`,
@@ -266,7 +312,8 @@ export function CourseContentEditor({ course, readOnly = false }: CourseContentE
                             </div>
                         )}
                     </div>
-                ))
+                    );
+                })
             )}
 
             {!readOnly && itemDialog && (

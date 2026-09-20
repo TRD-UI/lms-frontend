@@ -38,6 +38,7 @@ import { waitlistEntries as seedWaitlist } from "@/data/admin";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { describeError } from "@/lib/supabase";
 
 /** Admin: course CRUD and waitlist control, backed by the shared LMS store. */
 export default function CourseManager() {
@@ -60,7 +61,7 @@ export default function CourseManager() {
     const coursePage = usePagination(filtered, 8);
     const waitlistPage = usePagination(waitlist, 8);
 
-    const handleSubmit = (draft: CourseDraft) => {
+    const handleSubmit = async (draft: CourseDraft) => {
         // The assigned instructor is what puts the course on their dashboard and
         // grants them authoring rights over its modules and assessments.
         const assigned = instructors.find((i) => i.id === draft.instructorId);
@@ -77,20 +78,26 @@ export default function CourseManager() {
             instructorName: assigned?.name,
         };
 
-        if (editing) {
-            updateCourse(editing.id, {
-                ...shared,
-                seats: { enrolled: editing.seats.enrolled, total: draft.seatsTotal },
+        try {
+            if (editing) {
+                await updateCourse(editing.id, {
+                    ...shared,
+                    seats: { enrolled: editing.seats.enrolled, total: draft.seatsTotal },
+                });
+                toast.success("Course updated", { description: `"${draft.title}" saved.` });
+            } else {
+                await createCourse({
+                    ...shared,
+                    seats: { enrolled: 0, total: draft.seatsTotal },
+                    progress: 0,
+                    modules: [],
+                });
+                toast.success("Course created", { description: `"${draft.title}" added to the catalog.` });
+            }
+        } catch (e) {
+            toast.error("Could not save the course", {
+                description: describeError(e as { message?: string }),
             });
-            toast.success("Course updated", { description: `"${draft.title}" saved.` });
-        } else {
-            createCourse({
-                ...shared,
-                seats: { enrolled: 0, total: draft.seatsTotal },
-                progress: 0,
-                modules: [],
-            });
-            toast.success("Course created", { description: `"${draft.title}" added to the catalog.` });
         }
         setEditing(null);
     };

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
     ArrowRight01Icon,
@@ -17,7 +17,9 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
-import { gradeAssessment, remedialModuleIds, formatDuration } from "@/lib/grading";
+import { remedialModuleIds, formatDuration } from "@/lib/grading";
+import { describeError } from "@/lib/supabase";
+import type { AttemptResult } from "@/lib/api/assessments";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,23 +33,50 @@ export default function QuizResults() {
     const { assessmentId, attemptId } = useParams<{ assessmentId: string; attemptId: string }>();
     const navigate = useNavigate();
     const student = useActingUser("student");
-    const { getAssessment, getCourse, getAttempt, attemptsFor, entryPassUnlocked } = useLms();
+    const { getAssessment, getCourse, attemptsFor, entryPassUnlocked, fetchAttemptResult } = useLms();
 
     const assessment = assessmentId ? getAssessment(assessmentId) : undefined;
-    const attempt = attemptId ? getAttempt(attemptId) : undefined;
     const course = assessment ? getCourse(assessment.courseId) : undefined;
 
-    const result = useMemo(
-        () => (assessment && attempt ? gradeAssessment(assessment, attempt.answers) : null),
-        [assessment, attempt]
-    );
+    /**
+     * Grading is server-side, so the per-question breakdown — including the
+     * answer key, which the learner cannot read off the tables — comes from
+     * attempt_result(). It is only readable once the attempt is submitted.
+     */
+    const [data, setData] = useState<AttemptResult | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!attemptId) return;
+        let active = true;
+        setLoading(true);
+        fetchAttemptResult(attemptId)
+            .then((r) => active && setData(r))
+            .catch((e) => active && setLoadError(describeError(e as { message?: string })))
+            .finally(() => active && setLoading(false));
+        return () => {
+            active = false;
+        };
+    }, [attemptId, fetchAttemptResult]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <div className="h-7 w-7 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    const attempt = data?.attempt;
+    const result = data ? { graded: data.graded, pointsEarned: data.attempt.pointsEarned, pointsPossible: data.attempt.pointsPossible } : null;
 
     if (!assessment || !attempt || !course || !result) {
         return (
             <EmptyState
                 icon={Task01Icon}
                 title="Result not found"
-                description="This attempt is no longer available."
+                description={loadError ?? "This attempt is no longer available."}
                 action={
                     <Link to="/dashboard/assessments">
                         <Button className="h-11 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium">
@@ -64,12 +93,12 @@ export default function QuizResults() {
     const correctCount = result.graded.filter((g) => g.correct).length;
     const wrongCount = result.graded.length - correctCount;
 
-    const attemptsUsed = attemptsFor(assessment.id, student.dataId).length;
+    const attemptsUsed = attemptsFor(assessment.id, student.id).length;
     const attemptsLeft =
         assessment.maxAttempts === 0 ? Infinity : Math.max(0, assessment.maxAttempts - attemptsUsed);
 
     const passReleased =
-        assessment.gatesEntryPass && attempt.passed && entryPassUnlocked(course.id, student.dataId);
+        assessment.gatesEntryPass && attempt.passed && entryPassUnlocked(course.id, student.id);
     const hasAside = passReleased || remedialModules.length > 0;
 
     return (

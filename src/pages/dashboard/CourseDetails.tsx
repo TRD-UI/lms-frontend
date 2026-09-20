@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft01Icon } from "hugeicons-react";
-import { purchasedCourseIds } from "@/data/courses";
 import { useLms } from "@/store/lms-store";
 import { CourseHero } from "@/components/dashboard/course-details/CourseHero";
 import { CourseQuickInfo } from "@/components/dashboard/course-details/CourseQuickInfo";
@@ -9,9 +8,9 @@ import { EnrollmentCard } from "@/components/dashboard/course-details/Enrollment
 
 export default function CourseDetails() {
     const { id } = useParams<{ id: string }>();
-    const { courses } = useLms();
+    const { courses, enrolledCourseIds } = useLms();
     const course = courses.find((c) => c.id === id);
-    const isPurchased = purchasedCourseIds.includes(id || "");
+    const isPurchased = enrolledCourseIds.includes(id || "");
 
     if (!course) {
         return (

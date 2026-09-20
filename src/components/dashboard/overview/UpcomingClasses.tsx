@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
 import { useLms } from "@/store/lms-store";
-import { purchasedCourseIds } from "@/data/courses";
 import { formatSessionDate, formatSessionTime, toDateKey } from "@/data/classes";
 
 /**
@@ -15,10 +14,10 @@ import { formatSessionDate, formatSessionTime, toDateKey } from "@/data/classes"
  */
 export function UpcomingClasses() {
     const [scheduleOpen, setScheduleOpen] = useState(false);
-    const { sessionsForCourses, getCourse } = useLms();
+    const { sessionsForCourses, getCourse, enrolledCourseIds } = useLms();
 
     const today = toDateKey(new Date());
-    const upcoming = sessionsForCourses(purchasedCourseIds)
+    const upcoming = sessionsForCourses(enrolledCourseIds)
         .filter((s) => s.date >= today)
         .slice(0, 3);
 

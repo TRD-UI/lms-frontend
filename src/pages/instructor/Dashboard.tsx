@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PageActions } from "@/components/shared/PageActions";
 import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
+import { MiniDonut } from "@/components/shared/MiniDonut";
 import { PieChart, PieSlice, PieCenter } from "@/components/charts/pie";
 import {
     Legend,
@@ -59,7 +60,7 @@ export default function InstructorDashboard() {
     const instructor = useActingUser("instructor");
     const { coursesByInstructor, assessmentsForCourse, attemptsForAssessment } = useLms();
 
-    const myCourses = coursesByInstructor(instructor.dataId);
+    const myCourses = coursesByInstructor(instructor.id);
 
     const stats = useMemo(() => {
         const courseIds = new Set(myCourses.map((c) => c.id));
@@ -229,7 +230,7 @@ export default function InstructorDashboard() {
                         description="Share of your learners, by course"
                         className="lg:col-span-4"
                     >
-                        <div className="flex flex-col sm:flex-row items-center gap-8 py-2">
+                        <div className="flex flex-col items-center gap-5 py-2">
                             <PieChart
                                 data={pieData}
                                 hoveredIndex={hoveredSlice}
@@ -247,9 +248,9 @@ export default function InstructorDashboard() {
                                 hoveredIndex={hoveredSlice}
                                 items={legendItems}
                                 onHoverChange={setHoveredSlice}
-                                className="flex-1 min-w-0"
+                                className="flex-row flex-wrap justify-center gap-x-1 gap-y-0 w-full"
                             >
-                                <LegendItem>
+                                <LegendItem className="flex items-center gap-2">
                                     <LegendMarker />
                                     <LegendLabel />
                                     <LegendValue />
@@ -265,44 +266,39 @@ export default function InstructorDashboard() {
                         className="lg:col-span-2"
                     >
                         {nextSession ? (
-                            <div className="py-3 space-y-4">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-medium text-slate-900 leading-snug">
-                                        {nextSession.courseTitle}
-                                    </h4>
-                                    <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
-                                        <Calendar03Icon size={12} />
+                            <div className="py-2 space-y-5">
+                                {/* The attendance ring carries the headline number,
+                                    so the badges below it can go. */}
+                                <div className="flex items-center gap-4">
+                                    <MiniDonut
+                                        value={
+                                            nextSession.totalStudents === 0
+                                                ? 0
+                                                : (nextSession.presentCount / nextSession.totalStudents) * 100
+                                        }
+                                        size={72}
+                                        stroke={7}
+                                        label="attendance"
+                                    />
+                                    <div className="min-w-0 space-y-0.5">
+                                        <h4 className="text-sm font-medium text-slate-900 leading-snug truncate">
+                                            {nextSession.courseTitle}
+                                        </h4>
+                                        <p className="text-[11px] text-slate-400 font-medium">
+                                            {nextSession.presentCount} of {nextSession.totalStudents} present
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5 text-[11px] text-slate-400 font-medium">
+                                    <p className="flex items-center gap-1.5">
+                                        <Calendar03Icon size={12} className="shrink-0" />
                                         {nextSession.sessionDate} · {nextSession.sessionTime}
                                     </p>
-                                    <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
-                                        <Location01Icon size={12} />
+                                    <p className="flex items-center gap-1.5 truncate">
+                                        <Location01Icon size={12} className="shrink-0" />
                                         {nextSession.venue}
                                     </p>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <StatusBadge tone="good" icon={CheckmarkCircle01Icon}>
-                                        {nextSession.presentCount} present
-                                    </StatusBadge>
-                                    <StatusBadge tone="critical">{nextSession.absentCount} absent</StatusBadge>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-[11px] font-medium">
-                                        <span className="text-slate-400">Attendance</span>
-                                        <span className="text-slate-900 tabular-nums">
-                                            {Math.round((nextSession.presentCount / nextSession.totalStudents) * 100)}%
-                                        </span>
-                                    </div>
-                                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full"
-                                            style={{
-                                                width: `${(nextSession.presentCount / nextSession.totalStudents) * 100}%`,
-                                                backgroundColor: SERIES[0],
-                                            }}
-                                        />
-                                    </div>
                                 </div>
 
                                 <Link to="/instructor/attendance">

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
     ArrowLeft01Icon,
@@ -24,7 +24,8 @@ import { QuizTimer } from "@/components/dashboard/assessments/QuizTimer";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
-import type { AttemptAnswer } from "@/data/assessment-types";
+import type { AttemptAnswer, AssessmentQuestion } from "@/data/assessment-types";
+import { describeError } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -38,10 +39,21 @@ export default function QuizRunner() {
     const { assessmentId } = useParams<{ assessmentId: string }>();
     const navigate = useNavigate();
     const student = useActingUser("student");
-    const { getAssessment, getCourse, submitAttempt, attemptsFor } = useLms();
+    const { getAssessment, getCourse, startAttempt, submitAttempt } = useLms();
 
     const assessment = assessmentId ? getAssessment(assessmentId) : undefined;
     const course = assessment ? getCourse(assessment.courseId) : undefined;
+
+    /**
+     * The attempt is opened server-side: it returns the questions without the
+     * answer key, enforces the attempt cap, and anchors the time limit. Nothing
+     * about grading happens in the browser.
+     */
+    const [attemptId, setAttemptId] = useState<string | null>(null);
+    const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+    const [timeLimit, setTimeLimit] = useState(0);
+    const [startError, setStartError] = useState<string | null>(null);
+    const [starting, setStarting] = useState(true);
 
     const [current, setCurrent] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string[]>>({});
@@ -52,45 +64,62 @@ export default function QuizRunner() {
 
     const elapsedRef = useRef(0);
 
-    const priorAttempts = assessment ? attemptsFor(assessment.id, student.dataId) : [];
-    const attemptsExhausted =
-        assessment != null &&
-        assessment.maxAttempts > 0 &&
-        priorAttempts.length >= assessment.maxAttempts;
+    useEffect(() => {
+        if (!assessmentId) return;
+        let active = true;
+        setStarting(true);
+        startAttempt(assessmentId)
+            .then((opened) => {
+                if (!active) return;
+                setAttemptId(opened.attemptId);
+                setQuestions(opened.questions);
+                setTimeLimit(opened.timeLimitMinutes);
+                setStartError(null);
+            })
+            .catch((e) => {
+                if (active) setStartError(describeError(e as { message?: string }));
+            })
+            .finally(() => {
+                if (active) setStarting(false);
+            });
+        return () => {
+            active = false;
+        };
+    }, [assessmentId, startAttempt]);
 
     const handleSubmit = useCallback(
-        (auto = false) => {
-            if (!assessment || submitted) return;
+        async (auto = false) => {
+            if (!assessment || !attemptId || submitted) return;
             setSubmitted(true);
 
-            const payload: AttemptAnswer[] = assessment.questions.map((q) => ({
+            const payload: AttemptAnswer[] = questions.map((q) => ({
                 questionId: q.id,
                 selectedOptionIds: answers[q.id] ?? [],
             }));
 
-            const attempt = submitAttempt({
-                assessment,
-                answers: payload,
-                studentId: student.dataId,
-                studentName: student.name,
-                durationSeconds: elapsedRef.current,
-            });
-
-            if (auto) {
-                toast.warning("Time is up", { description: "Your answers were submitted automatically." });
+            try {
+                await submitAttempt({ attemptId, answers: payload });
+                if (auto) {
+                    toast.warning("Time is up", {
+                        description: "Your answers were submitted automatically.",
+                    });
+                }
+                navigate(`/dashboard/assessments/${assessment.id}/result/${attemptId}`, {
+                    replace: true,
+                });
+            } catch (e) {
+                setSubmitted(false);
+                toast.error("Could not submit", {
+                    description: describeError(e as { message?: string }),
+                });
             }
-
-            navigate(`/dashboard/assessments/${assessment.id}/result/${attempt.id}`, { replace: true });
         },
-        [assessment, answers, navigate, student.dataId, student.name, submitAttempt, submitted]
+        [assessment, attemptId, questions, answers, navigate, submitAttempt, submitted]
     );
 
     const answeredCount = useMemo(
-        () =>
-            assessment
-                ? assessment.questions.filter((q) => (answers[q.id]?.length ?? 0) > 0).length
-                : 0,
-        [assessment, answers]
+        () => questions.filter((q) => (answers[q.id]?.length ?? 0) > 0).length,
+        [questions, answers]
     );
 
     if (!assessment || !course) {
@@ -110,7 +139,32 @@ export default function QuizRunner() {
         );
     }
 
-    if (assessment.questions.length === 0) {
+    if (starting) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <div className="h-7 w-7 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (startError) {
+        return (
+            <EmptyState
+                icon={Cancel01Icon}
+                title="Cannot start this assessment"
+                description={startError}
+                action={
+                    <Link to="/dashboard/assessments">
+                        <Button className="h-11 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium">
+                            Back to assessments
+                        </Button>
+                    </Link>
+                }
+            />
+        );
+    }
+
+    if (questions.length === 0) {
         return (
             <EmptyState
                 icon={Task01Icon}
@@ -127,25 +181,8 @@ export default function QuizRunner() {
         );
     }
 
-    if (attemptsExhausted) {
-        return (
-            <EmptyState
-                icon={Cancel01Icon}
-                title="No attempts remaining"
-                description={`You have used all ${assessment.maxAttempts} attempts for "${assessment.title}". Contact your instructor if you need another.`}
-                action={
-                    <Link to="/dashboard/assessments">
-                        <Button className="h-11 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium">
-                            Back to assessments
-                        </Button>
-                    </Link>
-                }
-            />
-        );
-    }
-
-    const question = assessment.questions[current];
-    const total = assessment.questions.length;
+    const question = questions[current];
+    const total = questions.length;
     const unanswered = total - answeredCount;
     const isLast = current === total - 1;
 
@@ -180,8 +217,8 @@ export default function QuizRunner() {
 
                 <div className="flex items-center gap-3 shrink-0">
                     <QuizTimer
-                        totalSeconds={assessment.timeLimitMinutes * 60}
-                        onExpire={() => handleSubmit(true)}
+                        totalSeconds={timeLimit * 60}
+                        onExpire={() => void handleSubmit(true)}
                         onTick={(elapsed) => {
                             elapsedRef.current = elapsed;
                         }}
@@ -275,7 +312,7 @@ export default function QuizRunner() {
                             Questions
                         </p>
                         <div className="grid grid-cols-10 gap-2 max-h-[212px] overflow-y-auto scrollbar-thin -mr-1 pr-1">
-                            {assessment.questions.map((q, i) => {
+                            {questions.map((q, i) => {
                                 const isAnswered = (answers[q.id]?.length ?? 0) > 0;
                                 const isFlagged = flagged.has(q.id);
                                 const isCurrent = i === current;
@@ -356,7 +393,7 @@ export default function QuizRunner() {
                             Keep working
                         </AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => handleSubmit(false)}
+                            onClick={() => void handleSubmit(false)}
                             className="rounded-full h-10 bg-primary hover:bg-primary/90 text-white font-normal"
                         >
                             Submit

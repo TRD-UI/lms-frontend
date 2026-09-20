@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search01Icon, BookOpen01Icon, FavouriteIcon } from "hugeicons-react";
-import { purchasedCourseIds, courseCategories } from "@/data/courses";
+import {courseCategories} from "@/data/courses";
 import { useLms } from "@/store/lms-store";
 import { CourseCard } from "@/components/dashboard/course/CourseCard";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,8 @@ export default function MyLearning() {
     const [selectedCategory, setSelectedCategory] = useState("All Courses");
     const [activeTab, setActiveTab] = useState<'catalog' | 'my-courses'>('catalog');
 
-    const { courses } = useLms();
-    const allCoursesWithLockState = courses.map(course => ({ ...course, isUnlocked: purchasedCourseIds.includes(course.id) }));
+    const { courses, enrolledCourseIds } = useLms();
+    const allCoursesWithLockState = courses.map(course => ({ ...course, isUnlocked: enrolledCourseIds.includes(course.id) }));
     const myCourses = allCoursesWithLockState.filter(c => c.isUnlocked);
     const hasPurchasedCourses = myCourses.length > 0;
     const currentCourses = activeTab === 'my-courses' ? myCourses : allCoursesWithLockState;

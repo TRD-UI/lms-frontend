@@ -17,7 +17,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { RowActions } from "@/components/shared/RowActions";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge, toneForStatus } from "@/components/shared/StatusBadge";
-import { Progress } from "@/components/ui/progress";
+import { MiniDonut } from "@/components/shared/MiniDonut";
 import { TablePagination, usePagination } from "@/components/shared/TablePagination";
 import {
     Table,
@@ -36,6 +36,7 @@ import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
 import type { Course } from "@/data/types";
 import { toast } from "sonner";
+import { describeError } from "@/lib/supabase";
 
 /** Instructor: the courses they own, with create / edit / delete. */
 export default function MyCourses() {
@@ -53,7 +54,7 @@ export default function MyCourses() {
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
 
-    const myCourses = coursesByInstructor(instructor.dataId);
+    const myCourses = coursesByInstructor(instructor.id);
     const visible = myCourses.filter(
         (c) =>
             c.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -62,7 +63,7 @@ export default function MyCourses() {
 
     const { page, pageCount, pageRows, setPage, total, from, to } = usePagination(visible, 8);
 
-    const handleSubmit = (draft: CourseDraft) => {
+    const handleSubmit = async (draft: CourseDraft) => {
         const shared = {
             title: draft.title,
             description: draft.description,
@@ -73,17 +74,18 @@ export default function MyCourses() {
             status: draft.status,
         };
 
+        try {
         if (editing) {
-            updateCourse(editing.id, {
+            await updateCourse(editing.id, {
                 ...shared,
                 seats: { enrolled: editing.seats.enrolled, total: draft.seatsTotal },
             });
             toast.success("Course updated", { description: `"${draft.title}" saved.` });
         } else {
-            const created = createCourse({
+            const created = await createCourse({
                 ...shared,
                 seats: { enrolled: 0, total: draft.seatsTotal },
-                instructorId: instructor.dataId,
+                instructorId: instructor.id,
                 instructorName: instructor.name,
                 progress: 0,
                 modules: [],
@@ -92,6 +94,11 @@ export default function MyCourses() {
                 description: "Add modules and assessments to make it ready for learners.",
             });
             navigate(`/instructor/courses/${created.id}`);
+        }
+        } catch (e) {
+            toast.error("Could not save the course", {
+                description: describeError(e as { message?: string }),
+            });
         }
         setEditing(null);
     };
@@ -196,14 +203,11 @@ export default function MyCourses() {
                                                     </StatusBadge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="space-y-1 w-36">
-                                                        <div className="flex items-center justify-between text-[11px] font-medium">
-                                                            <span className="text-slate-400">
-                                                                {course.seats.enrolled} / {course.seats.total}
-                                                            </span>
-                                                            <span className="text-slate-400 tabular-nums">{filled}%</span>
-                                                        </div>
-                                                        <Progress value={filled} className="h-1.5" />
+                                                    <div className="flex items-center gap-2.5">
+                                                        <MiniDonut value={filled} size={40} label="of seats filled" />
+                                                        <span className="text-[11px] font-medium text-slate-400 tabular-nums">
+                                                            {course.seats.enrolled} / {course.seats.total}
+                                                        </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-sm text-slate-500 tabular-nums">

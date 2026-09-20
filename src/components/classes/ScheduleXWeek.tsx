@@ -7,7 +7,7 @@ import { createEventsServicePlugin } from "@schedule-x/events-service";
 import "temporal-polyfill/global";
 import { Temporal } from "temporal-polyfill";
 import "@schedule-x/theme-default/dist/index.css";
-import { Add01Icon } from "hugeicons-react";
+import { Add01Icon, Calendar03Icon, QrCode01Icon, SquareLock02Icon } from "hugeicons-react";
 import type { ClassSession } from "@/data/classes";
 import { cn } from "@/lib/utils";
 
@@ -156,9 +156,27 @@ export function ScheduleXWeek({
                                     state === "none" && "bg-accent/20 border-primary/20"
                                 )}
                             >
-                                <p className="text-[11px] font-medium text-slate-800 leading-tight line-clamp-2">
-                                    {session.title}
-                                </p>
+                                <div className="flex items-start gap-1.5">
+                                    <span
+                                        className={cn(
+                                            "h-4 w-4 rounded-md flex items-center justify-center shrink-0 mt-px",
+                                            state === "ready" && "bg-emerald-100 text-emerald-700",
+                                            state === "locked" && "bg-amber-100 text-amber-700",
+                                            state === "none" && "bg-primary/10 text-primary"
+                                        )}
+                                    >
+                                        {state === "ready" ? (
+                                            <QrCode01Icon size={10} />
+                                        ) : state === "locked" ? (
+                                            <SquareLock02Icon size={10} />
+                                        ) : (
+                                            <Calendar03Icon size={10} />
+                                        )}
+                                    </span>
+                                    <p className="text-[11px] font-medium text-slate-800 leading-tight line-clamp-2">
+                                        {session.title}
+                                    </p>
+                                </div>
                                 <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
                                     {session.startTime} – {session.endTime}
                                 </p>

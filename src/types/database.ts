@@ -855,6 +855,7 @@ export type Database = {
           external_url: string | null
           id: string
           module_id: string
+          notes: string | null
           position: number
           storage_path: string | null
           title: string
@@ -866,6 +867,7 @@ export type Database = {
           external_url?: string | null
           id?: string
           module_id: string
+          notes?: string | null
           position?: number
           storage_path?: string | null
           title: string
@@ -877,6 +879,7 @@ export type Database = {
           external_url?: string | null
           id?: string
           module_id?: string
+          notes?: string | null
           position?: number
           storage_path?: string | null
           title?: string
@@ -1284,6 +1287,7 @@ export type Database = {
         Args: { p_course_id: string; p_student_id: string }
         Returns: undefined
       }
+      teaches_course: { Args: { target_course_id: string }; Returns: boolean }
       verify_certificate: { Args: { p_credential_id: string }; Returns: Json }
     }
     Enums: {

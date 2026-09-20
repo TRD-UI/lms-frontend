@@ -282,3 +282,41 @@
 .sx-lms .sx__current-time-indicator {
   background-color: hsl(var(--primary));
 }
+
+/* The default header packs its View / Date selects tight enough that the
+   floating labels clip against the control border. Give them room. */
+.sx-lms .sx__calendar-header-content {
+  gap: 0.75rem;
+  padding: 0.25rem 0.25rem 0.5rem;
+}
+
+.sx-lms .sx__view-selection,
+.sx-lms .sx__date-input-wrapper,
+.sx-lms .sx__date-picker-wrapper {
+  overflow: visible;
+}
+
+.sx-lms .sx__view-selection-selected-item,
+.sx-lms .sx__date-input {
+  height: 2.5rem;
+  padding: 0 0.85rem;
+  border-radius: 0.75rem;
+  border-color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+/* The label sits on the border, so it needs a solid backdrop to sit on. */
+.sx-lms .sx__view-selection-label,
+.sx-lms .sx__date-input-label {
+  background: #fff;
+  padding: 0 0.3rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: #94a3b8;
+}
+
+.sx-lms .sx__today-button,
+.sx-lms .sx__forward-backward-navigation button {
+  border-radius: 9999px;
+}

@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/table";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
-import { purchasedCourseIds } from "@/data/courses";
 import type { Assessment } from "@/data/assessment-types";
 import { cn } from "@/lib/utils";
 
@@ -45,12 +44,12 @@ const KIND_LABEL: Record<Assessment["kind"], string> = {
 export default function Assessments() {
     const navigate = useNavigate();
     const student = useActingUser("student");
-    const { courses, assessments, attemptsFor, bestAttempt } = useLms();
+    const { courses, assessments, attemptsFor, bestAttempt, enrolledCourseIds } = useLms();
     const [query, setQuery] = useState("");
     const [filter, setFilter] = useState<Filter>("all");
 
     const enrolled = useMemo(
-        () => courses.filter((c) => purchasedCourseIds.includes(c.id)),
+        () => courses.filter((c) => enrolledCourseIds.includes(c.id)),
         [courses]
     );
 
@@ -59,8 +58,8 @@ export default function Assessments() {
         return assessments
             .filter((a) => a.status === "published" && enrolledIds.has(a.courseId))
             .map((a) => {
-                const best = bestAttempt(a.id, student.dataId);
-                const used = attemptsFor(a.id, student.dataId).length;
+                const best = bestAttempt(a.id, student.id);
+                const used = attemptsFor(a.id, student.id).length;
                 const left = a.maxAttempts === 0 ? Infinity : Math.max(0, a.maxAttempts - used);
                 return {
                     assessment: a,
@@ -70,7 +69,7 @@ export default function Assessments() {
                     left,
                 };
             });
-    }, [assessments, enrolled, student.dataId, attemptsFor, bestAttempt]);
+    }, [assessments, enrolled, student.id, attemptsFor, bestAttempt]);
 
     const visible = rows.filter((r) => {
         const matchesQuery =

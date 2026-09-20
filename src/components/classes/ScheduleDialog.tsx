@@ -13,7 +13,6 @@ import { ScheduleXWeek } from "./ScheduleXWeek";
 import { ScheduleClassDialog } from "./ScheduleClassDialog";
 import { useLms } from "@/store/lms-store";
 import { useSession } from "@/store/session";
-import { purchasedCourseIds } from "@/data/courses";
 import { formatSessionDate, formatSessionTime, type ClassSession } from "@/data/classes";
 import { toast } from "sonner";
 
@@ -40,6 +39,7 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
         entryPassUnlocked,
         assessmentsForCourse,
         bestAttempt,
+        enrolledCourseIds,
     } = useLms();
 
     const [addOpen, setAddOpen] = useState(false);
@@ -47,21 +47,21 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
     const [editing, setEditing] = useState<ClassSession | null>(null);
 
     const isInstructor = user?.role === "instructor";
-    const myCourses = isInstructor && user ? coursesByInstructor(user.dataId) : [];
+    const myCourses = isInstructor && user ? coursesByInstructor(user.id) : [];
     const sessions =
-        isInstructor && user ? sessionsForInstructor(user.dataId) : sessionsForCourses(purchasedCourseIds);
+        isInstructor && user ? sessionsForInstructor(user.id) : sessionsForCourses(enrolledCourseIds);
 
     /** A class is entered with a pass, released only once its gate is passed. */
     const passFor = (session: ClassSession) => {
         if (!user) return { unlocked: false, blocking: undefined };
-        const unlocked = entryPassUnlocked(session.courseId, user.dataId);
+        const unlocked = entryPassUnlocked(session.courseId, user.id);
         const blocking = unlocked
             ? undefined
             : assessmentsForCourse(session.courseId).find(
                 (a) =>
                     a.gatesEntryPass &&
                     a.status === "published" &&
-                    bestAttempt(a.id, user.dataId)?.passed !== true
+                    bestAttempt(a.id, user.id)?.passed !== true
             );
         return { unlocked, blocking };
     };
@@ -159,7 +159,7 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
                         }
                     }}
                     courses={myCourses}
-                    instructorId={user.dataId}
+                    instructorId={user.id}
                     session={editing}
                     defaultDate={addDate}
                 />

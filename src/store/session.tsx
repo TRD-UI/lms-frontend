@@ -10,24 +10,11 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
-import { adminUsers } from "@/data/admin";
 
 export type Role = "student" | "instructor" | "admin";
 
 export interface SessionUser {
     id: string;
-    /**
-     * Id this account is known by in the seeded mock data.
-     *
-     * TEMPORARY BRIDGE. Authentication is on Supabase, so `id` is a real
-     * auth UUID — but courses, attempts and passes still live in
-     * `src/data/*` keyed by the old short ids ("st-demo", "u-2"). Without this
-     * mapping an instructor sees no courses and every entry pass reads locked.
-     *
-     * Delete this, and every `.dataId` call site, once the data layer moves to
-     * Supabase; `id` becomes the only identifier.
-     */
-    dataId: string;
     name: string;
     email: string;
     role: Role;
@@ -55,16 +42,9 @@ function initialsOf(name: string): string {
         .join("") || "?";
 }
 
-/** Seeded accounts, matched on the email the seed gave them. */
-const MOCK_ID_BY_EMAIL: Record<string, string> = {
-    "cyber.smith@example.com": "st-demo",
-    ...Object.fromEntries(adminUsers.map((u) => [u.email, u.id])),
-};
-
 function toSessionUser(profile: Tables<"profiles">): SessionUser {
     return {
         id: profile.id,
-        dataId: MOCK_ID_BY_EMAIL[profile.email] ?? profile.id,
         name: profile.name,
         email: profile.email,
         role: profile.role,
