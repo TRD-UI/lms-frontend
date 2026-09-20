@@ -1,6 +1,5 @@
 import {
     Home01Icon,
-    Calendar03Icon,
     QrCode01Icon,
     UserGroupIcon,
     Logout01Icon,
@@ -34,7 +33,6 @@ import { useState } from "react";
 const items = [
     { title: "Home", url: "/instructor", icon: Home01Icon },
     { title: "Courses", url: "/instructor/courses", icon: BookOpen01Icon },
-    { title: "Classes", url: "/instructor/classes", icon: Calendar03Icon },
     { title: "Scanner", url: "/instructor/scanner", icon: QrCode01Icon },
     { title: "Attendance", url: "/instructor/attendance", icon: UserGroupIcon },
 ];

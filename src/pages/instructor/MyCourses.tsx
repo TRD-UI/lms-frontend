@@ -53,7 +53,7 @@ export default function MyCourses() {
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
 
-    const myCourses = coursesByInstructor(instructor.id);
+    const myCourses = coursesByInstructor(instructor.dataId);
     const visible = myCourses.filter(
         (c) =>
             c.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -83,7 +83,7 @@ export default function MyCourses() {
             const created = createCourse({
                 ...shared,
                 seats: { enrolled: 0, total: draft.seatsTotal },
-                instructorId: instructor.id,
+                instructorId: instructor.dataId,
                 instructorName: instructor.name,
                 progress: 0,
                 modules: [],

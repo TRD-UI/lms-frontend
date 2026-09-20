@@ -52,7 +52,7 @@ export default function QuizRunner() {
 
     const elapsedRef = useRef(0);
 
-    const priorAttempts = assessment ? attemptsFor(assessment.id, student.id) : [];
+    const priorAttempts = assessment ? attemptsFor(assessment.id, student.dataId) : [];
     const attemptsExhausted =
         assessment != null &&
         assessment.maxAttempts > 0 &&
@@ -71,7 +71,7 @@ export default function QuizRunner() {
             const attempt = submitAttempt({
                 assessment,
                 answers: payload,
-                studentId: student.id,
+                studentId: student.dataId,
                 studentName: student.name,
                 durationSeconds: elapsedRef.current,
             });
@@ -82,7 +82,7 @@ export default function QuizRunner() {
 
             navigate(`/dashboard/assessments/${assessment.id}/result/${attempt.id}`, { replace: true });
         },
-        [assessment, answers, navigate, student.id, student.name, submitAttempt, submitted]
+        [assessment, answers, navigate, student.dataId, student.name, submitAttempt, submitted]
     );
 
     const answeredCount = useMemo(

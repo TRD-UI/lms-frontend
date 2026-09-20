@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowRight01Icon,
@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PageActions } from "@/components/shared/PageActions";
+import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
 import { StatGrid, StatTile } from "@/components/shared/StatTile";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -45,10 +46,11 @@ import { SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "
  */
 export default function InstructorDashboard() {
     const navigate = useNavigate();
+    const [scheduleOpen, setScheduleOpen] = useState(false);
     const instructor = useActingUser("instructor");
     const { coursesByInstructor, assessmentsForCourse, attemptsForAssessment } = useLms();
 
-    const myCourses = coursesByInstructor(instructor.id);
+    const myCourses = coursesByInstructor(instructor.dataId);
 
     const stats = useMemo(() => {
         const courseIds = new Set(myCourses.map((c) => c.id));
@@ -138,7 +140,9 @@ export default function InstructorDashboard() {
                 description="Your courses, learners and upcoming sessions at a glance."
                 actions={
                     <PageActions
+                        mergedLabel="Actions"
                         actions={[
+                            { label: "Schedule a class", icon: Calendar03Icon, onSelect: () => setScheduleOpen(true) },
                             { label: "Scan passes", icon: QrCode01Icon, onSelect: () => navigate("/instructor/scanner") },
                             { label: "My courses", icon: BookOpen01Icon, onSelect: () => navigate("/instructor/courses") },
                         ]}
@@ -395,6 +399,8 @@ export default function InstructorDashboard() {
                     </ChartCard>
                 </div>
             )}
+
+            <ScheduleDialog open={scheduleOpen} onOpenChange={setScheduleOpen} />
         </div>
     );
 }

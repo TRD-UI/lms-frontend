@@ -59,8 +59,8 @@ export default function Assessments() {
         return assessments
             .filter((a) => a.status === "published" && enrolledIds.has(a.courseId))
             .map((a) => {
-                const best = bestAttempt(a.id, student.id);
-                const used = attemptsFor(a.id, student.id).length;
+                const best = bestAttempt(a.id, student.dataId);
+                const used = attemptsFor(a.id, student.dataId).length;
                 const left = a.maxAttempts === 0 ? Infinity : Math.max(0, a.maxAttempts - used);
                 return {
                     assessment: a,
@@ -70,7 +70,7 @@ export default function Assessments() {
                     left,
                 };
             });
-    }, [assessments, enrolled, student.id, attemptsFor, bestAttempt]);
+    }, [assessments, enrolled, student.dataId, attemptsFor, bestAttempt]);
 
     const visible = rows.filter((r) => {
         const matchesQuery =

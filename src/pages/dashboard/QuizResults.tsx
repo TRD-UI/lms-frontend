@@ -64,12 +64,12 @@ export default function QuizResults() {
     const correctCount = result.graded.filter((g) => g.correct).length;
     const wrongCount = result.graded.length - correctCount;
 
-    const attemptsUsed = attemptsFor(assessment.id, student.id).length;
+    const attemptsUsed = attemptsFor(assessment.id, student.dataId).length;
     const attemptsLeft =
         assessment.maxAttempts === 0 ? Infinity : Math.max(0, assessment.maxAttempts - attemptsUsed);
 
     const passReleased =
-        assessment.gatesEntryPass && attempt.passed && entryPassUnlocked(course.id, student.id);
+        assessment.gatesEntryPass && attempt.passed && entryPassUnlocked(course.id, student.dataId);
     const hasAside = passReleased || remedialModules.length > 0;
 
     return (

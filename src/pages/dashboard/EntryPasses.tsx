@@ -30,14 +30,14 @@ export default function EntryPasses() {
      * passed. When one is outstanding we surface it as the call to action.
      */
     const gateFor = (pass: EntryPass) => {
-        const unlocked = entryPassUnlocked(pass.courseId, student.id);
+        const unlocked = entryPassUnlocked(pass.courseId, student.dataId);
         const blockingAssessment = unlocked
             ? undefined
             : assessmentsForCourse(pass.courseId).find(
                 (a) =>
                     a.gatesEntryPass &&
                     a.status === "published" &&
-                    bestAttempt(a.id, student.id)?.passed !== true
+                    bestAttempt(a.id, student.dataId)?.passed !== true
             );
         return { unlocked, blockingAssessment };
     };

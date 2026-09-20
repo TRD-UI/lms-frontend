@@ -39,6 +39,8 @@ interface ScheduleClassDialogProps {
     courses: Course[];
     instructorId: string;
     session?: ClassSession | null;
+    /** Pre-selects a day when opened from a specific column. */
+    defaultDate?: string;
 }
 
 /**
@@ -53,6 +55,7 @@ export function ScheduleClassDialog({
     courses,
     instructorId,
     session,
+    defaultDate,
 }: ScheduleClassDialogProps) {
     const isEdit = Boolean(session);
     const { venues, scheduleClass, updateClassSession } = useLms();
@@ -79,7 +82,11 @@ export function ScheduleClassDialog({
             setVenue(session.venue);
             setRoomNumber(session.roomNumber);
         } else {
-            setDate(earliestSchedulableDate());
+            // A day picked off the grid wins, unless it falls inside the notice
+            // window — in which case the earliest legal date does.
+            const fromGrid = defaultDate ? new Date(defaultDate) : null;
+            const floor = earliestSchedulableDate();
+            setDate(fromGrid && fromGrid >= floor ? fromGrid : floor);
             setCourseId(courses[0]?.id ?? "");
             setTitle("");
             setStartTime("10:00");
@@ -89,7 +96,7 @@ export function ScheduleClassDialog({
         }
         // `courses`/`venues` are stable enough here; re-running on open is the point.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, session]);
+    }, [open, session, defaultDate]);
 
     const handleSubmit = () => {
         if (!courseId) return setError("Pick the course this class belongs to.");

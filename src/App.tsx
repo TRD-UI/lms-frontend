@@ -38,7 +38,6 @@ import InstructorCourseDetail from "@/pages/instructor/CourseDetail";
 import InstructorAssessmentDetail from "@/pages/instructor/AssessmentDetail";
 import QRScanner from "@/pages/instructor/QRScanner";
 import CohortAttendance from "@/pages/instructor/CohortAttendance";
-import InstructorClasses from "@/pages/instructor/Classes";
 
 // Auth & public
 import Login from "@/pages/auth/Login";
@@ -60,7 +59,8 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          {/* Opt in early so the v7 upgrade is a version bump, not a behaviour change. */}
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ScrollToTop />
             <Routes>
               {/* Landing Page */}
@@ -109,7 +109,6 @@ const App = () => (
                 <Route path="courses/:courseId" element={<InstructorCourseDetail />} />
                 <Route path="courses/:courseId/:assessmentId" element={<InstructorAssessmentDetail />} />
                 <Route path="scanner" element={<QRScanner />} />
-                <Route path="classes" element={<InstructorClasses />} />
                 <Route path="attendance" element={<CohortAttendance />} />
                 <Route path="settings" element={<AccountSettings />} />
               </Route>
