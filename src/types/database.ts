@@ -626,6 +626,7 @@ export type Database = {
           fee_amount: number | null
           fee_type: Database["public"]["Enums"]["fee_type"]
           id: string
+          image_url: string | null
           instructor_id: string | null
           location: string
           seats_total: number
@@ -642,6 +643,7 @@ export type Database = {
           fee_amount?: number | null
           fee_type?: Database["public"]["Enums"]["fee_type"]
           id?: string
+          image_url?: string | null
           instructor_id?: string | null
           location?: string
           seats_total?: number
@@ -658,6 +660,7 @@ export type Database = {
           fee_amount?: number | null
           fee_type?: Database["public"]["Enums"]["fee_type"]
           id?: string
+          image_url?: string | null
           instructor_id?: string | null
           location?: string
           seats_total?: number
@@ -1240,9 +1243,77 @@ export type Database = {
       }
     }
     Functions: {
+      analytics_course_health: {
+        Args: never
+        Returns: {
+          attendance: number
+          category: string
+          completion: number
+          pass_rate: number
+          retention: number
+          seats_filled: number
+        }[]
+      }
+      analytics_funnel: {
+        Args: never
+        Returns: {
+          stage: string
+          value: number
+        }[]
+      }
+      analytics_journey: { Args: never; Returns: Json }
+      analytics_overview: { Args: never; Returns: Json }
+      analytics_payment_mix: {
+        Args: never
+        Returns: {
+          amount: number
+          method: string
+        }[]
+      }
+      analytics_retention: {
+        Args: never
+        Returns: {
+          cohort: string
+          retained: number
+          size: number
+          week: number
+        }[]
+      }
+      analytics_revenue: {
+        Args: { p_months?: number }
+        Returns: {
+          application_fee: number
+          month: string
+          tuition: number
+        }[]
+      }
+      analytics_throughput: {
+        Args: { p_weeks?: number }
+        Returns: {
+          attempts: number
+          passes: number
+          week: string
+        }[]
+      }
+      analytics_top_courses: {
+        Args: { p_limit?: number }
+        Returns: {
+          course: string
+          enrolled: number
+          pass_rate: number
+          revenue: number
+        }[]
+      }
       assessment_authoring_payload: {
         Args: { p_assessment_id: string }
         Returns: Json
+      }
+      assessment_keys: {
+        Args: never
+        Returns: {
+          option_id: string
+          question_id: string
+        }[]
       }
       attempt_result: { Args: { p_attempt_id: string }; Returns: Json }
       auth_role: {
@@ -1278,12 +1349,23 @@ export type Database = {
         Args: { p_action: string; p_details?: string; p_target: string }
         Returns: undefined
       }
+      mark_all_notifications_read: { Args: never; Returns: number }
       mark_item_complete: {
         Args: { p_complete?: boolean; p_item_id: string }
         Returns: Json
       }
       mark_payment_settled: {
         Args: { p_reference: string }
+        Returns: undefined
+      }
+      notify_enrolled: {
+        Args: {
+          p_course_id: string
+          p_link?: string
+          p_message: string
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+        }
         Returns: undefined
       }
       owns_course: { Args: { target_course_id: string }; Returns: boolean }

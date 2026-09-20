@@ -5,13 +5,14 @@ import { fetchInstructors } from "@/lib/api/people";
 import * as assessmentsApi from "@/lib/api/assessments";
 import * as classesApi from "@/lib/api/classes";
 import * as referenceApi from "@/lib/api/reference";
+import * as notificationsApi from "@/lib/api/notifications";
 import {
     earliestSchedulableDate,
     formatSessionDate,
     toDateKey,
     type ClassSession,
 } from "@/data/classes";
-import { notifications as seedNotifications, type Notification } from "@/data/notifications";
+import type { Notification } from "@/data/notifications";
 import type { EntryPass } from "@/data/entry-passes";
 
 import type { Course, CourseModule, ModuleItem } from "@/data/types";
@@ -99,8 +100,8 @@ interface LmsContextValue {
 
     // ─── Notifications ───
     notifications: Notification[];
-    markNotificationRead: (id: string) => void;
-    markAllNotificationsRead: () => void;
+    markNotificationRead: (id: string) => Promise<void>;
+    markAllNotificationsRead: () => Promise<void>;
 
     // ─── Assessments ───
     createAssessment: (input: Omit<Assessment, "id" | "questions"> & { questions?: AssessmentQuestion[] }) => Promise<Assessment>;
@@ -218,8 +219,12 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         queryFn: referenceApi.fetchVenues,
         staleTime: 5 * 60_000,
     });
-    // Notifications are the last thing still held locally; they have no table yet.
-    const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
+    // Rows are written by database triggers, so the client only reads and marks.
+    const { data: notifications = [] } = useQuery({
+        queryKey: ["notifications"],
+        queryFn: notificationsApi.fetchNotifications,
+        staleTime: 20_000,
+    });
 
     // ─── Courses ───────────────────────────────────────────────────
     //
@@ -418,23 +423,18 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
 
     // ─── Notifications ─────────────────────────────────────────────
 
-    const pushNotification = useCallback(
-        (n: Omit<Notification, "id" | "timestamp" | "isRead">) => {
-            setNotifications((prev) => [
-                { ...n, id: nextId("ntf"), timestamp: "Just now", isRead: false },
-                ...prev,
-            ]);
+    const markNotificationRead = useCallback(
+        async (id: string) => {
+            await notificationsApi.markRead(id);
+            invalidate("notifications");
         },
-        []
+        [invalidate]
     );
 
-    const markNotificationRead = useCallback((id: string) => {
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-    }, []);
-
-    const markAllNotificationsRead = useCallback(() => {
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    }, []);
+    const markAllNotificationsRead = useCallback(async () => {
+        await notificationsApi.markAllRead();
+        invalidate("notifications");
+    }, [invalidate]);
 
     // ─── Physical classes ──────────────────────────────────────────
 
@@ -454,17 +454,12 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
             const id = await classesApi.createClassSession(input);
             // A database trigger issues the entry passes, so the pass list has
             // to be refetched alongside the sessions.
-            invalidate("class-sessions", "entry-passes");
-
-            pushNotification({
-                type: "new_class",
-                title: "New class scheduled",
-                message: `${input.title} on ${formatSessionDate(input.date)} at ${input.venue}.`,
-            });
-
+            // Triggers announce the class and issue the passes, so the
+            // notification feed is refetched rather than written to here.
+            invalidate("class-sessions", "entry-passes", "notifications");
             return { ...input, id };
         },
-        [invalidate, pushNotification]
+        [invalidate]
     );
 
     const updateClassSession = useCallback(

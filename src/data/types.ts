@@ -36,6 +36,8 @@ export interface Course {
     };
     fees: FeeStructure;
     category: string;
+    /** Cover image shown on the course card. */
+    imageUrl?: string;
     modules: CourseModule[];
     isUnlocked?: boolean;
     progress?: number;

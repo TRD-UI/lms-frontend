@@ -107,27 +107,23 @@ export async function fetchAssessments(): Promise<Assessment[]> {
 
     const rows = (data ?? []) as unknown as AssessmentRow[];
 
-    // The answer key is a separate, privileged read. It succeeds for the
-    // course's instructor and for an admin, and returns nothing otherwise —
-    // which is exactly the learner's view.
+    /*
+     * Answer keys, in one call. The previous version asked
+     * assessment_authoring_payload() per assessment, which raises for anyone
+     * who is not the course's owner — so a learner's catalogue read fired a
+     * 403 for every assessment on the platform.
+     *
+     * assessment_keys() returns keys only for assessments the caller may
+     * author, and an empty set otherwise. A learner gets no keys and no error,
+     * which is exactly right: the quiz runner never needs them.
+     */
     const correctByQuestion = new Map<string, string[]>();
-    const keyed = await Promise.all(
-        rows.map(async (r) => {
-            const { data: payload } = await supabase.rpc("assessment_authoring_payload", {
-                p_assessment_id: r.id,
-            });
-            return payload as unknown as
-                | { id: string; options: { id: string; isCorrect: boolean }[] }[]
-                | null;
-        })
-    );
-    for (const questions of keyed) {
-        for (const q of questions ?? []) {
-            correctByQuestion.set(
-                q.id,
-                (q.options ?? []).filter((o) => o.isCorrect).map((o) => o.id)
-            );
-        }
+    const { data: keys } = await supabase.rpc("assessment_keys");
+    for (const k of (keys ?? []) as { question_id: string; option_id: string }[]) {
+        correctByQuestion.set(k.question_id, [
+            ...(correctByQuestion.get(k.question_id) ?? []),
+            k.option_id,
+        ]);
     }
 
     return rows.map((r) => toAssessment(r, correctByQuestion));

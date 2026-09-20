@@ -72,6 +72,7 @@ export default function MyCourses() {
             location: draft.location,
             fees: draftToFees(draft),
             status: draft.status,
+            imageUrl: draft.imageUrl,
         };
 
         try {

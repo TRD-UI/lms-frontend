@@ -27,6 +27,7 @@ type CourseRow = {
     fee_amount: number | null;
     application_fee: number;
     status: "draft" | "published";
+    image_url: string | null;
     instructor_id: string | null;
     instructor: { name: string } | null;
     course_fee_tiers: { name: string; amount: number; position: number }[];
@@ -53,7 +54,7 @@ type CourseRow = {
  */
 const COURSE_SELECT = `
   id, title, description, duration, location, category, seats_total,
-  fee_type, fee_amount, application_fee, status, instructor_id,
+  fee_type, fee_amount, application_fee, status, image_url, instructor_id,
   instructor:profiles!courses_instructor_id_fkey ( name ),
   course_fee_tiers ( name, amount, position ),
   course_modules (
@@ -106,6 +107,7 @@ function toCourse(row: CourseRow, seatsTaken: number): Course {
         seats: { enrolled: seatsTaken, total: row.seats_total },
         fees: toFees(row),
         modules: toModules(row),
+        imageUrl: row.image_url ?? undefined,
         instructorId: row.instructor_id ?? undefined,
         instructorName: row.instructor?.name ?? undefined,
         status: row.status,
@@ -145,6 +147,7 @@ export interface CourseInput {
     seatsTotal: number;
     fees: FeeStructure;
     status: "draft" | "published";
+    imageUrl?: string;
     instructorId?: string;
 }
 
@@ -176,6 +179,7 @@ export async function createCourse(input: CourseInput): Promise<string> {
             fee_type: input.fees.type,
             fee_amount: input.fees.type === "flat" ? toKobo(input.fees.amount ?? 0) : null,
             status: input.status,
+            image_url: input.imageUrl ?? null,
             instructor_id: input.instructorId ?? null,
         })
         .select("id")
@@ -195,6 +199,7 @@ export async function updateCourse(id: string, patch: Partial<CourseInput>): Pro
     if (patch.location !== undefined) row.location = patch.location;
     if (patch.seatsTotal !== undefined) row.seats_total = patch.seatsTotal;
     if (patch.status !== undefined) row.status = patch.status;
+    if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl || null;
     if (patch.instructorId !== undefined) row.instructor_id = patch.instructorId || null;
     if (patch.fees !== undefined) {
         row.fee_type = patch.fees.type;
@@ -300,4 +305,25 @@ export async function fetchMyEnrolledCourseIds(): Promise<string[]> {
         .in("status", ["active", "completed"]);
     if (error) throw error;
     return (data ?? []).map((e) => e.course_id);
+}
+
+// ─── Cover image ─────────────────────────────────────────────────────────────
+
+/**
+ * Uploads a course cover and returns its public URL.
+ *
+ * `courseId` may be an id that does not exist yet — the form generates one so
+ * the image can be chosen before the course is saved. The bucket is public, so
+ * the returned URL needs no signing.
+ */
+export async function uploadCourseImage(courseId: string, file: File): Promise<string> {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+    const path = `${courseId}/cover-${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+        .from("course-images")
+        .upload(path, file, { contentType: file.type, upsert: true });
+    if (error) throw error;
+
+    return supabase.storage.from("course-images").getPublicUrl(path).data.publicUrl;
 }

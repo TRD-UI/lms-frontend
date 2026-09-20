@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Course } from "@/data/types";
-import { PlayIcon } from "hugeicons-react";
+import { PlayIcon, BookOpen01Icon } from "hugeicons-react";
 
 interface CourseCardProps {
     course: Course;
@@ -24,11 +24,18 @@ export function CourseCard({ course }: CourseCardProps) {
         <div className="group bg-white rounded-2xl md:rounded-3xl p-2 md:p-3 border border-slate-100 transition-all duration-300 flex flex-col h-full relative shadow-sm hover:shadow-md">
             {/* Image Container - Compact height */}
             <div className="relative aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden mb-2 md:mb-4 bg-slate-50">
-                <img
-                    src="/placeholder.svg"
-                    alt={course.title}
-                    className="object-cover w-full h-full"
-                />
+                {course.imageUrl ? (
+                    <img
+                        src={course.imageUrl}
+                        alt={course.title}
+                        loading="lazy"
+                        className="object-cover w-full h-full"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-200">
+                        <BookOpen01Icon size={40} />
+                    </div>
+                )}
             </div>
 
             {/* Content Area */}

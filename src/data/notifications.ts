@@ -7,6 +7,8 @@ export interface Notification {
     message: string;
     timestamp: string;
     isRead: boolean;
+    /** Where the notification points, when it points somewhere. */
+    link?: string;
 }
 
 export const notifications: Notification[] = [

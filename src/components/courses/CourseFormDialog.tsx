@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Dialog,
     DialogContent,
@@ -18,7 +18,8 @@ import {
 import { Field, NumberField, TextArea, TextField } from "@/components/assessments/form-fields";
 import { useLms } from "@/store/lms-store";
 import { describeError } from "@/lib/supabase";
-import { Add01Icon } from "hugeicons-react";
+import { Add01Icon, Upload01Icon, Cancel01Icon } from "hugeicons-react";
+import { uploadCourseImage } from "@/lib/api/courses";
 import { toast } from "sonner";
 import type { Course, FeeStructure } from "@/data/types";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export interface CourseDraft {
     duration: string;
     location: string;
     seatsTotal: number;
+    imageUrl: string;
     instructorId: string;
     feeType: FeeStructure["type"];
     flatAmount: number;
@@ -50,6 +52,7 @@ const EMPTY: CourseDraft = {
     duration: "1 month",
     location: "",
     seatsTotal: 20,
+    imageUrl: "",
     instructorId: "",
     feeType: "flat",
     flatAmount: 100_000,
@@ -68,6 +71,7 @@ export function courseToDraft(course: Course): CourseDraft {
         duration: course.duration,
         location: course.location,
         seatsTotal: course.seats.total,
+        imageUrl: course.imageUrl ?? "",
         instructorId: course.instructorId ?? "",
         feeType: course.fees.type,
         flatAmount: course.fees.amount ?? 100_000,
@@ -117,6 +121,37 @@ export function CourseFormDialog({
     const [error, setError] = useState<string | null>(null);
     // An admin hitting a missing option should not have to leave the form.
     const [adding, setAdding] = useState<null | "category" | "venue">(null);
+
+    /**
+     * The image is chosen before the course exists, so the form settles on an
+     * id up front and uploads under it. That same id is used on insert, so the
+     * storage path and the row agree.
+     */
+    const [draftId] = useState(() => crypto.randomUUID());
+    const [uploading, setUploading] = useState(false);
+    const [dragging, setDragging] = useState(false);
+    const imageInput = useRef<HTMLInputElement>(null);
+
+    const uploadImage = async (file: File) => {
+        if (!file.type.startsWith("image/")) {
+            setError("Choose an image file.");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setError("Cover images are limited to 5 MB.");
+            return;
+        }
+        setUploading(true);
+        setError(null);
+        try {
+            const url = await uploadCourseImage(course?.id ?? draftId, file);
+            set("imageUrl", url);
+        } catch (e) {
+            setError(describeError(e as { message?: string }));
+        } finally {
+            setUploading(false);
+        }
+    };
     const [newName, setNewName] = useState("");
     const [newCapacity, setNewCapacity] = useState(20);
 
@@ -171,7 +206,12 @@ export function CourseFormDialog({
             return;
         }
         if (!draft.location) {
-            setError("Pick a venue. Add one under Admin → Settings if the list is empty.");
+            setError("Pick a venue. Add one from the dropdown if the list is empty.");
+            return;
+        }
+        // Course cards are image-led, so a cover is not optional.
+        if (!draft.imageUrl) {
+            setError("Upload a cover image — it is what learners see on the course card.");
             return;
         }
         onSubmit({
@@ -197,6 +237,79 @@ export function CourseFormDialog({
                 </DialogHeader>
 
                 <div className="py-2 space-y-4">
+                    {/* Cover image */}
+                    <div className="space-y-1.5">
+                        <span className="text-xs font-medium text-slate-600">
+                            Cover image <span className="text-destructive">*</span>
+                        </span>
+
+                        <input
+                            ref={imageInput}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void uploadImage(file);
+                                e.target.value = "";
+                            }}
+                        />
+
+                        {draft.imageUrl ? (
+                            <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-[16/7] bg-slate-50">
+                                <img src={draft.imageUrl} alt="" className="w-full h-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={() => set("imageUrl", "")}
+                                    aria-label="Remove cover image"
+                                    className="absolute top-2 right-2 h-7 w-7 rounded-full bg-white/90 backdrop-blur border border-slate-200 text-slate-500 hover:text-destructive flex items-center justify-center shadow-sm"
+                                >
+                                    <Cancel01Icon size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    setDragging(true);
+                                }}
+                                onDragLeave={() => setDragging(false)}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    setDragging(false);
+                                    const file = e.dataTransfer.files?.[0];
+                                    if (file) void uploadImage(file);
+                                }}
+                                onClick={() => imageInput.current?.click()}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") imageInput.current?.click();
+                                }}
+                                className={cn(
+                                    "rounded-xl border-2 border-dashed aspect-[16/7] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all",
+                                    dragging ? "border-primary bg-accent/20" : "border-slate-200 bg-slate-50 hover:border-slate-300",
+                                    uploading && "opacity-60 pointer-events-none"
+                                )}
+                            >
+                                {uploading ? (
+                                    <>
+                                        <span className="h-5 w-5 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
+                                        <p className="text-xs font-medium text-slate-500">Uploading…</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload01Icon size={20} className={cn(dragging ? "text-primary" : "text-slate-300")} />
+                                        <p className="text-xs font-medium text-slate-600">
+                                            Drop an image, or <span className="text-primary">browse</span>
+                                        </p>
+                                        <p className="text-[11px] text-slate-400">PNG, JPG or WebP · up to 5 MB</p>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     <TextField
                         id="course-title"
                         label="Title"

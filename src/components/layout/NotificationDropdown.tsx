@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
     Notification01Icon, 
     BookOpen01Icon, 
@@ -34,7 +35,16 @@ const bgMap: Record<NotificationType, string> = {
 
 export function NotificationDropdown() {
     const [open, setOpen] = useState(false);
+    const navigate = useNavigate();
     const { notifications, markNotificationRead, markAllNotificationsRead } = useLms();
+
+    const open_ = (n: (typeof notifications)[number]) => {
+        void markNotificationRead(n.id);
+        if (n.link) {
+            setOpen(false);
+            navigate(n.link);
+        }
+    };
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -77,9 +87,9 @@ export function NotificationDropdown() {
                                         key={notification.id}
                                         role="button"
                                         tabIndex={0}
-                                        onClick={() => markNotificationRead(notification.id)}
+                                        onClick={() => open_(notification)}
                                         onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === " ") markNotificationRead(notification.id);
+                                            if (e.key === "Enter" || e.key === " ") open_(notification);
                                         }}
                                         className={cn(
                                             "flex items-start gap-3 p-4 border-b border-slate-50 transition-colors hover:bg-slate-50 cursor-pointer",
@@ -124,7 +134,7 @@ export function NotificationDropdown() {
                 <div className="p-2 border-t border-slate-100 bg-slate-50/50">
                     <Button
                         variant="ghost"
-                        onClick={markAllNotificationsRead}
+                        onClick={() => void markAllNotificationsRead()}
                         disabled={unreadCount === 0}
                         className="w-full text-xs font-medium text-primary hover:bg-primary/5 hover:text-primary rounded-xl h-8 disabled:opacity-40"
                     >

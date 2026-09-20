@@ -83,6 +83,7 @@ export default function CourseManager() {
             location: draft.location,
             fees: draftToFees(draft),
             status: draft.status,
+            imageUrl: draft.imageUrl,
             instructorId: assigned?.id,
             instructorName: assigned?.name,
         };
