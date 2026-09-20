@@ -6,8 +6,15 @@ interface ScoreRingProps {
     /** Draws a tick mark on the ring at the pass threshold. */
     passingScore?: number;
     passed: boolean;
+    /**
+     * The drawing coordinate space, and the rendered size unless `className`
+     * overrides it. The SVG scales to whatever box it is given, so a caller can
+     * pass responsive width/height classes instead.
+     */
     size?: number;
     className?: string;
+    /** Classes for the percentage in the middle — it is HTML, so it does not scale with the ring. */
+    valueClassName?: string;
 }
 
 /**
@@ -16,7 +23,14 @@ interface ScoreRingProps {
  * Pass/fail is carried by the label and the ✓/✗ glyph as well as the colour, so
  * the outcome never depends on colour alone.
  */
-export function ScoreRing({ score, passingScore, passed, size = 168, className }: ScoreRingProps) {
+export function ScoreRing({
+    score,
+    passingScore,
+    passed,
+    size = 168,
+    className,
+    valueClassName,
+}: ScoreRingProps) {
     const stroke = 12;
     const radius = (size - stroke) / 2;
     const circumference = 2 * Math.PI * radius;
@@ -33,8 +47,16 @@ export function ScoreRing({ score, passingScore, passed, size = 168, className }
     const rad = thresholdAngle != null ? (thresholdAngle * Math.PI) / 180 : 0;
 
     return (
-        <div className={cn("relative shrink-0", className)} style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="-rotate-90" role="img" aria-label={`Score ${clamped} percent`}>
+        <div
+            className={cn("relative shrink-0 h-[var(--score-ring)] w-[var(--score-ring)]", className)}
+            style={{ "--score-ring": `${size}px` } as React.CSSProperties}
+        >
+            <svg
+                viewBox={`0 0 ${size} ${size}`}
+                className="h-full w-full -rotate-90"
+                role="img"
+                aria-label={`Score ${clamped} percent`}
+            >
                 <circle
                     cx={center}
                     cy={center}
@@ -68,7 +90,7 @@ export function ScoreRing({ score, passingScore, passed, size = 168, className }
             </svg>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-medium tracking-tight text-slate-900 tabular-nums">
+                <span className={cn("text-4xl font-medium tracking-tight text-slate-900 tabular-nums", valueClassName)}>
                     {clamped}%
                 </span>
                 {/* On a fail the threshold is carried here, so the summary above

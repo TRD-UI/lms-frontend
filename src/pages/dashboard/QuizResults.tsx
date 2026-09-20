@@ -108,8 +108,15 @@ export default function QuizResults() {
                 "grid gap-6",
                 hasAside && "lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-slate-100"
             )}>
+                {/*
+                 * A grid rather than nested flex so the ring can sit beside the
+                 * title at every width while the metrics and buttons drop to
+                 * full width on a phone — one tree, two layouts, no duplicated
+                 * markup. On sm+ the ring spans all three rows, which is the
+                 * centred column it has always been.
+                 */}
                 <div className={cn(
-                    "flex flex-col sm:flex-row items-center gap-5 sm:gap-7 min-w-0",
+                    "grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-4 sm:gap-x-7 min-w-0",
                     hasAside && "lg:pr-8"
                 )}>
                     <ScoreRing
@@ -117,47 +124,47 @@ export default function QuizResults() {
                         passingScore={assessment.passingScore}
                         passed={attempt.passed}
                         size={132}
+                        className="h-[100px] w-[100px] sm:h-[132px] sm:w-[132px] sm:row-span-3 self-center"
+                        valueClassName="text-3xl sm:text-4xl"
                     />
 
-                    <div className="flex-1 min-w-0 space-y-4 text-center sm:text-left">
-                        <div className="space-y-0.5">
-                            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
-                                {course.title}
-                            </p>
-                            <h1 className="text-lg font-medium tracking-tight text-slate-900 truncate">
-                                {assessment.title}
-                            </h1>
-                        </div>
+                    <div className="min-w-0 space-y-0.5">
+                        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
+                            {course.title}
+                        </p>
+                        <h1 className="text-base sm:text-lg font-medium tracking-tight text-slate-900 line-clamp-2 sm:line-clamp-none sm:truncate">
+                            {assessment.title}
+                        </h1>
+                    </div>
 
-                        {/* Metrics, divided rather than spaced. */}
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start divide-x divide-slate-200">
-                            <Metric label="Correct" value={`${correctCount} / ${result.graded.length}`} first />
-                            <Metric label="Points" value={`${result.pointsEarned} / ${result.pointsPossible}`} />
-                            <Metric label="Time" value={formatDuration(attempt.durationSeconds)} icon={Timer01Icon} />
-                            <Metric label="Attempt" value={`#${attempt.attemptNumber}`} />
-                        </div>
+                    {/* Metrics, divided rather than spaced. */}
+                    <div className="col-span-2 sm:col-span-1 sm:col-start-2 flex flex-wrap items-center divide-x divide-slate-200">
+                        <Metric label="Correct" value={`${correctCount} / ${result.graded.length}`} first />
+                        <Metric label="Points" value={`${result.pointsEarned} / ${result.pointsPossible}`} />
+                        <Metric label="Time" value={formatDuration(attempt.durationSeconds)} icon={Timer01Icon} />
+                        <Metric label="Attempt" value={`#${attempt.attemptNumber}`} />
+                    </div>
 
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-0.5">
-                            {!attempt.passed && attemptsLeft > 0 && (
-                                <Button
-                                    onClick={() => navigate(`/dashboard/assessments/${assessment.id}/take`)}
-                                    className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shadow-lg shadow-primary/10"
-                                >
-                                    Retake
-                                    {attemptsLeft !== Infinity && (
-                                        <span className="ml-1.5 text-[11px] opacity-80">{attemptsLeft} left</span>
-                                    )}
-                                </Button>
-                            )}
-                            <Link to="/dashboard/assessments">
-                                <Button
-                                    variant="outline"
-                                    className="h-10 px-5 rounded-full border-slate-200 text-slate-600 font-medium text-sm"
-                                >
-                                    All assessments
-                                </Button>
-                            </Link>
-                        </div>
+                    <div className="col-span-2 sm:col-span-1 sm:col-start-2 flex flex-wrap items-center gap-2.5">
+                        {!attempt.passed && attemptsLeft > 0 && (
+                            <Button
+                                onClick={() => navigate(`/dashboard/assessments/${assessment.id}/take`)}
+                                className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shadow-lg shadow-primary/10"
+                            >
+                                Retake
+                                {attemptsLeft !== Infinity && (
+                                    <span className="ml-1.5 text-[11px] opacity-80">{attemptsLeft} left</span>
+                                )}
+                            </Button>
+                        )}
+                        <Link to="/dashboard/assessments">
+                            <Button
+                                variant="outline"
+                                className="h-10 px-5 rounded-full border-slate-200 text-slate-600 font-medium text-sm"
+                            >
+                                All assessments
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

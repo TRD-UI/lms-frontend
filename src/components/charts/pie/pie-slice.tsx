@@ -58,9 +58,15 @@ export function PieSlice({ index }: { index: number }) {
             stroke="var(--chart-background, #fff)"
             strokeWidth={2}
             opacity={dimmed ? 0.35 : 1}
-            className="transition-all duration-200 cursor-pointer"
+            // The browser draws its focus ring around a path's bounding box,
+            // which for a large slice is very nearly the whole chart — a square
+            // over a circle. The slice stays keyboard-reachable; focus is shown
+            // by the same growth and dimming a hover produces, plus the centre
+            // readout, so nothing is lost by suppressing the ring.
+            className="transition-all duration-200 cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
             onMouseEnter={() => setHovered(index)}
             onFocus={() => setHovered(index)}
+            onBlur={() => setHovered(null)}
             tabIndex={0}
             role="graphics-symbol"
             aria-label={`${datum.label}: ${datum.value}`}

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
     Calendar03Icon,
     Location01Icon,
-    Ticket01Icon,
     Cancel01Icon,
     Download01Icon,
     Share01Icon,
@@ -107,7 +106,7 @@ function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: Entr
                             <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-slate-900/5 rounded-full" />
 
                             <div className="flex items-center gap-2 text-primary mb-2 sm:mb-3">
-                                <Ticket01Icon size={18} />
+                                <img src="/logo.png" alt="" className="h-5 w-5 object-contain" />
                                 <span className="text-[11px] sm:text-[12px] font-medium uppercase tracking-widest">Official Entry Pass</span>
                             </div>
                             <h2 className="text-xl sm:text-2xl font-medium text-slate-900 leading-tight mb-4 sm:mb-6">
@@ -162,12 +161,9 @@ function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: Entr
                                 )}
                             </div>
 
-                            <div className="space-y-1 mb-6 sm:mb-8">
-                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Pass ID</p>
-                                <p className="text-lg sm:text-xl font-medium text-slate-900 tracking-wider">
-                                    {pass.passCode}
-                                </p>
-                            </div>
+                            <p className="text-lg sm:text-xl font-medium text-slate-900 tracking-wider mb-6 sm:mb-8">
+                                {pass.passCode}
+                            </p>
 
                             <div data-capture-ignore className="flex items-center gap-3 sm:gap-4 w-full">
                                 <Button

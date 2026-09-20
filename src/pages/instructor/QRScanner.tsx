@@ -123,10 +123,8 @@ export default function QRScanner() {
                     {/* Last Result */}
                     {lastResult && (
                         <Card className={cn(
-                            "rounded-2xl shadow-none border-0 sm:border transition-all animate-in fade-in zoom-in-95 duration-500",
-                            lastResult.valid
-                                ? "sm:border-emerald-200 bg-emerald-50/40 sm:bg-emerald-50/30"
-                                : "sm:border-red-200 bg-red-50/40 sm:bg-red-50/30"
+                            "rounded-2xl shadow-none border-0 transition-all animate-in fade-in zoom-in-95 duration-500",
+                            lastResult.valid ? "bg-emerald-50/40" : "bg-red-50/40"
                         )}>
                             <CardContent className="p-3.5 sm:p-6 space-y-3 sm:space-y-4">
                                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">

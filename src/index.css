@@ -167,6 +167,20 @@
     outline: none;
   }
 
+  /* Recharts marks its wrapper and surface focusable so slices can be reached
+     from the keyboard. Clicking one focuses it too, and the browser then paints
+     a rectangle around a chart that is usually a circle — the box is the SVG's
+     bounds, not the shape's. The slice stays reachable and its tooltip still
+     appears on focus, so the box is all that goes. */
+  .recharts-wrapper:focus,
+  .recharts-wrapper:focus-visible,
+  .recharts-surface:focus,
+  .recharts-surface:focus-visible,
+  .recharts-layer:focus,
+  .recharts-layer:focus-visible {
+    outline: none;
+  }
+
   * {
     @apply border-border;
   }
