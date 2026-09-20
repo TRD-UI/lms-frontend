@@ -33,19 +33,25 @@ error on startup if either is missing, rather than failing later in a fetch.
 
 ## 3. Apply the schema
 
-Against a local stack (needs Docker):
+**Docker is not required.** It is only needed for `supabase start` / `db reset`,
+which run a local Postgres. Pushing to a hosted project never touches it.
 
 ```bash
-supabase start
-supabase db reset     # runs every migration, then seed.sql
+supabase db push                  # migrations only
+supabase db push --include-seed   # migrations + supabase/seed.sql
 ```
 
-Against the hosted project:
+Then confirm it actually works:
 
 ```bash
-supabase db push                                  # migrations only
-psql "$(supabase db url)" -f supabase/seed.sql    # seed, if you want the demo data
+npm run verify:supabase
 ```
+
+That signs in as the seeded users through the anon key — the same path the
+browser takes — and asserts the security properties the schema is meant to
+guarantee: the answer key is unreachable, scores cannot be forged or rewritten,
+learners cannot see each other, the audit log is admin-only. 22 assertions.
+Run it after any migration touching RLS, grants or the assessment functions.
 
 > The seed creates real auth users. Do not run it against a database that has
 > real people in it.
@@ -119,6 +125,13 @@ identical output and the file stays safe to re-apply.
 | `…000900_passes_and_ops` | pass gating, signed QR, scanning, sync, waitlist, verification |
 | `…001000_rls` | RLS on all 23 tables, 54 policies, grants |
 | `…001100_storage` | three buckets and their policies |
+| `…001200_fix_profile_guard` | the role guard rejected trusted server-side writes |
+| `…001300_relax_module_item_payload` | allow content items that have no file attached yet |
+| `…001400_fix_seeded_auth_user_tokens` | NULL GoTrue token columns broke every login |
+| `…001500_pin_function_search_paths` | pin `search_path` on the last two functions |
+
+The last four came out of applying the first eleven against the real project —
+see **Applying this to a fresh project** below.
 
 ### Two rules the schema enforces that the client cannot
 
@@ -156,3 +169,38 @@ Still missing UI, unchanged by this phase:
 - `MediaViewer` renders PDFs through `docs.google.com/viewer`, which cannot read
   a private signed URL. That has to become a direct embed when content moves
   into the `course-content` bucket.
+
+
+---
+
+## Applying this to a fresh project
+
+Four defects only surfaced when the migrations met a real Postgres. They are
+already fixed in `…001200`–`…001500`, but they are the kind of thing that
+recurs, so they are worth knowing.
+
+**The role guard blocked its own seed.** `guard_profile_privileges()` stops a
+user writing their own `role`, exempting admins. But `auth.uid()` is NULL on a
+direct database connection, so `is_admin()` was false for migrations, the seed
+and the service role — every trusted write was rejected with *"Role is not
+self-assignable"*. A null `auth.uid()` now means "not an end user" and is
+exempt. That is not a hole: `anon` also has a null `auth.uid()`, but every
+update policy on `profiles` is granted `to authenticated` and requires
+`id = auth.uid()`, so `anon` never reaches the trigger.
+
+**A check constraint was stricter than the product.** `module_items_payload`
+demanded every non-quiz item carry a file. One seeded item — "Responsive
+Patterns" — has none, and more to the point an instructor will add an item
+before uploading to it. `MediaViewer` already renders a "content not available"
+state for exactly that. The quiz half of the rule stayed.
+
+**Seeded `auth.users` rows broke every login.** GoTrue scans columns like
+`confirmation_token` and `recovery_token` into non-nullable Go strings. They are
+nullable in Postgres and default to NULL, so inserting a user without naming
+them made GoTrue's row scan fail and *every* sign-in on the project — seeded or
+not — returned `500 Database error querying schema`. The generator now writes
+them as empty strings; `…001400` repairs rows already inserted.
+
+**Two functions had a mutable `search_path`.** `touch_updated_at()` and
+`safe_uuid()` missed the pin every other function had. Supabase's advisor flags
+this as `function_search_path_mutable`.

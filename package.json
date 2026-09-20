@@ -12,7 +12,8 @@
     "seed:gen": "node scripts/gen-seed.mjs",
     "types:gen": "supabase gen types typescript --linked > src/types/database.ts",
     "db:push": "supabase db push",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "verify:supabase": "node scripts/verify-supabase.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

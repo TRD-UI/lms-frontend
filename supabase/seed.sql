@@ -17,14 +17,17 @@ begin;
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', '3639ec96-9d24-56d6-af88-9a6ce62ea66a', 'authenticated', 'authenticated',
   'cyber.smith@example.com', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2026-01-02T00:00:00Z',
   '2026-01-02T00:00:00Z', '2026-01-02T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Cyber Smith', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=CyberSmith'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('cyber.smith@example.com', '3639ec96-9d24-56d6-af88-9a6ce62ea66a', jsonb_build_object('sub', '3639ec96-9d24-56d6-af88-9a6ce62ea66a', 'email', 'cyber.smith@example.com', 'email_verified', true, 'phone_verified', false), 'email', '2026-01-02T00:00:00Z', '2026-01-02T00:00:00Z', '2026-01-02T00:00:00Z')
@@ -33,14 +36,17 @@ update public.profiles set name = 'Cyber Smith', role = 'student'::public.user_r
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', '03b70a2c-70d5-538f-8c6c-474b2633fe0b', 'authenticated', 'authenticated',
   'adewale.j@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2026-01-05T00:00:00Z',
   '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Adewale Johnson', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=adewale'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('adewale.j@trd.edu', '03b70a2c-70d5-538f-8c6c-474b2633fe0b', jsonb_build_object('sub', '03b70a2c-70d5-538f-8c6c-474b2633fe0b', 'email', 'adewale.j@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z')
@@ -49,14 +55,17 @@ update public.profiles set name = 'Adewale Johnson', role = 'student'::public.us
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', 'd2aabb89-7202-55bb-bec8-1ac21ed47a51', 'authenticated', 'authenticated',
   'funke.a@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2025-09-12T00:00:00Z',
   '2025-09-12T00:00:00Z', '2025-09-12T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Dr. Funke Akindele', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=funke'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('funke.a@trd.edu', 'd2aabb89-7202-55bb-bec8-1ac21ed47a51', jsonb_build_object('sub', 'd2aabb89-7202-55bb-bec8-1ac21ed47a51', 'email', 'funke.a@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2025-09-12T00:00:00Z', '2025-09-12T00:00:00Z', '2025-09-12T00:00:00Z')
@@ -65,14 +74,17 @@ update public.profiles set name = 'Dr. Funke Akindele', role = 'instructor'::pub
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', '63fb03c7-54ac-597b-8a36-70d65756dd74', 'authenticated', 'authenticated',
   'chinedu.o@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2026-02-01T00:00:00Z',
   '2026-02-01T00:00:00Z', '2026-02-01T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Chinedu Okafor', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=chinedu'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('chinedu.o@trd.edu', '63fb03c7-54ac-597b-8a36-70d65756dd74', jsonb_build_object('sub', '63fb03c7-54ac-597b-8a36-70d65756dd74', 'email', 'chinedu.o@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2026-02-01T00:00:00Z', '2026-02-01T00:00:00Z', '2026-02-01T00:00:00Z')
@@ -81,14 +93,17 @@ update public.profiles set name = 'Chinedu Okafor', role = 'student'::public.use
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', 'ebd94036-72f2-5d8b-8711-2a9be4ad36ea', 'authenticated', 'authenticated',
   'halima.b@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2025-11-20T00:00:00Z',
   '2025-11-20T00:00:00Z', '2025-11-20T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Halima Bello', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=halima'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('halima.b@trd.edu', 'ebd94036-72f2-5d8b-8711-2a9be4ad36ea', jsonb_build_object('sub', 'ebd94036-72f2-5d8b-8711-2a9be4ad36ea', 'email', 'halima.b@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2025-11-20T00:00:00Z', '2025-11-20T00:00:00Z', '2025-11-20T00:00:00Z')
@@ -97,14 +112,17 @@ update public.profiles set name = 'Halima Bello', role = 'student'::public.user_
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', 'dd8ca978-4697-5e0f-bf62-43a4f3ed3c5c', 'authenticated', 'authenticated',
   'eze.n@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2025-06-01T00:00:00Z',
   '2025-06-01T00:00:00Z', '2025-06-01T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Prof. Eze Nwosu', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=eze'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('eze.n@trd.edu', 'dd8ca978-4697-5e0f-bf62-43a4f3ed3c5c', jsonb_build_object('sub', 'dd8ca978-4697-5e0f-bf62-43a4f3ed3c5c', 'email', 'eze.n@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2025-06-01T00:00:00Z', '2025-06-01T00:00:00Z', '2025-06-01T00:00:00Z')
@@ -113,14 +131,17 @@ update public.profiles set name = 'Prof. Eze Nwosu', role = 'admin'::public.user
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', 'a92a75c2-6729-50c6-944c-edac377f65bd', 'authenticated', 'authenticated',
   'seun.f@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2025-08-15T00:00:00Z',
   '2025-08-15T00:00:00Z', '2025-08-15T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Oluwaseun Fadare', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=seun'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('seun.f@trd.edu', 'a92a75c2-6729-50c6-944c-edac377f65bd', jsonb_build_object('sub', 'a92a75c2-6729-50c6-944c-edac377f65bd', 'email', 'seun.f@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2025-08-15T00:00:00Z', '2025-08-15T00:00:00Z', '2025-08-15T00:00:00Z')
@@ -129,14 +150,17 @@ update public.profiles set name = 'Oluwaseun Fadare', role = 'instructor'::publi
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', '14579911-7e15-5947-b6d7-9060549f630d', 'authenticated', 'authenticated',
   'amaka.e@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2026-02-20T00:00:00Z',
   '2026-02-20T00:00:00Z', '2026-02-20T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Amaka Eze', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=amaka'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('amaka.e@trd.edu', '14579911-7e15-5947-b6d7-9060549f630d', jsonb_build_object('sub', '14579911-7e15-5947-b6d7-9060549f630d', 'email', 'amaka.e@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2026-02-20T00:00:00Z', '2026-02-20T00:00:00Z', '2026-02-20T00:00:00Z')
@@ -145,14 +169,17 @@ update public.profiles set name = 'Amaka Eze', role = 'student'::public.user_rol
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', '3d060f89-0b05-5c52-a2e1-bff3626a1659', 'authenticated', 'authenticated',
   'ibrahim.m@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2025-10-10T00:00:00Z',
   '2025-10-10T00:00:00Z', '2025-10-10T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Ibrahim Musa', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=ibrahim'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('ibrahim.m@trd.edu', '3d060f89-0b05-5c52-a2e1-bff3626a1659', jsonb_build_object('sub', '3d060f89-0b05-5c52-a2e1-bff3626a1659', 'email', 'ibrahim.m@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2025-10-10T00:00:00Z', '2025-10-10T00:00:00Z', '2025-10-10T00:00:00Z')
@@ -161,14 +188,17 @@ update public.profiles set name = 'Ibrahim Musa', role = 'student'::public.user_
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', '72783d8a-6eb0-5adc-bd2a-262e3d750132', 'authenticated', 'authenticated',
   'ngozi.o@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2025-12-03T00:00:00Z',
   '2025-12-03T00:00:00Z', '2025-12-03T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Ngozi Obi', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=ngozi'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('ngozi.o@trd.edu', '72783d8a-6eb0-5adc-bd2a-262e3d750132', jsonb_build_object('sub', '72783d8a-6eb0-5adc-bd2a-262e3d750132', 'email', 'ngozi.o@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2025-12-03T00:00:00Z', '2025-12-03T00:00:00Z', '2025-12-03T00:00:00Z')
@@ -177,14 +207,17 @@ update public.profiles set name = 'Ngozi Obi', role = 'student'::public.user_rol
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', 'e9f3c827-bef8-52b0-9dbf-f5efa33710f0', 'authenticated', 'authenticated',
   'yusuf.a@trd.edu', extensions.crypt('Password123!', extensions.gen_salt('bf')), '2026-01-18T00:00:00Z',
   '2026-01-18T00:00:00Z', '2026-01-18T00:00:00Z',
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', 'Yusuf Abdullahi', 'avatar_url', 'https://api.dicebear.com/7.x/avataaars/svg?seed=yusuf'),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('yusuf.a@trd.edu', 'e9f3c827-bef8-52b0-9dbf-f5efa33710f0', jsonb_build_object('sub', 'e9f3c827-bef8-52b0-9dbf-f5efa33710f0', 'email', 'yusuf.a@trd.edu', 'email_verified', true, 'phone_verified', false), 'email', '2026-01-18T00:00:00Z', '2026-01-18T00:00:00Z', '2026-01-18T00:00:00Z')

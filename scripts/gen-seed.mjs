@@ -134,16 +134,23 @@ out("");
 for (const u of ALL_USERS) {
   const id = userId(u.id);
   const created = parseTimestamp(u.joinDate) ?? "2026-01-01T00:00:00Z";
+  // The token columns are written explicitly as empty strings. They are
+  // nullable in Postgres but GoTrue scans them into non-nullable Go strings, so
+  // leaving them NULL makes every login on the project fail with a 500
+  // "Database error querying schema".
   out(`insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 ) values (
   '00000000-0000-0000-0000-000000000000', ${q(id)}, 'authenticated', 'authenticated',
   ${q(u.email)}, extensions.crypt(${q(DEMO_PASSWORD)}, extensions.gen_salt('bf')), ${q(created)},
   ${q(created)}, ${q(created)},
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', ${q(u.name)}, 'avatar_url', ${q(u.avatarUrl ?? null)}),
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 ) on conflict (id) do nothing;`);
   out(`insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values (${q(u.email)}, ${q(id)}, jsonb_build_object('sub', ${q(id)}, 'email', ${q(u.email)}, 'email_verified', true, 'phone_verified', false), 'email', ${q(created)}, ${q(created)}, ${q(created)})
