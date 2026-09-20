@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFileDrop } from "@/hooks/use-file-drop";
 import {
     Dialog,
     DialogContent,
@@ -129,10 +130,9 @@ export function CourseFormDialog({
      */
     const [draftId] = useState(() => crypto.randomUUID());
     const [uploading, setUploading] = useState(false);
-    const [dragging, setDragging] = useState(false);
     const imageInput = useRef<HTMLInputElement>(null);
 
-    const uploadImage = async (file: File) => {
+    const uploadImage = useCallback(async (file: File) => {
         if (!file.type.startsWith("image/")) {
             setError("Choose an image file.");
             return;
@@ -151,7 +151,9 @@ export function CourseFormDialog({
         } finally {
             setUploading(false);
         }
-    };
+    }, [course?.id, draftId]);
+
+    const { dragging, dropProps } = useFileDrop((file) => void uploadImage(file));
     const [newName, setNewName] = useState("");
     const [newCapacity, setNewCapacity] = useState(20);
 
@@ -269,17 +271,7 @@ export function CourseFormDialog({
                             </div>
                         ) : (
                             <div
-                                onDragOver={(e) => {
-                                    e.preventDefault();
-                                    setDragging(true);
-                                }}
-                                onDragLeave={() => setDragging(false)}
-                                onDrop={(e) => {
-                                    e.preventDefault();
-                                    setDragging(false);
-                                    const file = e.dataTransfer.files?.[0];
-                                    if (file) void uploadImage(file);
-                                }}
+                                {...dropProps}
                                 onClick={() => imageInput.current?.click()}
                                 role="button"
                                 tabIndex={0}

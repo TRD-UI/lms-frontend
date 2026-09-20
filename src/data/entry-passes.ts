@@ -15,6 +15,8 @@ export interface EntryPass {
     courseId: string;
     /** The class session this pass admits the learner to, when it came from one. */
     sessionId?: string;
+    /** ISO date of that session. The code is only released on the day. */
+    sessionDate?: string;
 }
 
 export const entryPasses: EntryPass[] = [

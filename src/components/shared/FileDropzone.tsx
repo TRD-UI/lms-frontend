@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useFileDrop } from "@/hooks/use-file-drop";
 import { Upload01Icon, File01Icon, Cancel01Icon, Alert02Icon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { supabase, describeError } from "@/lib/supabase";
@@ -44,12 +45,11 @@ export function FileDropzone({
     onCleared,
 }: FileDropzoneProps) {
     const inputRef = useRef<HTMLInputElement>(null);
-    const [dragging, setDragging] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fileName, setFileName] = useState<string | null>(null);
 
-    const upload = async (file: File) => {
+    const upload = useCallback(async (file: File) => {
         setError(null);
 
         if (file.size > MAX_UPLOAD_BYTES) {
@@ -90,14 +90,9 @@ export function FileDropzone({
         } finally {
             setBusy(false);
         }
-    };
+    }, [courseStorageId, onUploaded]);
 
-    const onDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setDragging(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file) void upload(file);
-    };
+    const { dragging, dropProps } = useFileDrop((file) => void upload(file));
 
     if (value) {
         return (
@@ -129,12 +124,7 @@ export function FileDropzone({
     return (
         <div className="space-y-2">
             <div
-                onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragging(true);
-                }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={onDrop}
+                {...dropProps}
                 onClick={() => inputRef.current?.click()}
                 role="button"
                 tabIndex={0}

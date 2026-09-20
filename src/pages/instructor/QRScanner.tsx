@@ -22,14 +22,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { ScanResult } from "@/data/admin-types";
-
-// Mock scan results for demo
-const mockScanResults: Record<string, ScanResult> = {
-    "PSW-UI-2026-001": { valid: true, studentName: "Adewale Johnson", passCode: "PSW-UI-2026-001", courseName: "Physical Security Workshop", message: "Entry pass verified. Prerequisite test: Passed." },
-    "LOS-VIRT-2026-045": { valid: true, studentName: "Chinedu Okafor", passCode: "LOS-VIRT-2026-045", courseName: "LMS Onboarding Session", message: "Entry pass verified. Prerequisite test: Passed." },
-    "INVALID-001": { valid: false, studentName: "Unknown", passCode: "INVALID-001", courseName: "N/A", message: "Invalid pass code. No matching entry found." },
-    "EXP-2025-001": { valid: false, studentName: "Halima Bello", passCode: "EXP-2025-001", courseName: "Digital Literacy", message: "Pass expired. Prerequisite test not completed." },
-};
+import { redeemPass } from "@/lib/api/classes";
+import { describeError } from "@/lib/supabase";
 
 export default function QRScanner() {
     const [isScanning, setIsScanning] = useState(false);
@@ -38,41 +32,47 @@ export default function QRScanner() {
     const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
     const [clearHistoryOpen, setClearHistoryOpen] = useState(false);
 
-    const processCode = useCallback((code: string) => {
-        const trimmed = code.trim().toUpperCase();
-        const result = mockScanResults[trimmed] || {
-            valid: false,
-            studentName: "Unknown",
-            passCode: trimmed,
-            courseName: "N/A",
-            message: "Unrecognized pass code. Verify the student's enrollment.",
-        };
+    /**
+     * Verifies against the database. The same call handles a scanned QR and a
+     * code typed by hand, and checking in also records attendance — server-side,
+     * so the door and the register cannot disagree.
+     */
+    const processCode = useCallback(async (code: string) => {
+        const trimmed = code.trim();
+        if (!trimmed) return;
 
-        setLastResult(result);
-        setScanHistory((prev) => [result, ...prev.slice(0, 9)]);
+        setIsScanning(true);
+        try {
+            const outcome = await redeemPass(trimmed);
+            const result: ScanResult = {
+                valid: outcome.valid,
+                studentName: outcome.studentName ?? "Unknown",
+                passCode: outcome.passCode ?? trimmed.toUpperCase(),
+                courseName: outcome.courseName ?? "—",
+                message: outcome.message,
+            };
 
-        if (result.valid) {
-            toast.success(`${result.studentName} verified`, { description: result.message });
-        } else {
-            toast.error("Verification failed", { description: result.message });
+            setLastResult(result);
+            setScanHistory((prev) => [result, ...prev.slice(0, 9)]);
+
+            if (result.valid) {
+                toast.success(`${result.studentName} verified`, { description: result.message });
+            } else {
+                toast.error("Verification failed", { description: result.message });
+            }
+        } catch (e) {
+            toast.error("Could not check that pass", {
+                description: describeError(e as { message?: string }),
+            });
+        } finally {
+            setIsScanning(false);
         }
     }, []);
-
-    const handleSimulateScan = () => {
-        setIsScanning(true);
-        // Simulate a camera scan after a brief delay
-        setTimeout(() => {
-            const codes = Object.keys(mockScanResults);
-            const randomCode = codes[Math.floor(Math.random() * codes.length)];
-            processCode(randomCode);
-            setIsScanning(false);
-        }, 1500);
-    };
 
     const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (manualCode.trim()) {
-            processCode(manualCode);
+            void processCode(manualCode);
             setManualCode("");
         }
     };
@@ -111,31 +111,17 @@ export default function QRScanner() {
                                         <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center">
                                             <Camera01Icon size={36} />
                                         </div>
-                                        <p className="text-sm font-medium">Camera Preview Area</p>
-                                        <p className="text-xs text-white/30">Point camera at student's QR code to scan</p>
+                                        <p className="text-sm font-medium">Camera scanning not enabled yet</p>
+                                        <p className="text-xs text-white/30">
+                                            Type the learner's pass code below to check them in.
+                                        </p>
                                     </div>
                                 )}
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handleSimulateScan}
-                            disabled={isScanning}
-                            className="flex-1 h-12 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10 gap-2"
-                        >
-                            {isScanning ? (
-                                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <QrCode01Icon size={18} />
-                            )}
-                            {isScanning ? "Scanning..." : "Start Scan"}
-                        </Button>
-                    </div>
-
-                    {/* Manual Code Entry */}
+                    {/* Pass code entry — the working check-in path. */}
                     <form onSubmit={handleManualSubmit} className="flex items-center gap-3">
                         <div className="relative flex-1">
                             <input

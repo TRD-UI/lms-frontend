@@ -19,6 +19,8 @@ interface EntryPassCardProps {
     unlocked?: boolean;
     /** The outstanding gating assessment, used for the call to action. */
     blockingAssessment?: Assessment;
+    /** ISO date of the class. The code is withheld until that day. */
+    sessionDate?: string;
 }
 
 export function EntryPassCard({
@@ -26,9 +28,23 @@ export function EntryPassCard({
     onView,
     unlocked = true,
     blockingAssessment,
+    sessionDate,
 }: EntryPassCardProps) {
     const isPast = pass.status === 'past';
-    const isLocked = !isPast && !unlocked;
+
+    /*
+     * A pass is only good on the day. Handing someone a working code three days
+     * early invites it being shared, and lets them walk into the wrong session.
+     * The prerequisite gate is shown first, since that is the one the learner
+     * can actually do something about.
+     */
+    const today = new Date().toISOString().slice(0, 10);
+    const notYet = !isPast && !!sessionDate && sessionDate > today;
+    const isLocked = !isPast && (!unlocked || notYet);
+
+    const availableOn = sessionDate
+        ? new Date(sessionDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+        : null;
 
     return (
         <Card className={`group border-slate-100 transition-all duration-300 rounded-2xl overflow-hidden bg-white ${isPast ? 'opacity-60 grayscale-[0.5]' : ''}`}>
@@ -51,7 +67,11 @@ export function EntryPassCard({
                         )}
                     </div>
                     <span className="text-[8px] sm:text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-none text-center">
-                        {isLocked ? "Locked" : pass.passCode}
+                        {!isLocked
+                            ? pass.passCode
+                            : !unlocked
+                                ? "Locked"
+                                : `Opens ${availableOn ?? "on the day"}`}
                     </span>
                 </div>
 

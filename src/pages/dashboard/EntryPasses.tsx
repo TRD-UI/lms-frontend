@@ -122,6 +122,7 @@ export default function EntryPasses() {
                                         onView={handleView}
                                         unlocked={unlocked}
                                         blockingAssessment={blockingAssessment}
+                                        sessionDate={pass.sessionDate}
                                     />
                                 );
                             })}

@@ -130,6 +130,7 @@ export async function fetchEntryPasses(): Promise<EntryPass[]> {
             status: p.session!.session_date < today ? "past" : "active",
             courseId: p.session!.course_id,
             sessionId: p.session_id,
+            sessionDate: p.session!.session_date,
         }));
 }
 
@@ -140,4 +141,29 @@ export async function fetchPassQr(passId: string) {
     return data as unknown as
         | { released: true; payload: string; passCode: string }
         | { released: false; blockingAssessmentId: string | null };
+}
+
+/**
+ * Redeems a pass at the door.
+ *
+ * `payload` is either the signed QR value or a pass code typed by hand — the
+ * function tells them apart. Never throws for a bad code: an invalid pass is a
+ * result to show the instructor, not an exception.
+ */
+export interface ScanOutcome {
+    valid: boolean;
+    reason?: string;
+    studentName?: string;
+    passCode?: string;
+    courseName?: string;
+    message: string;
+}
+
+export async function redeemPass(payload: string, sessionId?: string): Promise<ScanOutcome> {
+    const { data, error } = await supabase.rpc("redeem_entry_pass", {
+        p_payload: payload,
+        ...(sessionId ? { p_session_id: sessionId } : {}),
+    });
+    if (error) throw error;
+    return data as unknown as ScanOutcome;
 }
