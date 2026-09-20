@@ -75,8 +75,14 @@ export default function QuizResults() {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 px-1 sm:px-2">
             {/* ── Summary ───────────────────────────────────────────────── */}
-            <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 lg:gap-8">
-                <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-7 flex-1 min-w-0">
+            <div className={cn(
+                "grid gap-6",
+                hasAside && "lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-slate-100"
+            )}>
+                <div className={cn(
+                    "flex flex-col sm:flex-row items-center gap-5 sm:gap-7 min-w-0",
+                    hasAside && "lg:pr-8"
+                )}>
                     <ScoreRing
                         score={attempt.score}
                         passingScore={assessment.passingScore}
@@ -89,7 +95,7 @@ export default function QuizResults() {
                             <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
                                 {course.title}
                             </p>
-                            <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-slate-900">
+                            <h1 className="text-lg font-medium tracking-tight text-slate-900 truncate">
                                 {assessment.title}
                             </h1>
                         </div>
@@ -128,10 +134,9 @@ export default function QuizResults() {
 
                 {hasAside && (
                     <>
-                        <div className="hidden lg:block w-px bg-slate-100 shrink-0" />
                         <div className="lg:hidden h-px bg-slate-100" />
 
-                        <aside className="lg:w-[420px] shrink-0 flex flex-col min-h-0">
+                        <aside className="flex flex-col min-h-0 lg:pl-8">
                             <div className="flex flex-col gap-4 lg:max-h-[248px] overflow-y-auto scrollbar-thin -mr-2 pr-2">
                             {passReleased && (
                                 <div className="flex items-start gap-3">
@@ -140,7 +145,7 @@ export default function QuizResults() {
                                     </div>
                                     <div className="min-w-0 space-y-1.5">
                                         <div>
-                                            <h2 className="text-sm font-medium text-slate-900">Entry pass released</h2>
+                                            <h2 className="text-lg font-medium text-slate-900">Entry pass released</h2>
                                             <p className="text-xs text-slate-500 font-normal leading-relaxed">
                                                 Your QR pass for the {course.title} session is now available.
                                             </p>
@@ -169,7 +174,7 @@ export default function QuizResults() {
                                             <Idea01Icon size={18} />
                                         </div>
                                         <div className="min-w-0">
-                                            <h2 className="text-sm font-medium text-slate-900">Recommended revision</h2>
+                                            <h2 className="text-lg font-medium text-slate-900">Recommended revision</h2>
                                             <p className="text-xs text-slate-500 font-normal leading-relaxed">
                                                 The modules behind the questions you missed.
                                             </p>

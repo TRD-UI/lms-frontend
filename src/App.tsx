@@ -20,6 +20,7 @@ import CoursePlayer from "@/pages/dashboard/CoursePlayer";
 import StudentAssessments from "@/pages/dashboard/Assessments";
 import QuizRunner from "@/pages/dashboard/QuizRunner";
 import QuizResults from "@/pages/dashboard/QuizResults";
+import Schedule from "@/pages/dashboard/Schedule";
 
 // Admin
 import Analytics from "@/pages/admin/Analytics";
@@ -29,6 +30,7 @@ import AdminCourseAssessments from "@/pages/admin/CourseAssessments";
 import AdminAssessmentDetail from "@/pages/admin/AssessmentDetail";
 import UserManagement from "@/pages/admin/UserManagement";
 import SystemHealth from "@/pages/admin/SystemHealth";
+import AdminSettings from "@/pages/admin/Settings";
 
 // Instructor
 import InstructorDashboard from "@/pages/instructor/Dashboard";
@@ -37,6 +39,7 @@ import InstructorCourseDetail from "@/pages/instructor/CourseDetail";
 import InstructorAssessmentDetail from "@/pages/instructor/AssessmentDetail";
 import QRScanner from "@/pages/instructor/QRScanner";
 import CohortAttendance from "@/pages/instructor/CohortAttendance";
+import InstructorClasses from "@/pages/instructor/Classes";
 
 // Auth & public
 import Login from "@/pages/auth/Login";
@@ -84,6 +87,7 @@ const App = () => (
                 <Route path="assessments/:assessmentId/result/:attemptId" element={<QuizResults />} />
                 <Route path="passes" element={<EntryPasses />} />
                 <Route path="certificates" element={<Certificates />} />
+                <Route path="schedule" element={<Schedule />} />
                 <Route path="settings" element={<AccountSettings />} />
               </Route>
 
@@ -96,6 +100,7 @@ const App = () => (
                 <Route path="assessments/:courseId/:assessmentId" element={<AdminAssessmentDetail />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="system" element={<SystemHealth />} />
+                <Route path="reference" element={<AdminSettings />} />
                 <Route path="settings" element={<AccountSettings />} />
               </Route>
 
@@ -106,6 +111,7 @@ const App = () => (
                 <Route path="courses/:courseId" element={<InstructorCourseDetail />} />
                 <Route path="courses/:courseId/:assessmentId" element={<InstructorAssessmentDetail />} />
                 <Route path="scanner" element={<QRScanner />} />
+                <Route path="classes" element={<InstructorClasses />} />
                 <Route path="attendance" element={<CohortAttendance />} />
                 <Route path="settings" element={<AccountSettings />} />
               </Route>

@@ -82,6 +82,9 @@ export function NumberField({
     onChange,
     min,
     max,
+    step,
+    /** Rejects decimals outright — seat counts and attempt caps are whole numbers. */
+    integer,
     hint,
     error,
 }: {
@@ -91,6 +94,8 @@ export function NumberField({
     onChange: (value: number) => void;
     min?: number;
     max?: number;
+    step?: number;
+    integer?: boolean;
     hint?: string;
     error?: string;
 }) {
@@ -99,12 +104,21 @@ export function NumberField({
             <input
                 id={id}
                 type="number"
+                inputMode={integer ? "numeric" : undefined}
                 value={value}
                 min={min}
                 max={max}
+                step={step}
+                onKeyDown={(e) => {
+                    // A number input still accepts "." and "e" from the keyboard.
+                    if (integer && [".", ",", "e", "E", "+", "-"].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                }}
                 onChange={(e) => {
                     const n = Number(e.target.value);
-                    onChange(Number.isNaN(n) ? 0 : n);
+                    if (Number.isNaN(n)) return onChange(0);
+                    onChange(integer ? Math.trunc(n) : n);
                 }}
                 className={cn(INPUT_CLASS, "tabular-nums")}
             />

@@ -75,7 +75,7 @@ export function ScoreRing({ score, passingScore, passed, size = 168, className }
                     does not need a sentence restating it. */}
                 <span
                     className={cn(
-                        "text-[11px] font-medium uppercase mt-0.5",
+                        "text-[10px] mt-0.5",
                         passed ? "tracking-widest text-emerald-600" : "tracking-wide text-red-500"
                     )}
                 >

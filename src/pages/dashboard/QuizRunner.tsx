@@ -286,18 +286,19 @@ export default function QuizRunner() {
                                         aria-label={`Go to question ${i + 1}${isAnswered ? ", answered" : ", unanswered"}${isFlagged ? ", flagged" : ""}`}
                                         aria-current={isCurrent ? "step" : undefined}
                                         className={cn(
-                                            "relative aspect-square rounded-xl text-xs font-medium transition-all flex items-center justify-center",
+                                            // No ring offset and no overflowing badge: the grid
+                                            // scrolls, so anything outside the box gets clipped.
+                                            "aspect-square rounded-xl text-xs font-medium transition-all flex items-center justify-center",
                                             isCurrent
-                                                ? "bg-primary text-white ring-2 ring-primary/20 ring-offset-1"
-                                                : isAnswered
-                                                    ? "bg-accent/40 text-primary hover:bg-accent/60"
-                                                    : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                                                ? "bg-primary text-white"
+                                                : isFlagged
+                                                    ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                                    : isAnswered
+                                                        ? "bg-accent/40 text-primary hover:bg-accent/60"
+                                                        : "bg-slate-50 text-slate-400 hover:bg-slate-100"
                                         )}
                                     >
                                         {i + 1}
-                                        {isFlagged && (
-                                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
-                                        )}
                                     </button>
                                 );
                             })}
@@ -313,7 +314,7 @@ export default function QuizRunner() {
                                 Not answered
                             </div>
                             <div className="flex items-center gap-2 text-slate-500">
-                                <span className="h-3 w-3 rounded-full bg-amber-500" />
+                                <span className="h-3 w-3 rounded bg-amber-100 border border-amber-300" />
                                 Flagged for review
                             </div>
                         </div>

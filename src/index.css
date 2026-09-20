@@ -153,6 +153,20 @@
 }
 
 @layer base {
+  /* Safety net for the focus treatment. Any component that still reaches for
+     the raw ring token, or that Tailwind gives a default offset, lands on the
+     brand tint with no white halo — so a missed component degrades to the
+     house style rather than to a black outline. */
+  * {
+    --tw-ring-color: hsl(var(--ring) / 0.2);
+    --tw-ring-offset-width: 0px;
+  }
+
+  /* The ring is the focus indicator; the UA outline would double it up. */
+  :focus-visible {
+    outline: none;
+  }
+
   * {
     @apply border-border;
   }

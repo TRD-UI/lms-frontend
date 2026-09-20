@@ -43,7 +43,7 @@ import { toast } from "sonner";
 export default function CourseManager() {
     const navigate = useNavigate();
     const admin = useActingUser("admin");
-    const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse } = useLms();
+    const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse, instructors } = useLms();
 
     const [query, setQuery] = useState("");
     const [tab, setTab] = useState<"courses" | "waitlist">("courses");
@@ -61,6 +61,10 @@ export default function CourseManager() {
     const waitlistPage = usePagination(waitlist, 8);
 
     const handleSubmit = (draft: CourseDraft) => {
+        // The assigned instructor is what puts the course on their dashboard and
+        // grants them authoring rights over its modules and assessments.
+        const assigned = instructors.find((i) => i.id === draft.instructorId);
+
         const shared = {
             title: draft.title,
             description: draft.description,
@@ -69,6 +73,8 @@ export default function CourseManager() {
             location: draft.location,
             fees: draftToFees(draft),
             status: draft.status,
+            instructorId: assigned?.id,
+            instructorName: assigned?.name,
         };
 
         if (editing) {
@@ -81,8 +87,6 @@ export default function CourseManager() {
             createCourse({
                 ...shared,
                 seats: { enrolled: 0, total: draft.seatsTotal },
-                instructorId: admin.id,
-                instructorName: admin.name,
                 progress: 0,
                 modules: [],
             });

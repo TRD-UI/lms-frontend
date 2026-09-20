@@ -16,7 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Field, NumberField, TextArea, TextField } from "@/components/assessments/form-fields";
-import { courseCategories } from "@/data/courses";
+import { useLms } from "@/store/lms-store";
 import type { Course, FeeStructure } from "@/data/types";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +27,7 @@ export interface CourseDraft {
     duration: string;
     location: string;
     seatsTotal: number;
+    instructorId: string;
     feeType: FeeStructure["type"];
     flatAmount: number;
     cohortAmount: number;
@@ -34,13 +35,19 @@ export interface CourseDraft {
     status: "published" | "draft";
 }
 
+/** Courses run in whole months, one to eight. */
+export const DURATION_OPTIONS = Array.from({ length: 8 }, (_, i) =>
+    i === 0 ? "1 month" : `${i + 1} months`
+);
+
 const EMPTY: CourseDraft = {
     title: "",
     description: "",
-    category: courseCategories[0],
+    category: "",
     duration: "1 month",
-    location: "ITeMS Building, UI",
+    location: "",
     seatsTotal: 20,
+    instructorId: "",
     feeType: "flat",
     flatAmount: 100_000,
     cohortAmount: 80_000,
@@ -58,6 +65,7 @@ export function courseToDraft(course: Course): CourseDraft {
         duration: course.duration,
         location: course.location,
         seatsTotal: course.seats.total,
+        instructorId: course.instructorId ?? "",
         feeType: course.fees.type,
         flatAmount: course.fees.amount ?? 100_000,
         cohortAmount: cohort?.amount ?? 80_000,
@@ -90,14 +98,23 @@ interface CourseFormDialogProps {
 /** Create / edit a course. */
 export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: CourseFormDialogProps) {
     const isEdit = Boolean(course);
+    const { categories, venues, instructors } = useLms();
     const [draft, setDraft] = useState<CourseDraft>(EMPTY);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!open) return;
         setError(null);
-        setDraft(course ? courseToDraft(course) : EMPTY);
-    }, [open, course]);
+        setDraft(
+            course
+                ? courseToDraft(course)
+                : {
+                    ...EMPTY,
+                    category: categories[0] ?? "",
+                    location: venues[0]?.name ?? "",
+                }
+        );
+    }, [open, course, categories, venues]);
 
     const set = <K extends keyof CourseDraft>(key: K, value: CourseDraft[K]) =>
         setDraft((d) => ({ ...d, [key]: value }));
@@ -107,8 +124,16 @@ export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: Cours
             setError("Give the course a title.");
             return;
         }
-        if (draft.seatsTotal < 1) {
-            setError("A course needs at least one seat.");
+        if (!Number.isInteger(draft.seatsTotal) || draft.seatsTotal < 1) {
+            setError("Total seats must be a whole number, one or more.");
+            return;
+        }
+        if (!draft.category) {
+            setError("Pick a category. Add one under Admin → Settings if the list is empty.");
+            return;
+        }
+        if (!draft.location) {
+            setError("Pick a venue. Add one under Admin → Settings if the list is empty.");
             return;
         }
         onSubmit({
@@ -158,7 +183,7 @@ export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: Cours
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl">
-                                    {courseCategories.map((c) => (
+                                    {categories.map((c) => (
                                         <SelectItem key={c} value={c}>
                                             {c}
                                         </SelectItem>
@@ -184,29 +209,73 @@ export function CourseFormDialog({ open, onOpenChange, course, onSubmit }: Cours
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <TextField
-                            id="course-duration"
-                            label="Duration"
-                            value={draft.duration}
-                            onChange={(v) => set("duration", v)}
-                            placeholder="3 months"
-                        />
+                        <Field label="Duration" htmlFor="course-duration">
+                            <Select value={draft.duration} onValueChange={(v) => set("duration", v)}>
+                                <SelectTrigger id="course-duration" className="h-11 rounded-xl bg-slate-50 border-slate-200 text-sm">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    {DURATION_OPTIONS.map((d) => (
+                                        <SelectItem key={d} value={d}>
+                                            {d}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
                         <NumberField
                             id="course-seats"
                             label="Total seats"
                             value={draft.seatsTotal}
                             onChange={(v) => set("seatsTotal", v)}
                             min={1}
+                            step={1}
+                            integer
                         />
                     </div>
 
-                    <TextField
-                        id="course-location"
-                        label="Venue"
-                        value={draft.location}
-                        onChange={(v) => set("location", v)}
-                        placeholder="Training Lab 1, ITeMS Building, UI"
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                        <Field label="Venue" htmlFor="course-location">
+                            <Select value={draft.location} onValueChange={(v) => set("location", v)}>
+                                <SelectTrigger id="course-location" className="h-11 rounded-xl bg-slate-50 border-slate-200 text-sm">
+                                    <SelectValue placeholder="Select a venue" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    {venues.map((v) => (
+                                        <SelectItem key={v.id} value={v.name}>
+                                            {v.name}
+                                            <span className="text-slate-400 ml-1.5 text-xs">
+                                                · {v.capacity} seats
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        {/* Assigning here is what puts the course on that
+                            instructor's dashboard and lets them author its
+                            modules and assessments. */}
+                        <Field label="Instructor" htmlFor="course-instructor">
+                            <Select
+                                value={draft.instructorId || "unassigned"}
+                                onValueChange={(v) => set("instructorId", v === "unassigned" ? "" : v)}
+                            >
+                                <SelectTrigger id="course-instructor" className="h-11 rounded-xl bg-slate-50 border-slate-200 text-sm">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                                    {instructors.map((i) => (
+                                        <SelectItem key={i.id} value={i.id}>
+                                            {i.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                    </div>
 
                     {/* Fees */}
                     <div className="space-y-2.5">

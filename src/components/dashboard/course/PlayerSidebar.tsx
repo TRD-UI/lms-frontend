@@ -5,7 +5,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { Course, ModuleItem } from "@/data/types";
 
@@ -68,12 +67,15 @@ export function PlayerSidebar({
                 </div>
             </div>
 
-            <ScrollArea className="flex-1">
+            {/* A plain scroller rather than ScrollArea: Radix lays its viewport
+                out as a table, which sizes to content and clips the module
+                titles horizontally instead of letting them truncate. */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin min-h-0">
                 <div className="p-4 pr-5">
                     <Accordion type="multiple" defaultValue={[currentModuleId]} className="space-y-2">
                         {course.modules.map((module, moduleIndex) => (
                             <AccordionItem key={module.id} value={module.id} className="border-none">
-                                <AccordionTrigger className="py-3 px-3 hover:no-underline hover:bg-slate-50 rounded-xl transition-all data-[state=open]:bg-slate-50">
+                                <AccordionTrigger className="py-3 px-3 hover:no-underline hover:bg-slate-50 rounded-xl transition-all data-[state=open]:bg-slate-50 [&>svg]:shrink-0 min-w-0">
                                     <div className="flex items-center gap-3 text-left min-w-0">
                                         <div className="h-6 w-6 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-medium text-slate-400 shrink-0">
                                             {moduleIndex + 1}
@@ -122,7 +124,7 @@ export function PlayerSidebar({
                         ))}
                     </Accordion>
                 </div>
-            </ScrollArea>
+            </div>
         </div>
     );
 }

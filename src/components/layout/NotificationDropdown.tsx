@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { notifications, NotificationType } from "@/data/notifications";
+import type { NotificationType } from "@/data/notifications";
+import { useLms } from "@/store/lms-store";
 import { cn } from "@/lib/utils";
 
 const iconMap: Record<NotificationType, React.ElementType> = {
@@ -33,9 +34,9 @@ const bgMap: Record<NotificationType, string> = {
 
 export function NotificationDropdown() {
     const [open, setOpen] = useState(false);
-    
-    // Unread count
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const { notifications, markAllNotificationsRead } = useLms();
+
+    const unreadCount = notifications.filter((n) => !n.isRead).length;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

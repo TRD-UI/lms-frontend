@@ -1,4 +1,5 @@
-import { BookOpen01Icon, Certificate01Icon, Home01Icon, QrCode01Icon, Logout01Icon, Task01Icon } from "hugeicons-react";
+import {
+    Calendar03Icon, BookOpen01Icon, Certificate01Icon, Home01Icon, QrCode01Icon, Logout01Icon, Task01Icon } from "hugeicons-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -23,6 +24,11 @@ const items = [
         title: "Tests",
         url: "/dashboard/assessments",
         icon: Task01Icon,
+    },
+    {
+        title: "Schedule",
+        url: "/dashboard/schedule",
+        icon: Calendar03Icon,
     },
     {
         title: "Passes",
