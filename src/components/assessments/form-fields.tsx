@@ -158,3 +158,54 @@ export function TextArea({
         </Field>
     );
 }
+
+
+/**
+ * Money input that groups thousands as you type.
+ *
+ * The displayed value is formatted, the value handed back is a plain number —
+ * `₦150,000` is far easier to verify at a glance than `150000`, and a
+ * mistyped zero is the kind of error nobody catches in an unformatted field.
+ */
+export function MoneyField({
+    id,
+    label,
+    value,
+    onChange,
+    hint,
+    error,
+    currencyPrefix = "₦",
+}: {
+    id: string;
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+    hint?: string;
+    error?: string;
+    currencyPrefix?: string;
+}) {
+    const format = (n: number) => (Number.isFinite(n) ? n.toLocaleString("en-NG") : "");
+
+    return (
+        <Field label={label} htmlFor={id} hint={hint} error={error}>
+            <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 pointer-events-none">
+                    {currencyPrefix}
+                </span>
+                <input
+                    id={id}
+                    // `text`, not `number`: a number input refuses to display
+                    // separators and strips them on the way in.
+                    type="text"
+                    inputMode="numeric"
+                    value={format(value)}
+                    onChange={(e) => {
+                        const digits = e.target.value.replace(/[^\d]/g, "");
+                        onChange(digits === "" ? 0 : Number(digits));
+                    }}
+                    className={cn(INPUT_CLASS, "tabular-nums pl-9")}
+                />
+            </div>
+        </Field>
+    );
+}

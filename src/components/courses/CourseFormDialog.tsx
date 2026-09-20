@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Field, NumberField, TextArea, TextField } from "@/components/assessments/form-fields";
+import { Field, MoneyField, NumberField, TextArea, TextField } from "@/components/assessments/form-fields";
 import { useLms } from "@/store/lms-store";
 import { describeError } from "@/lib/supabase";
 import { Add01Icon, Upload01Icon, Cancel01Icon } from "hugeicons-react";
@@ -472,28 +472,25 @@ export function CourseFormDialog({
                         </div>
 
                         {draft.feeType === "flat" ? (
-                            <NumberField
+                            <MoneyField
                                 id="course-flat"
-                                label="Amount (₦)"
+                                label="Amount"
                                 value={draft.flatAmount}
                                 onChange={(v) => set("flatAmount", v)}
-                                min={0}
                             />
                         ) : (
                             <div className="grid grid-cols-2 gap-3">
-                                <NumberField
+                                <MoneyField
                                     id="course-cohort"
-                                    label="Cohort (₦)"
+                                    label="Cohort"
                                     value={draft.cohortAmount}
                                     onChange={(v) => set("cohortAmount", v)}
-                                    min={0}
                                 />
-                                <NumberField
+                                <MoneyField
                                     id="course-special"
-                                    label="Special (₦)"
+                                    label="Special"
                                     value={draft.specialAmount}
                                     onChange={(v) => set("specialAmount", v)}
-                                    min={0}
                                 />
                             </div>
                         )}

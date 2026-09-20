@@ -49,3 +49,51 @@ export async function deleteVenue(id: string): Promise<void> {
     const { error } = await supabase.from("venues").delete().eq("id", id);
     if (error) throw error;
 }
+
+// ─── Institution ─────────────────────────────────────────────────────────────
+
+export interface InstitutionSettings {
+    enrollmentRule: string;
+    specialPackageRule: string;
+    facilities: string[];
+    contacts: string[];
+}
+
+const EMPTY_INSTITUTION: InstitutionSettings = {
+    enrollmentRule: "",
+    specialPackageRule: "",
+    facilities: [],
+    contacts: [],
+};
+
+/** Institution copy shown on the course page. Public read, admin write. */
+export async function fetchInstitution(): Promise<InstitutionSettings> {
+    const { data, error } = await supabase
+        .from("institution_settings")
+        .select("enrollment_rule, special_package_rule, facilities, contacts")
+        .maybeSingle();
+    if (error) throw error;
+    if (!data) return EMPTY_INSTITUTION;
+
+    return {
+        enrollmentRule: data.enrollment_rule,
+        specialPackageRule: data.special_package_rule,
+        facilities: data.facilities ?? [],
+        contacts: data.contacts ?? [],
+    };
+}
+
+export async function updateInstitution(patch: Partial<InstitutionSettings>): Promise<void> {
+    const { error } = await supabase
+        .from("institution_settings")
+        .update({
+            ...(patch.enrollmentRule !== undefined ? { enrollment_rule: patch.enrollmentRule } : {}),
+            ...(patch.specialPackageRule !== undefined
+                ? { special_package_rule: patch.specialPackageRule }
+                : {}),
+            ...(patch.facilities !== undefined ? { facilities: patch.facilities } : {}),
+            ...(patch.contacts !== undefined ? { contacts: patch.contacts } : {}),
+        })
+        .eq("id", true);
+    if (error) throw error;
+}

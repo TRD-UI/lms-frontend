@@ -2,6 +2,22 @@ import { supabase } from "@/lib/supabase";
 import { toNaira } from "@/lib/money";
 
 /**
+ * Radar axes for course health.
+ *
+ * Deliberately code, not a table: each key must match a column returned by
+ * `analytics_course_health()`. Making these editable would let someone rename
+ * an axis to something the query does not measure.
+ */
+export const COURSE_HEALTH_METRICS: { key: string; label: string }[] = [
+    { key: "completion", label: "Completion" },
+    { key: "attendance", label: "Attendance" },
+    { key: "passRate", label: "Pass Rate" },
+    { key: "satisfaction", label: "Seats Filled" },
+    { key: "retention", label: "Retention" },
+    { key: "punctuality", label: "Punctuality" },
+];
+
+/**
  * Admin analytics.
  *
  * Every figure is aggregated in Postgres — see the analytics_* functions — so

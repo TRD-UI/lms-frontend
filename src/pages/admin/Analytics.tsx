@@ -46,11 +46,12 @@ import { RadarArea } from "@/components/charts/radar-area";
 import { RadarAxis } from "@/components/charts/radar-axis";
 import { RadarGrid } from "@/components/charts/radar-grid";
 import { RadarLabels } from "@/components/charts/radar-labels";
-import { courseHealthMetrics, formatCompactNaira, formatNaira } from "@/data/analytics";
+
 import { useQuery } from "@tanstack/react-query";
 import * as analyticsApi from "@/lib/api/analytics";
 import * as adminApi from "@/lib/api/admin";
-import { toNaira } from "@/lib/money";
+import { formatCompactNaira, formatNairaAmount as formatNaira, toNaira } from "@/lib/money";
+import { COURSE_HEALTH_METRICS as courseHealthMetrics } from "@/lib/api/analytics";
 import { ORDINAL, SERIES, TOOLTIP_ITEM_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "@/lib/chart-palette";
 import { toast } from "sonner";
 

@@ -13,11 +13,9 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/data/types";
-// Enrolment rules, facilities and phone numbers are institution copy with no
-// table behind them. The application fee is per-course and comes from the row.
-import { courseMetadata } from "@/data/courses";
 import { useQuery } from "@tanstack/react-query";
 import { fetchApplicationFee } from "@/lib/api/courses";
+import { fetchInstitution } from "@/lib/api/reference";
 
 interface EnrollmentCardProps {
     course: Course;
@@ -31,6 +29,12 @@ export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardP
         queryKey: ["application-fee", course.id],
         queryFn: () => fetchApplicationFee(course.id),
         staleTime: 5 * 60_000,
+    });
+
+    const { data: institution } = useQuery({
+        queryKey: ["institution"],
+        queryFn: fetchInstitution,
+        staleTime: 10 * 60_000,
     });
 
     return (
@@ -93,10 +97,10 @@ export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardP
                             </AccordionTrigger>
                             <AccordionContent className="pt-2 space-y-3">
                                 <p className="text-[11px] text-slate-500 font-normal leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100/50">
-                                    {courseMetadata.enrollmentRule}
+                                    {institution?.enrollmentRule}
                                 </p>
                                 <p className="text-[11px] text-slate-500 font-normal leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100/50">
-                                    {courseMetadata.specialPackageRule}
+                                    {institution?.specialPackageRule}
                                 </p>
                             </AccordionContent>
                         </AccordionItem>
@@ -110,7 +114,7 @@ export function EnrollmentCard({ course, isPurchased, pricing }: EnrollmentCardP
                             </AccordionTrigger>
                             <AccordionContent className="pt-1">
                                 <div className="divide-y divide-slate-100">
-                                    {courseMetadata.contacts.map((contact) => (
+                                    {(institution?.contacts ?? []).map((contact) => (
                                         <a key={contact} href={`tel:${contact}`} className="text-sm font-medium text-slate-700 hover:text-primary transition-colors flex items-center justify-between py-3 px-1">
                                             <div className="flex items-center gap-2">
                                                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />

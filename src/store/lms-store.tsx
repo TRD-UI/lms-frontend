@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "@/store/session";
 import * as coursesApi from "@/lib/api/courses";
 import { fetchInstructors } from "@/lib/api/people";
 import * as assessmentsApi from "@/lib/api/assessments";
@@ -143,6 +144,18 @@ interface LmsContextValue {
 const LmsContext = createContext<LmsContextValue | null>(null);
 
 export function LmsProvider({ children }: { children: React.ReactNode }) {
+    /*
+     * Every read below is behind RLS, and RLS with no JWT is not an error — it
+     * is an empty result. If a query fires before the session has been
+     * restored, it succeeds with zero rows and staleTime then caches that
+     * emptiness: a venue list that stays blank for five minutes even though
+     * six venues exist.
+     *
+     * So nothing fetches until the session has settled.
+     */
+    const { status: sessionStatus } = useSession();
+    const isReady = sessionStatus === "authenticated";
+
     // Courses now come from Supabase. Everything else in this store is still
     // seeded, so the two are bridged here rather than at every call site.
     const queryClient = useQueryClient();
@@ -154,6 +167,7 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         queryKey: ["courses"],
         queryFn: coursesApi.fetchCourses,
         staleTime: 30_000,
+        enabled: isReady,
     });
 
     // The picker must yield real profile ids: courses.instructor_id is a UUID
@@ -162,6 +176,7 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         queryKey: ["instructors"],
         queryFn: fetchInstructors,
         staleTime: 5 * 60_000,
+        enabled: isReady,
     });
 
     const invalidateCourses = useCallback(() => {
@@ -174,18 +189,21 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         queryKey: ["assessments"],
         queryFn: assessmentsApi.fetchAssessments,
         staleTime: 30_000,
+        enabled: isReady,
     });
 
     const { data: attempts = [] } = useQuery({
         queryKey: ["attempts"],
         queryFn: assessmentsApi.fetchAttempts,
         staleTime: 15_000,
+        enabled: isReady,
     });
 
     const { data: classSessions = [] } = useQuery({
         queryKey: ["class-sessions"],
         queryFn: classesApi.fetchClassSessions,
         staleTime: 30_000,
+        enabled: isReady,
     });
 
     // Enrolment decides what a learner sees, so it is read rather than assumed.
@@ -193,12 +211,14 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         queryKey: ["my-enrollments"],
         queryFn: coursesApi.fetchMyEnrolledCourseIds,
         staleTime: 60_000,
+        enabled: isReady,
     });
 
     const { data: entryPasses = [] } = useQuery({
         queryKey: ["entry-passes"],
         queryFn: classesApi.fetchEntryPasses,
         staleTime: 30_000,
+        enabled: isReady,
     });
 
     const invalidate = useCallback(
@@ -212,18 +232,21 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
         queryKey: ["categories"],
         queryFn: referenceApi.fetchCategories,
         staleTime: 5 * 60_000,
+        enabled: isReady,
     });
 
     const { data: venues = [] } = useQuery({
         queryKey: ["venues"],
         queryFn: referenceApi.fetchVenues,
         staleTime: 5 * 60_000,
+        enabled: isReady,
     });
     // Rows are written by database triggers, so the client only reads and marks.
     const { data: notifications = [] } = useQuery({
         queryKey: ["notifications"],
         queryFn: notificationsApi.fetchNotifications,
         staleTime: 20_000,
+        enabled: isReady,
     });
 
     // ─── Courses ───────────────────────────────────────────────────
@@ -233,17 +256,44 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
     // optimistic guess that RLS might have rejected.
 
     /** Domain patch → the column set the API expects. */
-    const toCourseInput = (patch: Partial<Course>): Partial<coursesApi.CourseInput> => ({
-        ...(patch.title !== undefined ? { title: patch.title } : {}),
-        ...(patch.description !== undefined ? { description: patch.description } : {}),
-        ...(patch.category !== undefined ? { category: patch.category } : {}),
-        ...(patch.duration !== undefined ? { duration: patch.duration } : {}),
-        ...(patch.location !== undefined ? { location: patch.location } : {}),
-        ...(patch.seats !== undefined ? { seatsTotal: patch.seats.total } : {}),
-        ...(patch.fees !== undefined ? { fees: patch.fees } : {}),
-        ...(patch.status !== undefined ? { status: patch.status } : {}),
-        ...(patch.instructorId !== undefined ? { instructorId: patch.instructorId } : {}),
-    });
+    /**
+     * Domain patch → the column set the API expects.
+     *
+     * Keyed by `keyof CourseInput` on purpose: adding a field to CourseInput
+     * without mapping it here is a compile error. The cover image was silently
+     * dropped for weeks because the previous version was a hand-written object
+     * literal that simply forgot it, and nothing failed — the update just did
+     * not include the column.
+     */
+    const COURSE_FIELD_MAP: {
+        // Required<> matters: over an optional key a mapped type stays optional,
+        // so a missing entry would compile. This forces every field to appear.
+        [K in keyof Required<coursesApi.CourseInput>]: (
+            patch: Partial<Course>
+        ) => coursesApi.CourseInput[K] | undefined;
+    } = {
+        title: (p) => p.title,
+        description: (p) => p.description,
+        category: (p) => p.category,
+        duration: (p) => p.duration,
+        location: (p) => p.location,
+        seatsTotal: (p) => p.seats?.total,
+        fees: (p) => p.fees,
+        status: (p) => p.status,
+        imageUrl: (p) => p.imageUrl,
+        instructorId: (p) => p.instructorId,
+    };
+
+    const toCourseInput = (patch: Partial<Course>): Partial<coursesApi.CourseInput> => {
+        const out: Partial<coursesApi.CourseInput> = {};
+        for (const key of Object.keys(COURSE_FIELD_MAP) as (keyof coursesApi.CourseInput)[]) {
+            const value = COURSE_FIELD_MAP[key](patch);
+            if (value !== undefined) {
+                (out as Record<string, unknown>)[key] = value;
+            }
+        }
+        return out;
+    };
 
     const createCourse: LmsContextValue["createCourse"] = useCallback(
         async (input) => {

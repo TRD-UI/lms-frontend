@@ -17,7 +17,6 @@ export default function Signup() {
         name: "",
         email: "",
         phone: "",
-        organization: "",
         password: "",
         confirmPassword: "",
     });
@@ -127,11 +126,6 @@ export default function Signup() {
                         error={errors.phone} required disabled={loading}
                     />
                 </div>
-                <AuthFormField
-                    label="Organization" id="organization" placeholder="University of Ibadan"
-                    value={form.organization} onChange={e => setForm(f => ({ ...f, organization: e.target.value }))}
-                    disabled={loading}
-                />
                 <AuthFormField
                     label="Password" id="password" type="password" placeholder="Min. 8 characters"
                     value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}

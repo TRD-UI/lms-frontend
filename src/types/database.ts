@@ -833,6 +833,33 @@ export type Database = {
           },
         ]
       }
+      institution_settings: {
+        Row: {
+          contacts: string[]
+          enrollment_rule: string
+          facilities: string[]
+          id: boolean
+          special_package_rule: string
+          updated_at: string
+        }
+        Insert: {
+          contacts?: string[]
+          enrollment_rule?: string
+          facilities?: string[]
+          id?: boolean
+          special_package_rule?: string
+          updated_at?: string
+        }
+        Update: {
+          contacts?: string[]
+          enrollment_rule?: string
+          facilities?: string[]
+          id?: boolean
+          special_package_rule?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           completed_at: string

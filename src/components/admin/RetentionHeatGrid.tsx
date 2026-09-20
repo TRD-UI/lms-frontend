@@ -1,5 +1,11 @@
 import { useState } from "react";
-import type { RetentionCohort } from "@/data/analytics";
+/** One intake month and how far it has got, week by week. */
+export interface RetentionCohort {
+    cohort: string;
+    size: number;
+    /** Percentage still progressing at week 0..n. */
+    weeks: number[];
+}
 import { SEQUENTIAL, sequentialStep } from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 

@@ -38,6 +38,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as adminApi from "@/lib/api/admin";
 import { ReferenceTables } from "@/components/courses/ReferenceTables";
 import { ReferenceFormDialog } from "@/components/courses/ReferenceFormDialog";
+import { InstitutionSettings } from "@/components/courses/InstitutionSettings";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,7 +51,7 @@ export default function CourseManager() {
     const { courses, createCourse, updateCourse, deleteCourse, assessmentsForCourse, instructors, categories, venues } = useLms();
 
     const [query, setQuery] = useState("");
-    const [tab, setTab] = useState<"courses" | "waitlist" | "categories" | "venues">("courses");
+    const [tab, setTab] = useState<"courses" | "waitlist" | "categories" | "venues" | "institution">("courses");
     const [referenceOpen, setReferenceOpen] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Course | null>(null);
@@ -155,7 +156,7 @@ export default function CourseManager() {
                         </div>}
                         {/* The waitlist is populated by learners, so it has
                             nothing for an admin to create. */}
-                        {tab !== "waitlist" && (
+                        {tab !== "waitlist" && tab !== "institution" && (
                             <Button
                                 onClick={() => {
                                     if (tab === "courses") {
@@ -184,6 +185,7 @@ export default function CourseManager() {
                             ["waitlist", "Waitlist", waitlist.length],
                             ["categories", "Categories", categories.length],
                             ["venues", "Venues", venues.length],
+                            ["institution", "Institution", -1],
                         ] as const
                     ).map(([key, label, count]) => (
                         <button
@@ -195,14 +197,14 @@ export default function CourseManager() {
                             )}
                         >
                             {label}
-                            <span
+                            {count >= 0 && <span
                                 className={cn(
                                     "ml-2 rounded-full text-[10px] px-1.5 py-0.5",
                                     tab === key ? "bg-accent/50 text-primary" : "bg-slate-50 text-slate-400"
                                 )}
                             >
                                 {count}
-                            </span>
+                            </span>}
                             {tab === key && (
                                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
                             )}
@@ -211,7 +213,9 @@ export default function CourseManager() {
                 </div>
             </div>
 
-            {tab === "categories" || tab === "venues" ? (
+            {tab === "institution" ? (
+                <InstitutionSettings />
+            ) : tab === "categories" || tab === "venues" ? (
                 <ReferenceTables kind={tab} />
             ) : tab === "courses" ? (
                 filtered.length === 0 ? (
