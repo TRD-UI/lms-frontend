@@ -88,7 +88,9 @@ export default function InstructorDashboard() {
                     : null,
             sessions: myCohorts.length,
         };
-    }, [myCourses, assessmentsForCourse, attemptsForAssessment]);
+        // instructorCohorts feeds the attendance rate and session count — it was
+        // missing here, so both went stale until an unrelated dependency changed.
+    }, [myCourses, assessmentsForCourse, attemptsForAssessment, instructorCohorts]);
 
     /** Enrollment per course — nominal categories, so a single hue. */
     const enrollmentData = myCourses.map((c) => ({

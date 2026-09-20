@@ -16,7 +16,7 @@ import {
     SquareLock02Icon
 } from "hugeicons-react";
 import { EntryPass } from "@/data/entry-passes";
-import { usePassQr } from "./PassQrCode";
+import { usePassQr } from "./use-pass-qr";
 
 interface PassViewerProps {
     pass: EntryPass | null;
@@ -32,7 +32,7 @@ export function PassViewer({ pass, open, onOpenChange }: PassViewerProps) {
 }
 
 function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: EntryPass }) {
-    const { dataUrl, isLoading } = usePassQr(pass.id, open);
+    const { dataUrl, isLoading, withheldBecause } = usePassQr(pass.id, open);
 
     /* The QR is drawn locally, so "save" is just the data URL — no fetch. */
     const handleDownload = () => {
@@ -110,7 +110,7 @@ function PassTicket({ pass, open, onOpenChange }: PassViewerProps & { pass: Entr
                                             <>
                                                 <SquareLock02Icon size={28} className="text-slate-300" />
                                                 <p className="text-[11px] text-slate-400 font-medium px-4 leading-relaxed">
-                                                    This code opens on the day of the class, once any required test is passed.
+                                                    {withheldBecause ?? "This code is not available yet."}
                                                 </p>
                                             </>
                                         )}

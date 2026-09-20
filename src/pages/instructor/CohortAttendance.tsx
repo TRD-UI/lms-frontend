@@ -123,8 +123,35 @@ export default function CohortAttendance() {
         }
     };
 
+    const studentActions = (student: AttendanceRecord) => [
+        {
+            label: "Mark present",
+            icon: CheckmarkCircle01Icon,
+            disabled: student.status === "present",
+            onSelect: () => handleMarkAttendance(student, "present"),
+        },
+        {
+            label: "Mark absent",
+            icon: Cancel01Icon,
+            disabled: student.status === "absent",
+            onSelect: () => handleMarkAttendance(student, "absent"),
+        },
+        {
+            label: "Mark excused",
+            icon: Clock01Icon,
+            disabled: student.status === "excused",
+            onSelect: () => handleMarkAttendance(student, "excused"),
+        },
+        {
+            label: "Subjective grade",
+            icon: StarIcon,
+            separatorBefore: true,
+            onSelect: () => setGradeDialogStudent(student),
+        },
+    ];
+
     return (
-        <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex flex-col gap-6 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader
                 title={selectedCohort ? selectedCohort.courseTitle : "Cohort Attendance"}
                 description={
@@ -138,14 +165,14 @@ export default function CohortAttendance() {
 
             {selectedCohort ? (
                 /* Detailed Cohort View */
-                <div className="space-y-6 px-2">
+                <div className="space-y-4 sm:space-y-6 px-1 sm:px-2">
                     {/* Session Info */}
                     <Card className="border-slate-100 rounded-2xl shadow-none">
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <h2 className="text-xl font-medium text-slate-800">{selectedCohort.courseTitle}</h2>
-                                    <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                                    <h2 className="text-lg sm:text-xl font-medium text-slate-800">{selectedCohort.courseTitle}</h2>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 mt-2 text-xs sm:text-sm text-slate-500">
                                         <span className="flex items-center gap-1.5">
                                             <Calendar03Icon size={14} className="text-slate-400" />
                                             {selectedCohort.sessionDate} · {selectedCohort.sessionTime}
@@ -173,7 +200,7 @@ export default function CohortAttendance() {
                     {/* Student Attendance Table */}
                     <Card className="border-slate-100 rounded-2xl shadow-none">
                         <CardContent className="p-0">
-                            <div className="overflow-x-auto">
+                            <div className="hidden md:block overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="border-slate-100 hover:bg-transparent">
@@ -220,32 +247,7 @@ export default function CohortAttendance() {
                                                     <TableCell className="text-right">
                                                         <RowActions
                                                             label={`Actions for ${student.studentName}`}
-                                                            actions={[
-                                                                {
-                                                                    label: "Mark present",
-                                                                    icon: CheckmarkCircle01Icon,
-                                                                    disabled: student.status === "present",
-                                                                    onSelect: () => handleMarkAttendance(student, "present"),
-                                                                },
-                                                                {
-                                                                    label: "Mark absent",
-                                                                    icon: Cancel01Icon,
-                                                                    disabled: student.status === "absent",
-                                                                    onSelect: () => handleMarkAttendance(student, "absent"),
-                                                                },
-                                                                {
-                                                                    label: "Mark excused",
-                                                                    icon: Clock01Icon,
-                                                                    disabled: student.status === "excused",
-                                                                    onSelect: () => handleMarkAttendance(student, "excused"),
-                                                                },
-                                                                {
-                                                                    label: "Subjective grade",
-                                                                    icon: StarIcon,
-                                                                    separatorBefore: true,
-                                                                    onSelect: () => setGradeDialogStudent(student),
-                                                                },
-                                                            ]}
+                                                            actions={studentActions(student)}
                                                         />
                                                     </TableCell>
                                                 </TableRow>
@@ -253,6 +255,48 @@ export default function CohortAttendance() {
                                         })}
                                     </TableBody>
                                 </Table>
+                            </div>
+
+                            <div className="md:hidden divide-y divide-slate-100">
+                                {selectedCohort.students.map((student) => {
+                                    const StatusIcon = statusConfig[student.status].icon;
+                                    return (
+                                        <div key={student.id} className="flex items-center gap-3 p-4">
+                                            <Avatar className="h-9 w-9 border border-slate-100 rounded-full shrink-0">
+                                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.studentName.split(" ")[0].toLowerCase()}`} />
+                                                <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-medium">
+                                                    {student.studentName.split(" ").map((n) => n[0]).join("")}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="min-w-0 flex-1">
+                                                <span className="block text-sm font-medium text-slate-800 truncate">
+                                                    {student.studentName}
+                                                </span>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className={cn(
+                                                            "text-[10px] font-medium border-none rounded-full capitalize px-2 gap-1",
+                                                            statusConfig[student.status].color
+                                                        )}
+                                                    >
+                                                        <StatusIcon size={10} />
+                                                        {student.status}
+                                                    </Badge>
+                                                    {student.checkInTime && (
+                                                        <span className="text-[11px] text-slate-400 tabular-nums">
+                                                            {student.checkInTime}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <RowActions
+                                                label={`Actions for ${student.studentName}`}
+                                                actions={studentActions(student)}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>
@@ -270,31 +314,31 @@ export default function CohortAttendance() {
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-1 px-2">
+                    <div className="space-y-1 px-1 sm:px-2">
                         {instructorCohorts.map((cohort, index) => (
                             <div key={cohort.id}>
                                 <div
                                     onClick={() => setSelectedCohort(cohort)}
-                                    className="group flex items-center justify-between py-5 hover:bg-slate-50/50 px-4 rounded-xl transition-colors cursor-pointer"
+                                    className="group flex items-center justify-between gap-3 py-4 sm:py-5 hover:bg-slate-50/50 px-2 sm:px-4 rounded-xl transition-colors cursor-pointer"
                                     role="button"
                                     tabIndex={0}
                                     aria-label={`View ${cohort.courseTitle} session`}
                                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedCohort(cohort); } }}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
-                                            <UserGroupIcon size={24} />
+                                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                                            <UserGroupIcon size={22} />
                                         </div>
-                                        <div>
-                                            <h4 className="font-medium text-slate-800">{cohort.courseTitle}</h4>
-                                            <div className="flex items-center gap-3 mt-0.5">
-                                                <span className="text-xs text-slate-400">{cohort.sessionDate} · {cohort.sessionTime}</span>
-                                                <span className="text-slate-200">•</span>
-                                                <span className="text-xs text-slate-400">{cohort.venue}</span>
+                                        <div className="min-w-0">
+                                            <h4 className="font-medium text-slate-800 text-sm sm:text-base truncate">{cohort.courseTitle}</h4>
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 mt-0.5">
+                                                <span className="text-[11px] sm:text-xs text-slate-400">{cohort.sessionDate} · {cohort.sessionTime}</span>
+                                                <span className="hidden sm:inline text-slate-200">•</span>
+                                                <span className="text-[11px] sm:text-xs text-slate-400 truncate">{cohort.venue}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                         <div className="flex items-center gap-2">
                                             <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none text-[10px] font-medium rounded-full px-2 h-5 gap-1">
                                                 <CheckmarkCircle01Icon size={10} />
@@ -304,9 +348,9 @@ export default function CohortAttendance() {
                                                 <Cancel01Icon size={10} />
                                                 {cohort.absentCount}
                                             </Badge>
-                                            <span className="text-xs text-slate-300 ml-1">{cohort.totalStudents} total</span>
+                                            <span className="hidden sm:inline text-xs text-slate-300 ml-1">{cohort.totalStudents} total</span>
                                         </div>
-                                        <ArrowRight01Icon size={18} className="text-slate-300 group-hover:text-primary transition-colors" />
+                                        <ArrowRight01Icon size={18} className="hidden sm:block text-slate-300 group-hover:text-primary transition-colors" />
                                     </div>
                                 </div>
                                 {index < instructorCohorts.length - 1 && <Separator className="bg-slate-100" />}

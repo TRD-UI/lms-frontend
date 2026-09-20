@@ -131,13 +131,23 @@ export async function fetchEntryPasses(): Promise<EntryPass[]> {
         }));
 }
 
-/** The signed payload for the door scanner, or why it is still withheld. */
+/**
+ * The signed payload for the door scanner, or why it is still withheld.
+ *
+ * `gated` means a required assessment is outstanding, `not_yet` that the class
+ * has not come round yet, `expired` that it has been and gone.
+ */
+export type PassQr =
+    | { released: true; payload: string; passCode: string }
+    | { released: false; reason: "gated"; blockingAssessmentId: string | null }
+    | { released: false; reason: "not_yet"; availableOn: string }
+    | { released: false; reason: "expired" };
+
+
 export async function fetchPassQr(passId: string) {
     const { data, error } = await supabase.rpc("entry_pass_qr", { p_pass_id: passId });
     if (error) throw error;
-    return data as unknown as
-        | { released: true; payload: string; passCode: string }
-        | { released: false; blockingAssessmentId: string | null };
+    return data as unknown as PassQr;
 }
 
 /**

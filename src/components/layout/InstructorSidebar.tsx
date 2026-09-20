@@ -29,6 +29,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/store/session";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 const items = [
     { title: "Home", url: "/instructor", icon: Home01Icon },
@@ -55,7 +56,8 @@ export function InstructorSidebar() {
     };
 
     return (
-        <Sidebar collapsible="none" className="w-20 bg-slate-100 p-0 overflow-visible">
+        <>
+        <Sidebar collapsible="none" className="hidden md:flex w-20 bg-slate-100 p-0 overflow-visible">
             <SidebarHeader className="flex items-center justify-center pt-10 pb-6">
                 <img src="/logo.png" alt="TRD Instructor" className="h-10 w-10 object-contain" />
             </SidebarHeader>
@@ -119,5 +121,39 @@ export function InstructorSidebar() {
                 </AlertDialog>
             </SidebarFooter>
         </Sidebar>
+
+        {/* Mobile bottom nav — the same floating pill the learner portal uses,
+            so a phone behaves identically whichever role you signed in as. */}
+        <nav className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-1rem)] bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 border border-white/60 rounded-full p-1.5 flex items-center gap-0.5 z-50">
+            {items.map((item) => {
+                const active = isActive(item.url);
+                return (
+                    <button
+                        key={item.title}
+                        onClick={() => navigate(item.url)}
+                        className={cn(
+                            "relative flex items-center justify-center h-12 rounded-full transition-all duration-300 ease-in-out focus:outline-none overflow-hidden shrink-0",
+                            active ? "bg-primary w-[7.5rem]" : "bg-transparent w-11"
+                        )}
+                    >
+                        <div className="flex items-center gap-2">
+                            <item.icon
+                                size={22}
+                                className={cn("shrink-0 transition-colors duration-300", active ? "text-white" : "text-primary")}
+                            />
+                            <span
+                                className={cn(
+                                    "text-white text-xs font-semibold whitespace-nowrap transition-all duration-300",
+                                    active ? "opacity-100 max-w-[90px]" : "opacity-0 max-w-0"
+                                )}
+                            >
+                                {item.title}
+                            </span>
+                        </div>
+                    </button>
+                );
+            })}
+        </nav>
+        </>
     );
 }

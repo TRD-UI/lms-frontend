@@ -76,6 +76,49 @@ export default function MyCourses() {
 
     const { page, pageCount, pageRows, setPage, total, from, to } = usePagination(visible, 8);
 
+    const courseActions = (course: Course) => {
+        const assessments = assessmentsForCourse(course.id);
+        return [
+            {
+                label: "Manage course",
+                icon: ViewIcon,
+                onSelect: () => navigate(`/instructor/courses/${course.id}`),
+            },
+            {
+                label: "Edit settings",
+                icon: Edit01Icon,
+                onSelect: () => {
+                    setEditing(course);
+                    setFormOpen(true);
+                },
+            },
+            {
+                label: (course.status ?? "draft") === "published" ? "Unpublish" : "Publish",
+                icon: Task01Icon,
+                onSelect: () => {
+                    const next = (course.status ?? "draft") === "published" ? "draft" : "published";
+                    updateCourse(course.id, { status: next });
+                    toast.success(next === "published" ? "Course published" : "Moved to draft");
+                },
+            },
+            {
+                label: "Delete course",
+                icon: Delete02Icon,
+                destructive: true,
+                separatorBefore: true,
+                onSelect: () => {
+                    deleteCourse(course.id);
+                    toast.success("Course deleted");
+                },
+                confirm: {
+                    title: "Delete this course?",
+                    description: `"${course.title}" and its ${assessments.length} assessments will be removed.`,
+                    actionLabel: "Delete",
+                },
+            },
+        ];
+    };
+
     const handleSubmit = async (draft: CourseDraft) => {
         const shared = {
             title: draft.title,
@@ -217,7 +260,7 @@ export default function MyCourses() {
             ) : (
                 <div className="px-1 sm:px-2">
                     <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        <div className="hidden md:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-slate-100 hover:bg-transparent">
@@ -271,45 +314,7 @@ export default function MyCourses() {
                                                 <TableCell className="text-right">
                                                     <RowActions
                                                         label={`Actions for ${course.title}`}
-                                                        actions={[
-                                                            {
-                                                                label: "Manage course",
-                                                                icon: ViewIcon,
-                                                                onSelect: () => navigate(`/instructor/courses/${course.id}`),
-                                                            },
-                                                            {
-                                                                label: "Edit settings",
-                                                                icon: Edit01Icon,
-                                                                onSelect: () => {
-                                                                    setEditing(course);
-                                                                    setFormOpen(true);
-                                                                },
-                                                            },
-                                                            {
-                                                                label: (course.status ?? "draft") === "published" ? "Unpublish" : "Publish",
-                                                                icon: Task01Icon,
-                                                                onSelect: () => {
-                                                                    const next = (course.status ?? "draft") === "published" ? "draft" : "published";
-                                                                    updateCourse(course.id, { status: next });
-                                                                    toast.success(next === "published" ? "Course published" : "Moved to draft");
-                                                                },
-                                                            },
-                                                            {
-                                                                label: "Delete course",
-                                                                icon: Delete02Icon,
-                                                                destructive: true,
-                                                                separatorBefore: true,
-                                                                onSelect: () => {
-                                                                    deleteCourse(course.id);
-                                                                    toast.success("Course deleted");
-                                                                },
-                                                                confirm: {
-                                                                    title: "Delete this course?",
-                                                                    description: `"${course.title}" and its ${assessments.length} assessments will be removed.`,
-                                                                    actionLabel: "Delete",
-                                                                },
-                                                            },
-                                                        ]}
+                                                        actions={courseActions(course)}
                                                     />
                                                 </TableCell>
                                             </TableRow>
@@ -317,6 +322,41 @@ export default function MyCourses() {
                                     })}
                                 </TableBody>
                             </Table>
+                        </div>
+
+                        {/* Phone: the same rows, stacked — a course table does
+                            not survive a 390px viewport. */}
+                        <div className="md:hidden divide-y divide-slate-100">
+                            {pageRows.map((course) => {
+                                const assessments = assessmentsForCourse(course.id);
+                                const lessons = course.modules.reduce((n, m) => n + m.items.length, 0);
+                                const filled = course.seats.total === 0
+                                    ? 0
+                                    : Math.round((course.seats.enrolled / course.seats.total) * 100);
+                                return (
+                                    <div key={course.id} className="flex items-center gap-3 p-4">
+                                        <MiniDonut value={filled} size={40} label="of seats filled" />
+                                        <Link to={`/instructor/courses/${course.id}`} className="min-w-0 flex-1">
+                                            <span className="block text-sm font-medium text-slate-800 truncate">
+                                                {course.title}
+                                            </span>
+                                            <p className="text-[11px] text-slate-400 font-medium truncate">
+                                                {course.seats.enrolled}/{course.seats.total} seats · {course.modules.length} modules · {lessons} lessons · {assessments.length} tests
+                                            </p>
+                                            <StatusBadge
+                                                tone={toneForStatus(course.status ?? "draft")}
+                                                className="mt-1.5"
+                                            >
+                                                {course.status ?? "draft"}
+                                            </StatusBadge>
+                                        </Link>
+                                        <RowActions
+                                            label={`Actions for ${course.title}`}
+                                            actions={courseActions(course)}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         <TablePagination
