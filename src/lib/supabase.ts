@@ -4,23 +4,39 @@ import type { Database } from "@/types/database";
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!url || !anonKey) {
-    throw new Error(
-        "Missing Supabase configuration. Copy .env.example to .env.local and fill in " +
-        "VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from your project's API settings."
-    );
-}
+/**
+ * Set when the bundle was built without Supabase credentials.
+ *
+ * This used to `throw` here. A throw at module scope aborts the import graph
+ * before React ever mounts, so the page renders blank and the only clue is a
+ * console line — the least diagnosable failure a deploy can have. main.tsx
+ * reads this and renders a screen that says what is wrong instead.
+ *
+ * Vite inlines `VITE_*` at build time, so an empty value means the machine
+ * that ran the build did not have them. Setting them on the host afterwards
+ * changes nothing until it rebuilds.
+ */
+export const supabaseConfigError =
+    !url || !anonKey
+        ? "VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY were not present when this build ran."
+        : null;
 
-export const supabase = createClient<Database>(url, anonKey, {
-    auth: {
-        // The reset-password link lands on /reset-password with the recovery
-        // token in the URL hash; detectSessionInUrl is what exchanges it.
-        detectSessionInUrl: true,
-        persistSession: true,
-        autoRefreshToken: true,
-        flowType: "pkce",
-    },
-});
+// Placeholders keep createClient from throwing on its own URL validation. The
+// app is never rendered in this state, so no request is ever made with them.
+export const supabase = createClient<Database>(
+    url || "https://placeholder.supabase.co",
+    anonKey || "placeholder-anon-key",
+    {
+        auth: {
+            // The reset-password link lands on /reset-password with the recovery
+            // token in the URL hash; detectSessionInUrl is what exchanges it.
+            detectSessionInUrl: true,
+            persistSession: true,
+            autoRefreshToken: true,
+            flowType: "pkce",
+        },
+    }
+);
 
 /**
  * Narrows a PostgREST error into something worth showing a user.
