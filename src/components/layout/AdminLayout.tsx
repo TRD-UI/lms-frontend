@@ -4,8 +4,16 @@ import { Outlet } from "react-router-dom";
 import { Search01Icon } from "hugeicons-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { UserDropdown } from "./UserDropdown";
+import { MobileBlocker } from "@/components/admin/MobileBlocker";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function AdminLayout() {
+    const isMobile = useIsMobile();
+
+    // Dense tables, wide charts and multi-column forms: there is no useful
+    // phone rendering of this, so it is blocked rather than half-adapted.
+    if (isMobile) return <MobileBlocker />;
+
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans">
