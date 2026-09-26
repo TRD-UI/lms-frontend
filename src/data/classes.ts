@@ -19,6 +19,13 @@ export interface ClassSession {
     endTime: string;
     venue: string;
     roomNumber: string;
+    /**
+     * Join link for an online class. Non-empty means virtual.
+     *
+     * Never present on a list read — the column is not selectable from the
+     * client. It arrives only from session_meeting_link(), and only when due.
+     */
+    meetingUrl?: string;
     instructorId: string;
     capacity?: number;
     notes?: string;
@@ -46,6 +53,38 @@ export function fromDateKey(key: string): Date {
 export function earliestSchedulableDate(from = new Date()): Date {
     const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
     d.setDate(d.getDate() + MIN_SCHEDULE_NOTICE_DAYS);
+    return d;
+}
+
+/** The venue recorded for an online class. */
+export const VIRTUAL_VENUE = "Virtual";
+
+export const isVirtualSession = (session: Pick<ClassSession, "venue">) =>
+    session.venue === VIRTUAL_VENUE;
+
+const DAYS_PER: Record<string, number> = { day: 1, week: 7, month: 30, year: 365 };
+
+/** `"3 months"` → 90. Null when the course's duration cannot be read. */
+export function durationInDays(duration: string): number | null {
+    const match = /(\d+(?:\.\d+)?)\s*(day|week|month|year)s?/i.exec(duration);
+    if (!match) return null;
+    return Math.round(Number(match[1]) * DAYS_PER[match[2].toLowerCase()]);
+}
+
+/**
+ * The last date a class may be scheduled onto.
+ *
+ * There is no upper bound in principle — a term's worth of classes can be laid
+ * out in one sitting. The only limit is the course's own length, measured from
+ * today, since a course has a duration but no start date to measure from.
+ * Undefined when the duration is free text we cannot read, in which case no
+ * ceiling is imposed.
+ */
+export function latestSchedulableDate(duration: string, from = new Date()): Date | undefined {
+    const days = durationInDays(duration);
+    if (days == null) return undefined;
+    const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    d.setDate(d.getDate() + days);
     return d;
 }
 

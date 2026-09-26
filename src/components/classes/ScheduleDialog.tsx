@@ -114,8 +114,8 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
                                 </DialogTitle>
                                 <DialogDescription className="text-slate-500 text-sm">
                                     {isInstructor
-                                        ? "The on-site sessions you run. Hover a day to add one."
-                                        : "On-site classes across every course you are enrolled on."}
+                                        ? "The classes you run, on site and online. Hover a day to add one there."
+                                        : "Classes across every course you are enrolled on."}
                                 </DialogDescription>
                             </div>
 

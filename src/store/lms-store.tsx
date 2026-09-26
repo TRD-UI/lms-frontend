@@ -10,6 +10,7 @@ import * as notificationsApi from "@/lib/api/notifications";
 import {
     earliestSchedulableDate,
     formatSessionDate,
+    latestSchedulableDate,
     toDateKey,
     type ClassSession,
 } from "@/data/classes";
@@ -501,6 +502,18 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
                 );
             }
 
+            // There is no ceiling in principle, only the course's own length —
+            // a class after the course has ended has nobody left to attend it.
+            const target = courses.find((c) => c.id === input.courseId);
+            const latest = target ? latestSchedulableDate(target.duration) : undefined;
+            if (latest && input.date > toDateKey(latest)) {
+                throw new Error(
+                    `"${target!.title}" runs for ${target!.duration}, so the latest class date is ${formatSessionDate(
+                        toDateKey(latest)
+                    )}.`
+                );
+            }
+
             const id = await classesApi.createClassSession(input);
             // A database trigger issues the entry passes, so the pass list has
             // to be refetched alongside the sessions.
@@ -509,7 +522,7 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
             invalidate("class-sessions", "entry-passes", "notifications");
             return { ...input, id };
         },
-        [invalidate]
+        [invalidate, courses]
     );
 
     const updateClassSession = useCallback(

@@ -45,6 +45,26 @@ export async function fetchClassSessions(): Promise<ClassSession[]> {
     return ((data ?? []) as SessionRow[]).map(toSession);
 }
 
+/**
+ * The join link, or why it is still withheld.
+ *
+ * `meeting_url` is not selectable from the client — this RPC is the only way
+ * to it, and for a learner it only answers on the day of the class.
+ */
+export type MeetingLink =
+    | { virtual: false }
+    | { virtual: true; released: true; url: string }
+    | { virtual: true; released: false; reason: "not_yet"; availableOn: string }
+    | { virtual: true; released: false; reason: "past" };
+
+export async function fetchMeetingLink(sessionId: string): Promise<MeetingLink> {
+    const { data, error } = await supabase.rpc("session_meeting_link", {
+        p_session_id: sessionId,
+    });
+    if (error) throw error;
+    return data as unknown as MeetingLink;
+}
+
 export async function createClassSession(input: Omit<ClassSession, "id">): Promise<string> {
     const { data, error } = await supabase
         .from("course_sessions")
@@ -56,6 +76,7 @@ export async function createClassSession(input: Omit<ClassSession, "id">): Promi
             ends_at: input.endTime,
             venue_name: input.venue,
             room_number: input.roomNumber,
+            meeting_url: input.meetingUrl ?? "",
             instructor_id: input.instructorId || null,
         })
         .select("id")
@@ -74,6 +95,7 @@ export async function updateClassSession(id: string, patch: Partial<ClassSession
             ...(patch.startTime !== undefined ? { starts_at: patch.startTime } : {}),
             ...(patch.endTime !== undefined ? { ends_at: patch.endTime } : {}),
             ...(patch.venue !== undefined ? { venue_name: patch.venue } : {}),
+            ...(patch.meetingUrl !== undefined ? { meeting_url: patch.meetingUrl } : {}),
             ...(patch.roomNumber !== undefined ? { room_number: patch.roomNumber } : {}),
         })
         .eq("id", id);

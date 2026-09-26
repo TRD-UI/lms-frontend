@@ -156,7 +156,20 @@ console.log('\n── Assessments belong to the instructor, not the admin ──
   const { c: funke } = await login('funke.a@trd.edu');   // teaches Tech Odyssey + Cybersecurity
   const { c: seun } = await login('seun.f@trd.edu');     // teaches other courses
 
-  const { data: mine } = await funke.from('assessments').select('id, title, course_id').limit(1).single();
+  const { data: funkeProfile } = await funke.auth.getUser();
+  const { data: herCourses } = await funke.from('courses')
+    .select('id').eq('instructor_id', funkeProfile.user.id);
+  const herCourseIds = (herCourses ?? []).map((c) => c.id);
+
+  // Must be one she actually owns: an unordered limit(1) over every assessment
+  // she can *read* will sometimes pick another instructor's, and then the
+  // edit test fails for a rule that is working exactly as intended.
+  const { data: mine } = await funke.from('assessments')
+    .select('id, title, course_id')
+    .in('course_id', herCourseIds)
+    .order('id')
+    .limit(1)
+    .maybeSingle();
   if (!mine) { bad('instructor can see their own assessment'); }
   else {
     ok('instructor sees their own assessment', mine.title);
@@ -188,9 +201,11 @@ console.log('\n── Assessments belong to the instructor, not the admin ──
   }
 
   const { data: admAll } = await adm.from('assessments').select('id');
-  (admAll?.length ?? 0) >= 17
-    ? ok('admin still reads every assessment', `${admAll.length}`)
-    : bad('admin lost read access', `${admAll?.length}`);
+  const { data: funkeAll } = await funke.from('assessments').select('id');
+  const admCount = admAll?.length ?? 0;
+  admCount > 0 && admCount >= (funkeAll?.length ?? 0)
+    ? ok('admin still reads every assessment', `${admCount}`)
+    : bad('admin lost read access', `admin ${admCount} vs instructor ${funkeAll?.length}`);
 }
 
 console.log('\n── Long-form paper reached the database ──');
@@ -290,6 +305,92 @@ console.log('\n── Course applications ──');
     const { data: leftover } = await stu.from('notifications')
       .select('id, title').in('title', ['Application approved', 'Application not successful']);
     for (const n of leftover ?? []) await stu.from('notifications').delete().eq('id', n.id);
+  }
+}
+
+console.log('\n── Virtual classes ──');
+{
+  const { c: ins, data: insAuth } = await login('funke.a@trd.edu');
+  const { c: stu, data: stuAuth } = await login('cyber.smith@example.com');
+  const { c: adm } = await login('eze.n@trd.edu');
+  const INS = insAuth.user.id, STU = stuAuth.user.id;
+
+  // A course she teaches that the learner is enrolled on, so both sides are real.
+  const { data: enrolled } = await stu.from('enrollments')
+    .select('course_id').in('status', ['active', 'completed']);
+  const theirs = new Set((enrolled ?? []).map((e) => e.course_id));
+  const { data: hers } = await ins.from('courses').select('id, title').eq('instructor_id', INS);
+  const course = (hers ?? []).find((c) => theirs.has(c.id));
+
+  if (!course) bad('no shared course to test a virtual class on');
+  else {
+    const LINK = 'https://meet.example.com/verify-run';
+    const day = (offset) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return d.toISOString().slice(0, 10);
+    };
+
+    const mk = async (title, date) => {
+      const { data, error } = await ins.from('course_sessions').insert({
+        course_id: course.id, title, session_date: date,
+        starts_at: '10:00', ends_at: '12:00',
+        venue_name: 'Virtual', room_number: '', meeting_url: LINK,
+        instructor_id: INS,
+      }).select('id').single();
+      if (error) throw new Error(`${title}: ${error.message}`);
+      return data.id;
+    };
+
+    const future = await mk('__verify virtual future__', day(10));
+    const today = await mk('__verify virtual today__', day(0));
+
+    // The column itself must be unreadable, whatever the date.
+    const direct = await stu.from('course_sessions').select('meeting_url').eq('id', today);
+    direct.error
+      ? ok('learner cannot read meeting_url directly', direct.error.code)
+      : bad('meeting_url is selectable from the client', JSON.stringify(direct.data));
+
+    const futureLink = await stu.rpc('session_meeting_link', { p_session_id: future });
+    futureLink.data?.released === false && futureLink.data?.reason === 'not_yet'
+      ? ok('link withheld before the day', `opens ${futureLink.data.availableOn}`)
+      : bad('link not withheld', JSON.stringify(futureLink.data ?? futureLink.error?.message));
+
+    const todayLink = await stu.rpc('session_meeting_link', { p_session_id: today });
+    todayLink.data?.released === true && todayLink.data?.url === LINK
+      ? ok('link released on the day')
+      : bad('link not released on the day', JSON.stringify(todayLink.data ?? todayLink.error?.message));
+
+    const insLink = await ins.rpc('session_meeting_link', { p_session_id: future });
+    insLink.data?.url === LINK
+      ? ok('the class instructor always has their own link')
+      : bad('instructor cannot read their own link', JSON.stringify(insLink.data ?? insLink.error?.message));
+
+    // A class with no door issues no door pass.
+    const { data: passes } = await adm.from('entry_passes')
+      .select('id').in('session_id', [future, today]);
+    (passes?.length ?? 0) === 0
+      ? ok('no entry passes issued for a virtual class')
+      : bad('virtual class issued entry passes', `${passes.length}`);
+
+    // Scheduling far out is allowed — the old 3-to-5-day window is gone.
+    const farOut = await ins.from('course_sessions').insert({
+      course_id: course.id, title: '__verify far out__', session_date: day(28),
+      starts_at: '10:00', ends_at: '12:00', venue_name: 'Training Lab 1',
+      room_number: '', meeting_url: '', instructor_id: INS,
+    }).select('id').single();
+    farOut.error
+      ? bad('could not schedule four weeks ahead', farOut.error.message)
+      : ok('a class can be scheduled four weeks ahead');
+
+    for (const id of [future, today, farOut.data?.id].filter(Boolean)) {
+      await ins.from('entry_passes').delete().eq('session_id', id);
+      await ins.from('course_sessions').delete().eq('id', id);
+    }
+    const { data: junk } = await stu.from('notifications').select('id, message');
+    for (const n of junk ?? []) {
+      if (n.message.includes('__verify')) await stu.from('notifications').delete().eq('id', n.id);
+    }
   }
 }
 

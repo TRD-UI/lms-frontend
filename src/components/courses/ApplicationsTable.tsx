@@ -320,7 +320,7 @@ function ReviewDialog({ application, onClose, onDecided }: ReviewDialogProps) {
                                     onClick={() => decide.mutate({ approve: true })}
                                     className="h-11 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/10"
                                 >
-                                    {decide.isPending ? "Saving…" : "Approve & enrol"}
+                                    {decide.isPending ? "Saving…" : "Approve & Enrol"}
                                 </Button>
                             </DialogFooter>
                         )}

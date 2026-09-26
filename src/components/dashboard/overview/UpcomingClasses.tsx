@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Calendar03Icon, ArrowRight01Icon, Location01Icon } from "hugeicons-react";
+import { Calendar03Icon, ArrowRight01Icon, Location01Icon, ComputerVideoIcon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScheduleDialog } from "@/components/classes/ScheduleDialog";
 import { useLms } from "@/store/lms-store";
-import { formatSessionDate, formatSessionTime, toDateKey } from "@/data/classes";
+import { formatSessionDate, formatSessionTime, isVirtualSession, toDateKey } from "@/data/classes";
+import { JoinClassLink } from "./JoinClassLink";
 
 /**
  * The learner's next on-site sessions.
@@ -43,15 +44,25 @@ export function UpcomingClasses() {
                 </div>
             ) : (
                 <div className="space-y-1">
-                    {upcoming.map((session, index) => (
+                    {upcoming.map((session, index) => {
+                        const virtual = isVirtualSession(session);
+                        return (
                         <div key={session.id}>
-                            <button
+                            <div
                                 onClick={() => setScheduleOpen(true)}
-                                className="w-full group flex items-center justify-between py-4 hover:bg-slate-50/50 px-2 rounded-xl transition-colors text-left"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        setScheduleOpen(true);
+                                    }
+                                }}
+                                className="w-full group flex items-center justify-between gap-3 py-4 hover:bg-slate-50/50 px-2 rounded-xl transition-colors text-left cursor-pointer"
                             >
                                 <div className="flex items-center gap-4 min-w-0">
                                     <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
-                                        <Calendar03Icon size={18} />
+                                        {virtual ? <ComputerVideoIcon size={18} /> : <Calendar03Icon size={18} />}
                                     </div>
                                     <div className="min-w-0">
                                         <h4 className="font-medium text-slate-700 text-sm leading-tight truncate">
@@ -61,21 +72,26 @@ export function UpcomingClasses() {
                                             {formatSessionDate(session.date)} • {formatSessionTime(session)}
                                         </p>
                                         <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5 truncate">
-                                            <Location01Icon size={10} />
+                                            {virtual ? <ComputerVideoIcon size={10} /> : <Location01Icon size={10} />}
                                             {session.venue}
                                             <span className="text-slate-300">·</span>
                                             {getCourse(session.courseId)?.title}
                                         </p>
                                     </div>
                                 </div>
-                                <ArrowRight01Icon
-                                    size={16}
-                                    className="text-slate-200 group-hover:text-primary transition-colors shrink-0"
-                                />
-                            </button>
+                                {virtual ? (
+                                    <JoinClassLink sessionId={session.id} />
+                                ) : (
+                                    <ArrowRight01Icon
+                                        size={16}
+                                        className="text-slate-200 group-hover:text-primary transition-colors shrink-0"
+                                    />
+                                )}
+                            </div>
                             {index < upcoming.length - 1 && <Separator className="bg-slate-100" />}
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

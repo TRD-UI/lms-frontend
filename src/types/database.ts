@@ -624,6 +624,7 @@ export type Database = {
           ends_at: string
           id: string
           instructor_id: string | null
+          meeting_url: string
           room_number: string
           session_date: string
           starts_at: string
@@ -638,6 +639,7 @@ export type Database = {
           ends_at: string
           id?: string
           instructor_id?: string | null
+          meeting_url?: string
           room_number?: string
           session_date: string
           starts_at: string
@@ -652,6 +654,7 @@ export type Database = {
           ends_at?: string
           id?: string
           instructor_id?: string | null
+          meeting_url?: string
           room_number?: string
           session_date?: string
           starts_at?: string
@@ -1491,6 +1494,7 @@ export type Database = {
         Returns: Json
       }
       safe_uuid: { Args: { p_text: string }; Returns: string }
+      session_meeting_link: { Args: { p_session_id: string }; Returns: Json }
       start_attempt: { Args: { p_assessment_id: string }; Returns: Json }
       submit_attempt: {
         Args: { p_answers: Json; p_attempt_id: string }
