@@ -18,7 +18,6 @@ import {
 import { Field, TextField } from "@/components/assessments/form-fields";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { FileDropzone } from "@/components/shared/FileDropzone";
-import { storageCourseId } from "@/data/supabase-ids";
 import { cn } from "@/lib/utils";
 import { useLms } from "@/store/lms-store";
 import type { ModuleItem } from "@/data/types";
@@ -194,7 +193,7 @@ export function ModuleItemFormDialog({
 
                             {source === "upload" ? (
                                 <FileDropzone
-                                    courseStorageId={storageCourseId(courseId)}
+                                    courseStorageId={courseId}
                                     kind={draft.type === "video" ? "video" : draft.type === "pdf" ? "pdf" : "document"}
                                     value={draft.url}
                                     onUploaded={(url) => set("url", url)}

@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { type SpringConfig, useChartConfig } from "../chart-config-context";
-import { chartCssVars } from "../chart-context";
+import { TOOLTIP_BACKGROUND } from "@/lib/chart-palette";
 
 export interface TooltipBoxProps {
   /** X position in pixels (relative to container) */
@@ -82,7 +82,7 @@ function TooltipBoxInner({
   animate = true,
   entrance = true,
   panelStyle,
-  backgroundColor = chartCssVars.tooltipBackground,
+  backgroundColor = TOOLTIP_BACKGROUND,
   container,
 }: Omit<TooltipBoxProps, "visible" | "containerRef"> & {
   container: HTMLElement;
@@ -178,7 +178,7 @@ function TooltipBoxInner({
   const panelClassName = cn(
     "min-w-[140px] overflow-hidden rounded-lg text-chart-tooltip-foreground shadow-lg",
     panelStyle?.backgroundColor === undefined &&
-      backgroundColor === chartCssVars.tooltipBackground &&
+      backgroundColor === TOOLTIP_BACKGROUND &&
       "bg-chart-tooltip-background",
     panelStyle?.backdropFilter === undefined && "backdrop-blur-md"
   );

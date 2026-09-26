@@ -429,3 +429,22 @@
     max-width: 8.5rem;
   }
 }
+
+
+/* ─── No zoom-on-focus ──────────────────────────────────────────────────────
+ *
+ * Safari on iOS zooms the page whenever a focused field's text is smaller than
+ * 16px, and it has ignored `user-scalable=no` since iOS 10 — so the viewport
+ * meta tag cannot fix this, and setting it would only take pinch-zoom away
+ * from everyone else. Meeting the 16px threshold is what actually stops it.
+ *
+ * `font-size` only; the fields keep their own padding and height, so nothing
+ * moves except the text getting a little easier to read on a phone.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

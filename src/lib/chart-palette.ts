@@ -79,3 +79,6 @@ export const TOOLTIP_LABEL_STYLE: React.CSSProperties = {
 export const TOOLTIP_ITEM_STYLE: React.CSSProperties = {
     color: "var(--chart-tooltip-foreground)",
 };
+
+/** Tooltip surface, for the hand-rolled charts that draw their own box. */
+export const TOOLTIP_BACKGROUND = "var(--chart-tooltip-background)";
