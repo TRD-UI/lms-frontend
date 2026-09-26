@@ -125,8 +125,9 @@ export function CourseFormDialog({
 
     /**
      * The image is chosen before the course exists, so the form settles on an
-     * id up front and uploads under it. That same id is used on insert, so the
-     * storage path and the row agree.
+     * id up front and uploads under it. On create that folder does not match
+     * the row's eventual id — the row is what stores the resulting public URL,
+     * so display is unaffected, but the objects are not grouped by course.
      */
     const [draftId] = useState(() => crypto.randomUUID());
     const [uploading, setUploading] = useState(false);
@@ -177,6 +178,15 @@ export function CourseFormDialog({
         }
     };
 
+    /*
+     * Seed the form when it opens, or when it is pointed at a different course.
+     *
+     * Deliberately NOT keyed on `categories`/`venues`: those are query results
+     * that get a new array identity on every background refetch, and this
+     * effect resets the whole draft — so a refetch landing mid-edit (including
+     * one triggered by adding a category from inside this very form) wiped
+     * whatever had been typed, and any cover image just uploaded with it.
+     */
     useEffect(() => {
         if (!open) return;
         setError(null);
@@ -189,7 +199,8 @@ export function CourseFormDialog({
                     location: venues[0]?.name ?? "",
                 }
         );
-    }, [open, course, categories, venues]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, course?.id]);
 
     const set = <K extends keyof CourseDraft>(key: K, value: CourseDraft[K]) =>
         setDraft((d) => ({ ...d, [key]: value }));

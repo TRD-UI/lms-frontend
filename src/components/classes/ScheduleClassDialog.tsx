@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar03Icon } from "hugeicons-react";
+import { Calendar03Icon, Delete02Icon } from "hugeicons-react";
 import {
     Dialog,
     DialogContent,
@@ -10,6 +10,16 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -33,6 +43,7 @@ import {
 } from "@/data/classes";
 import type { Course } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const TIME_SLOTS = Array.from({ length: 27 }, (_, i) => {
     const minutes = 8 * 60 + i * 30; // 08:00 → 21:00, half-hourly
@@ -69,7 +80,7 @@ export function ScheduleClassDialog({
     defaultDate,
 }: ScheduleClassDialogProps) {
     const isEdit = Boolean(session);
-    const { venues, scheduleClass, updateClassSession } = useLms();
+    const { venues, scheduleClass, updateClassSession, cancelClassSession } = useLms();
 
     const earliest = earliestSchedulableDate();
     const [date, setDate] = useState<Date | undefined>(earliest);
@@ -83,6 +94,7 @@ export function ScheduleClassDialog({
     const [roomNumber, setRoomNumber] = useState("");
     const [meetingUrl, setMeetingUrl] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     /*
      * Classes run for as long as the course does. There is no start date on a
@@ -108,6 +120,7 @@ export function ScheduleClassDialog({
         if (!open) return;
         setError(null);
         setDateOpen(false);
+        setConfirmDelete(false);
         if (session) {
             setDate(new Date(session.date));
             setCourseId(session.courseId);
@@ -170,6 +183,22 @@ export function ScheduleClassDialog({
             }
             onOpenChange(false);
         } catch (e) {
+            setError((e as Error).message);
+        }
+    };
+
+    /** Cancelling takes the passes with it — entry_passes cascades on the session. */
+    const handleCancel = async () => {
+        if (!session) return;
+        try {
+            await cancelClassSession(session.id);
+            toast.success("Class cancelled", {
+                description: `"${session.title}" has been removed from the schedule.`,
+            });
+            setConfirmDelete(false);
+            onOpenChange(false);
+        } catch (e) {
+            setConfirmDelete(false);
             setError((e as Error).message);
         }
     };
@@ -340,13 +369,27 @@ export function ScheduleClassDialog({
                     {error && <p className="text-xs text-destructive font-medium">{error}</p>}
                 </div>
 
-                <DialogFooter className="gap-2 sm:gap-2">
+                <DialogFooter className="gap-2 sm:gap-2 sm:justify-between">
+                    {isEdit ? (
+                        <Button
+                            variant="ghost"
+                            onClick={() => setConfirmDelete(true)}
+                            className="rounded-full h-10 px-4 text-destructive hover:text-destructive hover:bg-destructive/5 font-normal"
+                        >
+                            <Delete02Icon size={16} className="mr-1.5" />
+                            Cancel class
+                        </Button>
+                    ) : (
+                        <span className="hidden sm:block" />
+                    )}
+
+                    <div className="flex flex-col-reverse sm:flex-row gap-2">
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
                         className="rounded-full h-10 border-slate-200 text-slate-500 font-normal"
                     >
-                        Cancel
+                        Close
                     </Button>
                     <Button
                         onClick={() => void handleSubmit()}
@@ -354,8 +397,37 @@ export function ScheduleClassDialog({
                     >
                         {isEdit ? "Save class" : "Schedule class"}
                     </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
+
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                <AlertDialogContent className="rounded-2xl border-slate-100 shadow-xl max-w-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-lg font-medium text-slate-900">
+                            Cancel this class?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-500 font-normal text-sm">
+                            "{session?.title}" will be removed from the schedule, and any entry passes
+                            issued for it go with it. Learners are not told automatically.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 sm:gap-2">
+                        <AlertDialogCancel className="rounded-full h-10 border-slate-200 text-slate-500 font-normal">
+                            Keep it
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                void handleCancel();
+                            }}
+                            className="rounded-full h-10 bg-destructive hover:bg-destructive/90 text-white font-normal"
+                        >
+                            Cancel class
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     );
 }

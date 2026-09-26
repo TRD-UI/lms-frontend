@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AssessmentListView } from "@/components/assessments/AssessmentListView";
 import { CourseContentEditor } from "@/components/courses/CourseContentEditor";
+import { CourseRoster } from "@/components/courses/CourseRoster";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useLms } from "@/store/lms-store";
 import { useActingUser } from "@/store/session";
 import { cn } from "@/lib/utils";
 
-type Tab = "content" | "assessments";
+type Tab = "content" | "assessments" | "students";
 
 /**
  * Instructor: one course — its curriculum and its assessments.
@@ -49,17 +50,13 @@ export default function InstructorCourseDetail() {
     const TABS: { key: Tab; label: string; count: number }[] = [
         { key: "content", label: "Content", count: lessonCount },
         { key: "assessments", label: "Assessments", count: assessmentCount },
+        { key: "students", label: "Students", count: course.seats.enrolled },
     ];
 
     return (
         <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <PageHeader
                 title={course.title}
-                description={
-                    tab === "content"
-                        ? "Build the curriculum learners work through in the player."
-                        : `${assessmentCount} ${assessmentCount === 1 ? "assessment" : "assessments"} · ${course.seats.enrolled} enrolled`
-                }
                 backTo="/instructor/courses"
                 backLabel="My courses"
                 breadcrumbs={[
@@ -74,6 +71,8 @@ export default function InstructorCourseDetail() {
                 <div className="px-1 sm:px-2">
                     <CourseContentEditor course={course} />
                 </div>
+            ) : tab === "students" ? (
+                <CourseRoster courseId={course.id} />
             ) : (
                 <AssessmentListView
                     embedded

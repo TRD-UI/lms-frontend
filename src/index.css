@@ -334,3 +334,58 @@
 .sx-lms .sx__forward-backward-navigation button {
   border-radius: 9999px;
 }
+
+
+/* ─── Modals are bottom sheets on a phone ───────────────────────────────────
+ *
+ * Declared here rather than as utilities on the component: nearly every
+ * dialog passes its own max-width, radius, padding and max-height for the
+ * desktop layout, and tailwind-merge would let those win and undo the sheet.
+ * Plain CSS after the utility layers takes precedence instead.
+ */
+@media (max-width: 639px) {
+  [data-mobile-sheet] {
+    inset-inline: 0;
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-inline-width: 0;
+    border-bottom-width: 0;
+    /* dvh, so the sheet is not cut off by mobile browser chrome. */
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* The grab handle is what makes it read as a sheet rather than a dialog
+     that has slipped down the screen. */
+  [data-mobile-sheet]::before {
+    content: "";
+    display: block;
+    width: 2.25rem;
+    height: 0.25rem;
+    margin: 0 auto 0.75rem;
+    border-radius: 9999px;
+    background: hsl(var(--border));
+    flex: none;
+  }
+
+  [data-mobile-sheet][data-state="open"] {
+    animation: sheet-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  [data-mobile-sheet][data-state="closed"] {
+    animation: sheet-out 180ms ease-in;
+  }
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
