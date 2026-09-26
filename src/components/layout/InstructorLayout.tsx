@@ -18,6 +18,10 @@ export function InstructorLayout() {
                 <SidebarInset className="flex flex-col bg-white md:bg-slate-100 overflow-hidden">
                     <div className="flex-1 m-0 md:my-3 md:mr-3 rounded-none md:rounded-3xl bg-white md:border md:border-slate-200 overflow-hidden flex flex-col">
                         <header className="flex h-16 md:h-20 shrink-0 items-center gap-2 md:gap-4 px-4 md:px-10 border-b border-slate-100">
+                            <div className="flex-1 min-w-0 max-w-sm">
+                                <GlobalSearch />
+                            </div>
+
                             {/* Reports the browser's own connectivity. An instructor
                                 marking a register needs to know when their check-ins
                                 have stopped landing. */}
@@ -33,11 +37,7 @@ export function InstructorLayout() {
                                 <span className="sr-only">{online ? "Online" : "Offline"}</span>
                             </span>
 
-                            <div className="flex-1 min-w-0 max-w-sm">
-                                <GlobalSearch />
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2 md:gap-4 shrink-0">
+                            <div className="flex items-center justify-end gap-2 md:gap-4 shrink-0 ml-auto">
                                 <NotificationDropdown />
                                 <UserDropdown />
                             </div>
