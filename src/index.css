@@ -409,4 +409,23 @@
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+
+  /* The month picker is a fixed 20.75rem panel anchored to the left edge of
+     the date field, which pushes its forward chevron off a phone screen.
+     Cap it to the viewport and hang it from the right instead. */
+  .sx-lms .sx__date-picker-popup {
+    width: min(20.75rem, calc(100vw - 1.5rem));
+    left: auto;
+    right: 0;
+    max-height: min(400px, 60dvh);
+  }
+
+  .sx-lms .sx__date-picker__month-view-header__month-year {
+    font-size: 1.05rem;
+  }
+
+  /* A narrower field leaves room for the View select beside it. */
+  .sx-lms .sx__date-input {
+    max-width: 8.5rem;
+  }
 }

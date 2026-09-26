@@ -6,6 +6,7 @@ import { NotificationDropdown } from "./NotificationDropdown";
 import { UserDropdown } from "./UserDropdown";
 import { Badge } from "@/components/ui/badge";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { GlobalSearch } from "@/components/shared/GlobalSearch";
 import { cn } from "@/lib/utils";
 
 export function InstructorLayout() {
@@ -36,6 +37,9 @@ export function InstructorLayout() {
                                     {online ? <Wifi01Icon size={12} /> : <WifiDisconnected01Icon size={12} />}
                                     {online ? "Online" : "Offline"}
                                 </Badge>
+                            </div>
+                            <div className="hidden sm:block flex-1 max-w-xs mx-4">
+                                <GlobalSearch placeholder="Search your courses..." />
                             </div>
                             <div className="flex items-center justify-end gap-2 md:gap-4">
                                 <NotificationDropdown />
