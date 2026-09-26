@@ -26,6 +26,12 @@ import type { Course, FeeStructure } from "@/data/types";
 import { cn } from "@/lib/utils";
 
 export interface CourseDraft {
+    /**
+     * The id the course will be created with. Fixed before the form is filled
+     * in so the cover image can be uploaded under the course's own folder.
+     * Ignored when editing — the existing course keeps its id.
+     */
+    id: string;
     title: string;
     description: string;
     category: string;
@@ -47,6 +53,8 @@ export const DURATION_OPTIONS = Array.from({ length: 8 }, (_, i) =>
 );
 
 const EMPTY: CourseDraft = {
+    // Replaced with the form's own draft id on submit.
+    id: "",
     title: "",
     description: "",
     category: "",
@@ -66,6 +74,7 @@ export function courseToDraft(course: Course): CourseDraft {
     const cohort = course.fees.tiers?.find((t) => t.name === "Cohort");
     const special = course.fees.tiers?.find((t) => t.name === "Special");
     return {
+        id: course.id,
         title: course.title,
         description: course.description,
         category: course.category,
@@ -125,9 +134,10 @@ export function CourseFormDialog({
 
     /**
      * The image is chosen before the course exists, so the form settles on an
-     * id up front and uploads under it. On create that folder does not match
-     * the row's eventual id — the row is what stores the resulting public URL,
-     * so display is unaffected, but the objects are not grouped by course.
+     * id up front, uploads under it, and hands it back on submit to be used as
+     * the new course's primary key. Storage path and row therefore agree —
+     * which is what makes the bucket's ownership-based replace and delete
+     * policies work, and what lets a deleted course take its covers with it.
      */
     const [draftId] = useState(() => crypto.randomUUID());
     const [uploading, setUploading] = useState(false);
@@ -229,6 +239,7 @@ export function CourseFormDialog({
         }
         onSubmit({
             ...draft,
+            id: course?.id ?? draftId,
             title: draft.title.trim(),
             description: draft.description.trim(),
         });

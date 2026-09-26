@@ -23,6 +23,8 @@ export interface CourseApplication {
     employer: string;
     experience: string;
     motivation: string;
+    /** Object path in the private evidence bucket; "" when none was attached. */
+    paymentEvidencePath: string;
     submittedAt: string;
     reviewedAt: string | null;
     reviewNote: string;
@@ -33,10 +35,50 @@ export interface ApplicationInput {
     employer: string;
     experience: string;
     motivation: string;
+    /** Path returned by uploadPaymentEvidence(), or "" if none. */
+    paymentEvidencePath: string;
+}
+
+const EVIDENCE_BUCKET = "application-evidence";
+
+/**
+ * Uploads proof of payment and returns its object path.
+ *
+ * The bucket is private and the applicant's own id is the folder, which is
+ * both what the storage policy checks and what apply_for_course() verifies
+ * before it will record the path.
+ */
+export async function uploadPaymentEvidence(file: File): Promise<string> {
+    const { data: me } = await supabase.auth.getUser();
+    if (!me.user) throw new Error("You need to be signed in to attach a receipt.");
+
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+    const path = `${me.user.id}/receipt-${Date.now()}.${extension}`;
+
+    const { error } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, file, { contentType: file.type, upsert: true });
+    if (error) throw error;
+    return path;
+}
+
+/**
+ * A short-lived URL for a reviewer to open the receipt.
+ *
+ * Signing runs under the caller's own permissions, so RLS decides: the
+ * applicant, an admin, or the instructor of the course applied for.
+ */
+export async function signPaymentEvidence(path: string): Promise<string> {
+    const { data, error } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .createSignedUrl(path, 5 * 60);
+    if (error) throw error;
+    return data.signedUrl;
 }
 
 const SELECT =
-    "id, course_id, student_id, status, phone, employer, experience, motivation, submitted_at, reviewed_at, review_note, " +
+    "id, course_id, student_id, status, phone, employer, experience, motivation, " +
+    "payment_evidence_path, submitted_at, reviewed_at, review_note, " +
     "course:courses ( title ), student:profiles!course_applications_student_id_fkey ( name, email )";
 
 type Row = {
@@ -48,6 +90,7 @@ type Row = {
     employer: string;
     experience: string;
     motivation: string;
+    payment_evidence_path: string;
     submitted_at: string;
     reviewed_at: string | null;
     review_note: string;
@@ -67,6 +110,7 @@ const toApplication = (r: Row): CourseApplication => ({
     employer: r.employer,
     experience: r.experience,
     motivation: r.motivation,
+    paymentEvidencePath: r.payment_evidence_path,
     submittedAt: r.submitted_at,
     reviewedAt: r.reviewed_at,
     reviewNote: r.review_note,
@@ -108,6 +152,7 @@ export async function applyForCourse(courseId: string, input: ApplicationInput) 
         p_employer: input.employer,
         p_experience: input.experience,
         p_motivation: input.motivation,
+        p_evidence: input.paymentEvidencePath,
     });
     if (error) throw error;
 }

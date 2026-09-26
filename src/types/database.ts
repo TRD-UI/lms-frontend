@@ -453,6 +453,7 @@ export type Database = {
           experience: string
           id: string
           motivation: string
+          payment_evidence_path: string
           phone: string
           review_note: string
           reviewed_at: string | null
@@ -467,6 +468,7 @@ export type Database = {
           experience?: string
           id?: string
           motivation?: string
+          payment_evidence_path?: string
           phone?: string
           review_note?: string
           reviewed_at?: string | null
@@ -481,6 +483,7 @@ export type Database = {
           experience?: string
           id?: string
           motivation?: string
+          payment_evidence_path?: string
           phone?: string
           review_note?: string
           reviewed_at?: string | null
@@ -1412,6 +1415,7 @@ export type Database = {
         Args: {
           p_course_id: string
           p_employer?: string
+          p_evidence?: string
           p_experience?: string
           p_motivation?: string
           p_phone?: string

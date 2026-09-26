@@ -62,7 +62,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "flex flex-col space-y-1.5 text-left",
       className
     )}
     {...props}
@@ -76,7 +76,12 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      // On a phone the footer is a two-column grid: two buttons sit side by
+      // side, and a third drops to its own row spanning both — the destructive
+      // action, which is why it comes last in the DOM. A single button fills
+      // the row. Stacking them was a column of full-width bars.
+      "grid grid-cols-2 gap-2 [&>*:only-child]:col-span-2 [&>*:nth-child(3)]:col-span-2",
+      "sm:flex sm:flex-row sm:justify-end sm:gap-2",
       className
     )}
     {...props}

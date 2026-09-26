@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Attachment01Icon, Cancel01Icon, File01Icon } from "hugeicons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     Dialog,
@@ -17,7 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Field, TextField, TextArea } from "@/components/assessments/form-fields";
-import { applyForCourse } from "@/lib/api/applications";
+import { applyForCourse, uploadPaymentEvidence } from "@/lib/api/applications";
+import { useFileDrop } from "@/hooks/use-file-drop";
+import { cn } from "@/lib/utils";
 import { describeError } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -42,7 +45,13 @@ interface ApplyDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     /** Pre-fills the form when re-applying after a rejection. */
-    initial?: { phone: string; employer: string; experience: string; motivation: string };
+    initial?: {
+        phone: string;
+        employer: string;
+        experience: string;
+        motivation: string;
+        paymentEvidencePath: string;
+    };
 }
 
 export function ApplyDialog({
@@ -59,6 +68,38 @@ export function ApplyDialog({
     const [motivation, setMotivation] = useState(initial?.motivation ?? "");
     const [touched, setTouched] = useState(false);
 
+    // Proof of payment. The file goes to private storage first; only its path
+    // is submitted with the application.
+    const [evidencePath, setEvidencePath] = useState(initial?.paymentEvidencePath ?? "");
+    const [evidenceName, setEvidenceName] = useState("");
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const fileInput = useRef<HTMLInputElement>(null);
+
+    const attach = async (file: File) => {
+        const allowed = ["image/png", "image/jpeg", "image/webp", "application/pdf"];
+        if (!allowed.includes(file.type)) {
+            setUploadError("Attach a PNG, JPG, WebP or PDF.");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setUploadError("Receipts are limited to 5 MB.");
+            return;
+        }
+        setUploading(true);
+        setUploadError(null);
+        try {
+            setEvidencePath(await uploadPaymentEvidence(file));
+            setEvidenceName(file.name);
+        } catch (e) {
+            setUploadError(describeError(e as { message?: string }));
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const { dragging, dropProps } = useFileDrop((file) => void attach(file));
+
     const phoneError = touched && !phone.trim() ? "A phone number is required." : undefined;
     const motivationError =
         touched && motivation.trim().length < 20
@@ -72,6 +113,7 @@ export function ApplyDialog({
                 employer: employer.trim(),
                 experience,
                 motivation: motivation.trim(),
+                paymentEvidencePath: evidencePath,
             }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["my-applications"] });
@@ -90,7 +132,7 @@ export function ApplyDialog({
 
     const handleSubmit = () => {
         setTouched(true);
-        if (!phone.trim() || motivation.trim().length < 20) return;
+        if (!phone.trim() || motivation.trim().length < 20 || !evidencePath) return;
         submit.mutate();
     };
 
@@ -140,6 +182,78 @@ export function ApplyDialog({
                             </SelectContent>
                         </Select>
                     </Field>
+                    <div className="space-y-1.5">
+                        <span className="text-xs font-medium text-slate-600">
+                            Proof of payment <span className="text-destructive">*</span>
+                        </span>
+                        <input
+                            ref={fileInput}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,application/pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void attach(file);
+                                e.target.value = "";
+                            }}
+                        />
+                        {evidencePath ? (
+                            <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <File01Icon size={16} className="text-slate-400 shrink-0" />
+                                <span className="text-sm text-slate-700 truncate flex-1 min-w-0">
+                                    {evidenceName || "Receipt attached"}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEvidencePath("");
+                                        setEvidenceName("");
+                                    }}
+                                    aria-label="Remove receipt"
+                                    className="h-7 w-7 rounded-full text-slate-400 hover:text-destructive flex items-center justify-center shrink-0"
+                                >
+                                    <Cancel01Icon size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                {...dropProps}
+                                onClick={() => fileInput.current?.click()}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") fileInput.current?.click();
+                                }}
+                                className={cn(
+                                    "rounded-xl border-2 border-dashed py-5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all",
+                                    dragging ? "border-primary bg-accent/20" : "border-slate-200 bg-slate-50 hover:border-slate-300",
+                                    uploading && "opacity-60 pointer-events-none"
+                                )}
+                            >
+                                {uploading ? (
+                                    <>
+                                        <span className="h-5 w-5 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
+                                        <p className="text-xs font-medium text-slate-500">Uploading…</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Attachment01Icon size={18} className={cn(dragging ? "text-primary" : "text-slate-300")} />
+                                        <p className="text-xs font-medium text-slate-600">
+                                            Drop your receipt, or <span className="text-primary">browse</span>
+                                        </p>
+                                        <p className="text-[11px] text-slate-400">PNG, JPG, WebP or PDF · up to 5 MB</p>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                        {uploadError && <p className="text-[10px] text-destructive font-medium">{uploadError}</p>}
+                        {touched && !evidencePath && !uploadError && (
+                            <p className="text-[10px] text-destructive font-medium">
+                                Attach proof that the application fee has been paid.
+                            </p>
+                        )}
+                    </div>
+
                     <TextArea
                         id="apply-motivation"
                         label="Why do you want this place?"

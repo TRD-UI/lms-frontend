@@ -144,6 +144,7 @@ export default function MyCourses() {
         } else {
             const created = await createCourse({
                 ...shared,
+                id: draft.id,
                 seats: { enrolled: 0, total: draft.seatsTotal },
                 instructorId: instructor.id,
                 instructorName: instructor.name,

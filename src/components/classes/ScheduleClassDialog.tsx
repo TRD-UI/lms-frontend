@@ -369,35 +369,30 @@ export function ScheduleClassDialog({
                     {error && <p className="text-xs text-destructive font-medium">{error}</p>}
                 </div>
 
-                <DialogFooter className="gap-2 sm:gap-2 sm:justify-between">
-                    {isEdit ? (
-                        <Button
-                            variant="ghost"
-                            onClick={() => setConfirmDelete(true)}
-                            className="rounded-full h-10 px-4 text-destructive hover:text-destructive hover:bg-destructive/5 font-normal"
-                        >
-                            <Delete02Icon size={16} className="mr-1.5" />
-                            Cancel class
-                        </Button>
-                    ) : (
-                        <span className="hidden sm:block" />
-                    )}
-
-                    <div className="flex flex-col-reverse sm:flex-row gap-2">
+                <DialogFooter className="sm:justify-between">
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
-                        className="rounded-full h-10 border-slate-200 text-slate-500 font-normal"
+                        className="rounded-full h-10 border-slate-200 text-slate-500 font-normal sm:order-2"
                     >
                         Close
                     </Button>
                     <Button
                         onClick={() => void handleSubmit()}
-                        className="rounded-full h-10 bg-primary hover:bg-primary/90 text-white font-normal shadow-lg shadow-primary/10"
+                        className="rounded-full h-10 bg-primary hover:bg-primary/90 text-white font-normal shadow-lg shadow-primary/10 sm:order-3"
                     >
                         {isEdit ? "Save class" : "Schedule class"}
                     </Button>
-                    </div>
+                    {isEdit && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => setConfirmDelete(true)}
+                            className="rounded-full h-10 px-4 text-destructive hover:text-destructive hover:bg-destructive/5 font-normal sm:order-1 sm:mr-auto"
+                        >
+                            <Delete02Icon size={16} className="mr-1.5" />
+                            Cancel class
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
 

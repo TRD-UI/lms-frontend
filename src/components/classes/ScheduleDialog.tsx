@@ -105,14 +105,15 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="rounded-3xl border-slate-100 shadow-2xl max-w-[min(96vw,78rem)] p-0 overflow-hidden h-[86vh] flex flex-col gap-0">
-                    <DialogHeader className="px-5 pt-5 pb-3 shrink-0">
-                        <div className="flex items-start justify-between gap-4">
+                <DialogContent className="rounded-3xl border-slate-100 shadow-2xl max-w-[min(96vw,78rem)] p-0 overflow-hidden h-[86vh] max-sm:h-[88dvh] flex flex-col gap-0">
+                    <DialogHeader className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 shrink-0">
+                        <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                                <DialogTitle className="text-xl font-medium text-slate-900">
+                                <DialogTitle className="text-base sm:text-xl font-medium text-slate-900 truncate">
                                     {isInstructor ? "Class schedule" : "Your schedule"}
                                 </DialogTitle>
-                                <DialogDescription className="text-slate-500 text-sm">
+                                {/* Advisory only, and "hover" means nothing on a touch screen. */}
+                                <DialogDescription className="hidden sm:block text-slate-500 text-sm">
                                     {isInstructor
                                         ? "The classes you run, on site and online. Hover a day to add one there."
                                         : "Classes across every course you are enrolled on."}
@@ -123,10 +124,11 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
                                 <Button
                                     onClick={() => openAdd()}
                                     disabled={myCourses.length === 0}
-                                    className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shrink-0 mr-8"
+                                    aria-label="Add class"
+                                    className="h-10 w-10 px-0 sm:w-auto sm:px-5 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm shrink-0 mr-8"
                                 >
-                                    <Add01Icon size={16} className="mr-1.5" />
-                                    Add class
+                                    <Add01Icon size={16} className="sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Add class</span>
                                 </Button>
                             )}
                         </div>

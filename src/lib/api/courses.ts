@@ -139,6 +139,12 @@ export async function fetchApplicationFee(courseId: string): Promise<number> {
 }
 
 export interface CourseInput {
+    /**
+     * Chosen by the caller so the cover image can be uploaded under the
+     * course's own folder before the row exists. Omit to let Postgres
+     * generate one.
+     */
+    id?: string;
     title: string;
     description: string;
     category: string;
@@ -170,6 +176,7 @@ export async function createCourse(input: CourseInput): Promise<string> {
     const { data, error } = await supabase
         .from("courses")
         .insert({
+            ...(input.id ? { id: input.id } : {}),
             title: input.title,
             description: input.description,
             category: input.category,
@@ -316,6 +323,21 @@ export async function fetchMyEnrolledCourseIds(): Promise<string[]> {
  * the image can be chosen before the course is saved. The bucket is public, so
  * the returned URL needs no signing.
  */
+/**
+ * Removes every cover uploaded for a course.
+ *
+ * Must run while the course row still exists: the bucket's delete policy is
+ * `owns_course(<first path segment>)`, and ownership cannot be established
+ * once the row is gone.
+ */
+export async function deleteCourseImages(courseId: string): Promise<void> {
+    const { data, error } = await supabase.storage.from("course-images").list(courseId);
+    if (error || !data?.length) return;
+    await supabase.storage
+        .from("course-images")
+        .remove(data.map((object) => `${courseId}/${object.name}`));
+}
+
 export async function uploadCourseImage(courseId: string, file: File): Promise<string> {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
     const path = `${courseId}/cover-${Date.now()}.${ext}`;

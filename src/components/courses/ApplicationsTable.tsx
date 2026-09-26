@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserCheck01Icon, Mail01Icon, CallIcon, Building01Icon } from "hugeicons-react";
+import { UserCheck01Icon, Mail01Icon, CallIcon, Building01Icon, File01Icon, LinkSquare02Icon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,6 +26,7 @@ import { TablePagination, usePagination } from "@/components/shared/TablePaginat
 import {
     fetchApplications,
     reviewApplication,
+    signPaymentEvidence,
     type CourseApplication,
 } from "@/lib/api/applications";
 import { useSession } from "@/store/session";
@@ -264,6 +265,8 @@ function ReviewDialog({ application, onClose, onDecided }: ReviewDialogProps) {
                                 <Detail icon={UserCheck01Icon} label="Experience" value={application.experience} />
                             </div>
 
+                            <PaymentEvidence path={application.paymentEvidencePath} />
+
                             {application.motivation && (
                                 <div className="space-y-1.5">
                                     <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
@@ -328,6 +331,56 @@ function ReviewDialog({ application, onClose, onDecided }: ReviewDialogProps) {
                 )}
             </DialogContent>
         </Dialog>
+    );
+}
+
+/**
+ * Opens the applicant's receipt.
+ *
+ * The bucket is private, so the file is reached through a short-lived signed
+ * URL minted at click time under the reviewer's own permissions — an admin or
+ * the course's instructor. Nothing is fetched until it is asked for.
+ */
+function PaymentEvidence({ path }: { path: string }) {
+    const [opening, setOpening] = useState(false);
+
+    if (!path) {
+        return (
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-3">
+                <File01Icon size={14} className="text-slate-400 shrink-0" />
+                <span className="text-sm text-slate-500">No proof of payment attached</span>
+            </div>
+        );
+    }
+
+    const open = async () => {
+        setOpening(true);
+        try {
+            window.open(await signPaymentEvidence(path), "_blank", "noopener,noreferrer");
+        } catch (e) {
+            toast.error("Could not open the receipt", {
+                description: describeError(e as { message?: string }),
+            });
+        } finally {
+            setOpening(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-3">
+            <File01Icon size={14} className="text-slate-400 shrink-0" />
+            <span className="text-sm text-slate-700 flex-1 min-w-0 truncate">Proof of payment</span>
+            <Button
+                variant="ghost"
+                size="sm"
+                disabled={opening}
+                onClick={() => void open()}
+                className="h-8 rounded-full text-xs font-medium text-primary hover:bg-accent/40 shrink-0"
+            >
+                {opening ? "Opening…" : "View"}
+                <LinkSquare02Icon size={13} className="ml-1" />
+            </Button>
+        </div>
     );
 }
 

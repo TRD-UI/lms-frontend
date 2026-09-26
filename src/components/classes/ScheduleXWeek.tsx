@@ -10,8 +10,19 @@ import "@schedule-x/theme-default/dist/index.css";
 import { Add01Icon, Calendar03Icon, QrCode01Icon, SquareLock02Icon } from "hugeicons-react";
 import type { ClassSession } from "@/data/classes";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+/**
+ * Schedule-X hides the week and month grids under 700px and offers only the
+ * day view. That is a reasonable default for a 7-column grid, but it left the
+ * phone with no way to see a week or a month at all. The flag is a plain
+ * writable property on the view, so the views are opted back in and the grid
+ * is given a minimum width to scroll within (see `.sx-lms` in index.css).
+ */
+const onSmallScreens = <T,>(view: T): T =>
+    Object.assign(view as object, { hasSmallScreenCompat: true }) as T;
 
 /** `2026-03-14` + `10:00` → a zoned instant Schedule-X can place on the grid. */
 function zoned(dateKey: string, hhmm: string) {
@@ -48,6 +59,7 @@ export function ScheduleXWeek({
     onAdd,
 }: ScheduleXWeekProps) {
     const eventsService = useState(() => createEventsServicePlugin())[0];
+    const isMobile = useIsMobile();
 
     // Schedule-X keys events by id; keep a lookup so a click can hand back the
     // domain object rather than the library's shape.
@@ -67,8 +79,14 @@ export function ScheduleXWeek({
     );
 
     const calendar = useCalendarApp({
-        views: [createViewWeek(), createViewDay(), createViewMonthGrid()],
-        defaultView: "week",
+        views: [
+            onSmallScreens(createViewWeek()),
+            createViewDay(),
+            onSmallScreens(createViewMonthGrid()),
+        ],
+        // A single day is the sensible opening view on a phone; the others are
+        // still reachable from the dropdown.
+        defaultView: isMobile ? "day" : "week",
         events,
         plugins: [eventsService],
         dayBoundaries: { start: "07:00", end: "21:00" },

@@ -58,7 +58,9 @@ interface LmsContextValue {
     attempts: AssessmentAttempt[];
 
     // ─── Courses ───
-    createCourse: (input: Omit<Course, "id" | "modules"> & { modules?: CourseModule[] }) => Promise<Course>;
+    createCourse: (
+        input: Omit<Course, "id" | "modules"> & { modules?: CourseModule[]; id?: string }
+    ) => Promise<Course>;
     updateCourse: (id: string, patch: Partial<Course>) => Promise<void>;
     deleteCourse: (id: string) => Promise<void>;
     getCourse: (id: string) => Course | undefined;
@@ -269,7 +271,9 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
     const COURSE_FIELD_MAP: {
         // Required<> matters: over an optional key a mapped type stays optional,
         // so a missing entry would compile. This forces every field to appear.
-        [K in keyof Required<coursesApi.CourseInput>]: (
+        // `id` is excluded deliberately — it identifies the row being updated
+        // and is never part of the patch.
+        [K in keyof Required<Omit<coursesApi.CourseInput, "id">>]: (
             patch: Partial<Course>
         ) => coursesApi.CourseInput[K] | undefined;
     } = {
@@ -287,7 +291,7 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
 
     const toCourseInput = (patch: Partial<Course>): Partial<coursesApi.CourseInput> => {
         const out: Partial<coursesApi.CourseInput> = {};
-        for (const key of Object.keys(COURSE_FIELD_MAP) as (keyof coursesApi.CourseInput)[]) {
+        for (const key of Object.keys(COURSE_FIELD_MAP) as (keyof typeof COURSE_FIELD_MAP)[]) {
             const value = COURSE_FIELD_MAP[key](patch);
             if (value !== undefined) {
                 (out as Record<string, unknown>)[key] = value;
@@ -299,6 +303,8 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
     const createCourse: LmsContextValue["createCourse"] = useCallback(
         async (input) => {
             const id = await coursesApi.createCourse({
+                // The form has already uploaded the cover under this id.
+                id: input.id,
                 title: input.title,
                 description: input.description,
                 category: input.category,
@@ -325,6 +331,9 @@ export function LmsProvider({ children }: { children: React.ReactNode }) {
 
     const deleteCourse = useCallback(
         async (id: string) => {
+            // Covers first: the storage policy needs the course row to still be
+            // there to prove ownership, and nothing else would ever clear them.
+            await coursesApi.deleteCourseImages(id);
             await coursesApi.deleteCourse(id);
             // assessments.course_id cascades, so they go with the course.
             invalidate("courses", "assessments");

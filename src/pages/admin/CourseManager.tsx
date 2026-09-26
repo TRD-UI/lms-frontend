@@ -112,6 +112,7 @@ export default function CourseManager() {
             } else {
                 await createCourse({
                     ...shared,
+                    id: draft.id,
                     seats: { enrolled: 0, total: draft.seatsTotal },
                     progress: 0,
                     modules: [],

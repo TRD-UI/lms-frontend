@@ -389,3 +389,24 @@
   from { transform: translateY(0); }
   to { transform: translateY(100%); }
 }
+
+
+/* The week and month grids are opted back in on phones (see ScheduleXWeek).
+   Seven columns cannot fit a 390px viewport honestly, so the grid keeps a
+   workable minimum width and the container scrolls sideways instead. */
+@media (max-width: 639px) {
+  .sx-lms .sx__view-container {
+    overflow-x: auto;
+  }
+  .sx-lms .sx__week-wrapper {
+    min-width: 42rem;
+  }
+  .sx-lms .sx__month-grid-wrapper {
+    min-width: 21rem;
+  }
+  /* The built-in controls stack awkwardly at this width. */
+  .sx-lms .sx__calendar-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

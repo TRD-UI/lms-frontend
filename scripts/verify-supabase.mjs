@@ -394,5 +394,73 @@ console.log('\n── Virtual classes ──');
   }
 }
 
+console.log('\n── Payment evidence on an application ──');
+{
+  const { c: stu, data: stuAuth } = await login('cyber.smith@example.com');
+  const { c: adm } = await login('eze.n@trd.edu');
+  const { c: owner, data: ownerAuth } = await login('funke.a@trd.edu');
+  const { c: other } = await login('seun.f@trd.edu');
+  const STU = stuAuth.user.id, OWNER = ownerAuth.user.id;
+
+  const { data: enrolled } = await stu.from('enrollments')
+    .select('course_id').in('status', ['active', 'completed']);
+  const mine = new Set((enrolled ?? []).map((e) => e.course_id));
+  const { data: courses } = await stu.from('courses')
+    .select('id, instructor_id').eq('status', 'published');
+  const target = courses?.find((c) => !mine.has(c.id) && c.instructor_id === OWNER)
+              ?? courses?.find((c) => !mine.has(c.id));
+
+  if (!target) bad('no course available to apply to');
+  else {
+    await adm.from('course_applications').delete().eq('course_id', target.id).eq('student_id', STU);
+
+    const receipt = new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' });
+    const path = `${STU}/receipt-verify-${Date.now()}.pdf`;
+    const up = await stu.storage.from('application-evidence')
+      .upload(path, receipt, { contentType: 'application/pdf' });
+    up.error ? bad('applicant uploads a receipt', up.error.message) : ok('applicant uploads a receipt');
+
+    const intruder = await stu.storage.from('application-evidence')
+      .upload(`${OWNER}/sneaky.pdf`, receipt, { contentType: 'application/pdf' });
+    intruder.error ? ok("cannot upload into another user's folder")
+                   : bad('uploaded into another user folder');
+
+    const applied = await stu.rpc('apply_for_course', {
+      p_course_id: target.id, p_phone: '0800', p_motivation: 'Verification run.', p_evidence: path,
+    });
+    applied.error ? bad('apply with evidence', applied.error.message) : ok('apply with evidence');
+
+    const forged = await stu.rpc('apply_for_course', {
+      p_course_id: target.id, p_evidence: `${OWNER}/theirs.pdf`,
+    });
+    forged.error ? ok('an evidence path outside your own folder is refused')
+                 : bad('a forged evidence path was accepted');
+
+    const canSign = async (client) => {
+      const { data, error } = await client.storage
+        .from('application-evidence').createSignedUrl(path, 60);
+      return !error && Boolean(data?.signedUrl);
+    };
+
+    (await canSign(stu)) ? ok('applicant can open their own receipt') : bad('applicant blocked');
+    (await canSign(adm)) ? ok('admin can open the receipt') : bad('admin blocked from the receipt');
+    const ownerCan = await canSign(owner);
+    (target.instructor_id === OWNER ? ownerCan : !ownerCan)
+      ? ok("the course's own instructor can open it")
+      : bad('course instructor receipt access wrong');
+    (await canSign(other)) ? bad('AN UNRELATED INSTRUCTOR READ A RECEIPT')
+                           : ok('an unrelated instructor cannot open it');
+
+    await adm.from('course_applications').delete().eq('id', applied.data?.id);
+    await stu.storage.from('application-evidence').remove([path]);
+    for (const c of [stu, adm, owner]) {
+      const { data: notes } = await c.from('notifications').select('id, title');
+      for (const n of notes ?? []) {
+        if (n.title === 'New course application') await c.from('notifications').delete().eq('id', n.id);
+      }
+    }
+  }
+}
+
 console.log(`\n${'─'.repeat(50)}\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
